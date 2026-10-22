@@ -78,8 +78,14 @@ Deployment steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md).
 ## 4. Admin and content
 
 ### Admin (`/admin`)
+A sidebar app with a light/dark theme (stored per browser; the public site stays light).
+- **Dashboard**: new leads, leads in the last 30 days, subscriber counts, leads by status, latest leads, and which services are configured.
 - **Leads**: search, filter, update status and notes, export CSV.
-- **Site sections**: show, hide and reorder sections on Home, About, use case pages and the Viewixsoft CMS page; set each product to available, coming soon or hidden; enter the home stats (each needs a source and a date); manage customer quotes (shown only when approved with a written-consent date).
+- **Subscribers**: newsletter and launch sign-ups; filter by status and topic, export CSV, unsubscribe, delete on request.
+- **Pages & sections**: show, hide and reorder sections on Home, About, use case pages and the Viewixsoft CMS page.
+- **Products**: set each product to available, coming soon or hidden.
+- **Home stats**: real figures, each with a source and a date.
+- **Customer quotes**: shown only when approved with a written-consent date.
 - **Images**: replace hardware photos, use case covers and screen photos without touching code.
 
 Sections that depend on real data (stats, quotes, use case results) stay hidden on the live site until that data exists. Sample content renders only in the dev server.

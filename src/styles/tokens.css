@@ -57,6 +57,9 @@
   --color-light-nfc: #b49cff;
   --color-light-tracking: #4ade80;
   --color-alert: #ff5a4f;
+  /* Status icons and badges (3:1+ against both room surfaces). */
+  --color-success: #15803d;
+  --color-warning: #b45309;
 
   /* Crisp, hardware-like radii (overrides Tailwind defaults site-wide) */
   --radius-sm: 0.125rem;
@@ -120,6 +123,8 @@
 /* Dark theme, and every story screen in either theme. */
 .dark,
 .screen-dark {
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
   --color-ink-50: #f5f4ef;
   --color-ink-100: #eae8e1;
   --color-ink-200: #d6d4cc;

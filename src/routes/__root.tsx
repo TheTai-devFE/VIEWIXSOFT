@@ -4,6 +4,7 @@ import {
   HeadContent,
   Outlet,
   Scripts,
+  useRouterState,
 } from '@tanstack/react-router'
 import * as React from 'react'
 import { SiteHeader } from '~/components/blocks/SiteHeader'
@@ -53,8 +54,11 @@ export const Route = createRootRoute({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  // The admin has its own shell (sidebar, theme, <main>); the marketing chrome stays out of it.
+  const isAdmin = useRouterState({ select: (s) => s.location.pathname.startsWith('/admin') })
   return (
-    <html lang="en">
+    // The admin theme script may add `dark` before hydration.
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
@@ -65,11 +69,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         >
           Skip to main content
         </a>
-        <SiteHeader />
-        <main id="main-content" className="flex-1 pt-16">
-          {children}
-        </main>
-        <Footer />
+        {isAdmin ? (
+          children
+        ) : (
+          <>
+            <SiteHeader />
+            <main id="main-content" className="flex-1 pt-16">
+              {children}
+            </main>
+            <Footer />
+          </>
+        )}
         <Scripts />
       </body>
     </html>

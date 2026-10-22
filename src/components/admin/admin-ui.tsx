@@ -2,6 +2,28 @@ import type { ReactNode } from 'react'
 
 /** Small building blocks shared by the admin editors. */
 
+/** Title row of every admin module: H1, one-line purpose and optional actions. */
+export function AdminPageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
+  return (
+    <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <div className="min-w-0">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{title}</h1>
+        {description && <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">{description}</p>}
+      </div>
+      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+    </header>
+  )
+}
+
+/** Alert for a module whose data could not load. */
+export function LoadError({ children }: { children: ReactNode }) {
+  return (
+    <p role="alert" className="rounded-xl border border-destructive/40 p-4 text-sm text-destructive">
+      {children}
+    </p>
+  )
+}
+
 export function Panel({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
     <section className="rounded-2xl border border-ink-800 bg-ink-900 p-6">

@@ -50,12 +50,12 @@ function LoginPage() {
         return
       }
       await router.invalidate()
-      await router.navigate({ to: redirect ?? '/admin/leads' })
+      await router.navigate({ to: redirect ?? '/admin' })
     },
   })
 
   return (
-    <div className="mx-auto max-w-md px-4 py-20">
+    <main id="main-content" className="mx-auto min-h-screen max-w-md px-4 py-20">
       <h1 className="font-display text-3xl font-semibold tracking-tight text-ink-50">Admin sign in</h1>
       <p className="mt-2 text-sm text-ink-400">Accounts are created with pnpm admin:create.</p>
       <form
@@ -113,6 +113,6 @@ function LoginPage() {
           )}
         </form.Subscribe>
       </form>
-    </div>
+    </main>
   )
 }

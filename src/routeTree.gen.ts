@@ -24,7 +24,12 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminLeadsRouteImport } from './routes/admin/leads'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminMediaRouteImport } from './routes/admin/media'
+import { Route as AdminPagesRouteImport } from './routes/admin/pages'
+import { Route as AdminProductsRouteImport } from './routes/admin/products'
 import { Route as AdminSiteRouteImport } from './routes/admin/site'
+import { Route as AdminStatsRouteImport } from './routes/admin/stats'
+import { Route as AdminSubscribersRouteImport } from './routes/admin/subscribers'
+import { Route as AdminTestimonialsRouteImport } from './routes/admin/testimonials'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as BlogChar123slugChar125DotmdRouteImport } from './routes/blog/{$slug}[.]md'
@@ -117,9 +122,34 @@ const AdminMediaRoute = AdminMediaRouteImport.update({
   path: '/media',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminPagesRoute = AdminPagesRouteImport.update({
+  id: '/pages',
+  path: '/pages',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminProductsRoute = AdminProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminSiteRoute = AdminSiteRouteImport.update({
   id: '/site',
   path: '/site',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminStatsRoute = AdminStatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSubscribersRoute = AdminSubscribersRouteImport.update({
+  id: '/subscribers',
+  path: '/subscribers',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminTestimonialsRoute = AdminTestimonialsRouteImport.update({
+  id: '/testimonials',
+  path: '/testimonials',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
@@ -221,7 +251,12 @@ export interface FileRoutesByFullPath {
   '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
+  '/admin/pages': typeof AdminPagesRoute
+  '/admin/products': typeof AdminProductsRoute
   '/admin/site': typeof AdminSiteRoute
+  '/admin/stats': typeof AdminStatsRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
+  '/admin/testimonials': typeof AdminTestimonialsRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/{$slug}.md': typeof BlogChar123slugChar125DotmdRoute
   '/legal/cookies': typeof LegalCookiesRoute
@@ -254,7 +289,12 @@ export interface FileRoutesByTo {
   '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
+  '/admin/pages': typeof AdminPagesRoute
+  '/admin/products': typeof AdminProductsRoute
   '/admin/site': typeof AdminSiteRoute
+  '/admin/stats': typeof AdminStatsRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
+  '/admin/testimonials': typeof AdminTestimonialsRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/{$slug}.md': typeof BlogChar123slugChar125DotmdRoute
   '/legal/cookies': typeof LegalCookiesRoute
@@ -289,7 +329,12 @@ export interface FileRoutesById {
   '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
+  '/admin/pages': typeof AdminPagesRoute
+  '/admin/products': typeof AdminProductsRoute
   '/admin/site': typeof AdminSiteRoute
+  '/admin/stats': typeof AdminStatsRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
+  '/admin/testimonials': typeof AdminTestimonialsRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/{$slug}.md': typeof BlogChar123slugChar125DotmdRoute
   '/legal/cookies': typeof LegalCookiesRoute
@@ -325,7 +370,12 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/login'
     | '/admin/media'
+    | '/admin/pages'
+    | '/admin/products'
     | '/admin/site'
+    | '/admin/stats'
+    | '/admin/subscribers'
+    | '/admin/testimonials'
     | '/blog/$slug'
     | '/blog/{$slug}.md'
     | '/legal/cookies'
@@ -358,7 +408,12 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/login'
     | '/admin/media'
+    | '/admin/pages'
+    | '/admin/products'
     | '/admin/site'
+    | '/admin/stats'
+    | '/admin/subscribers'
+    | '/admin/testimonials'
     | '/blog/$slug'
     | '/blog/{$slug}.md'
     | '/legal/cookies'
@@ -392,7 +447,12 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/login'
     | '/admin/media'
+    | '/admin/pages'
+    | '/admin/products'
     | '/admin/site'
+    | '/admin/stats'
+    | '/admin/subscribers'
+    | '/admin/testimonials'
     | '/blog/$slug'
     | '/blog/{$slug}.md'
     | '/legal/cookies'
@@ -549,11 +609,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMediaRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/pages': {
+      id: '/admin/pages'
+      path: '/pages'
+      fullPath: '/admin/pages'
+      preLoaderRoute: typeof AdminPagesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/products': {
+      id: '/admin/products'
+      path: '/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/site': {
       id: '/admin/site'
       path: '/site'
       fullPath: '/admin/site'
       preLoaderRoute: typeof AdminSiteRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/stats': {
+      id: '/admin/stats'
+      path: '/stats'
+      fullPath: '/admin/stats'
+      preLoaderRoute: typeof AdminStatsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/subscribers': {
+      id: '/admin/subscribers'
+      path: '/subscribers'
+      fullPath: '/admin/subscribers'
+      preLoaderRoute: typeof AdminSubscribersRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/testimonials': {
+      id: '/admin/testimonials'
+      path: '/testimonials'
+      fullPath: '/admin/testimonials'
+      preLoaderRoute: typeof AdminTestimonialsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/blog/': {
@@ -675,7 +770,12 @@ interface AdminRouteRouteChildren {
   AdminLeadsRoute: typeof AdminLeadsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMediaRoute: typeof AdminMediaRoute
+  AdminPagesRoute: typeof AdminPagesRoute
+  AdminProductsRoute: typeof AdminProductsRoute
   AdminSiteRoute: typeof AdminSiteRoute
+  AdminStatsRoute: typeof AdminStatsRoute
+  AdminSubscribersRoute: typeof AdminSubscribersRoute
+  AdminTestimonialsRoute: typeof AdminTestimonialsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -683,7 +783,12 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminLeadsRoute: AdminLeadsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMediaRoute: AdminMediaRoute,
+  AdminPagesRoute: AdminPagesRoute,
+  AdminProductsRoute: AdminProductsRoute,
   AdminSiteRoute: AdminSiteRoute,
+  AdminStatsRoute: AdminStatsRoute,
+  AdminSubscribersRoute: AdminSubscribersRoute,
+  AdminTestimonialsRoute: AdminTestimonialsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 

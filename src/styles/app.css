@@ -8,6 +8,11 @@
     color-scheme: light;
   }
 
+  /* Only the admin switches <html> to dark (see use-admin-theme.ts). */
+  html.dark {
+    color-scheme: dark;
+  }
+
   @media (prefers-reduced-motion: no-preference) {
     html {
       scroll-behavior: smooth;

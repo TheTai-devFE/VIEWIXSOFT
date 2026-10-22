@@ -4,6 +4,7 @@ import { generateMetaTags } from '~/lib/seo/meta'
 import { getLeadsFn, updateLeadStatusFn } from '~/server/functions/admin'
 import { LEAD_STATUSES } from '~/lib/enums'
 import type { Lead } from '~/server/db/schema'
+import { AdminPageHeader, buttonSecondary, LoadError } from '~/components/admin/admin-ui'
 
 /** Quotes a CSV cell and defuses spreadsheet formulas (=, +, -, @) in visitor-supplied text. */
 function csvCell(value: string) {
@@ -12,7 +13,7 @@ function csvCell(value: string) {
 }
 import { 
   Search, Download, Filter, RefreshCw, X, ChevronLeft, 
-  ChevronRight, ArrowUpDown, CheckCircle2, Shield, Calendar 
+  ChevronRight, ArrowUpDown, CheckCircle2, Calendar 
 } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/leads')({
@@ -144,34 +145,18 @@ function AdminLeadsPage() {
   }
 
   return (
-    <div className="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-      {loadFailed && (
-        <p role="alert" className="rounded-xl border border-destructive/40 p-4 text-sm text-destructive">
-          Leads could not be loaded. Check DATABASE_URL and the server logs.
-        </p>
-      )}
-
-      {/* Dashboard Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ink-800 pb-6">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-signal-400 uppercase tracking-wider">
-            <Shield className="w-4 h-4" /> Authenticated Admin Console
-          </div>
-          <h1 className="text-3xl font-black text-ink-50 mt-1">Lead Management Dashboard</h1>
-          <p className="text-xs text-ink-400">
-            Total Captured Leads: {leadsList.length} • Filtered: {filteredLeads.length}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleExportCsv}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-ink-900 hover:bg-ink-800 border border-ink-700 text-xs font-bold text-ink-50 uppercase tracking-wider transition-all cursor-pointer"
-          >
-            <Download className="w-4 h-4 text-signal-400" /> Export CSV
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="Leads"
+        description={`Demo and contact requests from the website. ${leadsList.length} in total, ${filteredLeads.length} shown.`}
+        actions={
+          <button type="button" onClick={handleExportCsv} className={buttonSecondary}>
+            <Download aria-hidden="true" className="size-4" /> Export CSV
           </button>
-        </div>
-      </div>
+        }
+      />
+
+      {loadFailed && <LoadError>Leads could not be loaded. Check DATABASE_URL and the server logs.</LoadError>}
 
       {/* Filter Bar */}
       <div className="p-4 rounded-2xl panel border border-ink-800 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
