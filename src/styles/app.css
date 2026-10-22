@@ -328,3 +328,23 @@ dialog.site-menu[open] .menu-item {
 html:has(dialog.site-menu[open]) {
   overflow: hidden;
 }
+
+/* Admin route-change progress: a gradient segment sweeping across the top edge. */
+@keyframes admin-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+@utility admin-progress {
+  animation: admin-progress 1.1s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    transform: none;
+    width: 100%;
+  }
+}

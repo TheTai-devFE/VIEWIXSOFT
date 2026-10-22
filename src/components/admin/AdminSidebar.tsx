@@ -1,5 +1,5 @@
-import { Link, useRouter } from '@tanstack/react-router'
-import { LogOut } from 'lucide-react'
+import { Link, useRouter, useRouterState } from '@tanstack/react-router'
+import { Loader2, LogOut } from 'lucide-react'
 import { useState } from 'react'
 import { ADMIN_NAV } from '~/components/admin/admin-nav'
 import { ViewixLogo } from '~/components/blocks/ViewixLogo'
@@ -19,6 +19,10 @@ interface Props {
 export function AdminSidebar({ email, theme, onThemeChange, onNavigate }: Props) {
   const router = useRouter()
   const [signingOut, setSigningOut] = useState(false)
+  // The page being loaded after a click, so its item can show a spinner.
+  const pendingPath = useRouterState({ select: (s) => (s.isLoading ? s.location.pathname : null) })
+  const isPending = (to: string) =>
+    pendingPath !== null && (pendingPath === to || (to !== '/admin' && pendingPath.startsWith(`${to}/`)))
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-card">
@@ -60,7 +64,11 @@ export function AdminSidebar({ email, theme, onThemeChange, onNavigate }: Props)
                       'aria-current': 'page',
                     }}
                   >
-                    <Icon aria-hidden="true" className="size-4 shrink-0" />
+                    {isPending(to) ? (
+                      <Loader2 aria-hidden="true" className="size-4 shrink-0 animate-spin motion-reduce:animate-none" />
+                    ) : (
+                      <Icon aria-hidden="true" className="size-4 shrink-0" />
+                    )}
                     {label}
                   </Link>
                 </li>
