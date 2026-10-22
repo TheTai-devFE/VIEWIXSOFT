@@ -1,16 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   // Worker settings. `pnpm build` merges this into .output/server/wrangler.json
-  // and points `wrangler dev` / `wrangler deploy` at it. Secrets are set with
-  // `wrangler secret put`, never here.
+  // (Nitro sets `main` and `assets`) and points `wrangler dev` / `wrangler deploy`
+  // at it. Secrets are set with `wrangler secret put`, never here.
   "name": "viewixsoft",
-  "main": ".output/server/index.mjs",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
-  "assets": {
-    "directory": ".output/public",
-    "binding": "ASSETS"
-  },
   "observability": {
     "enabled": true
   },

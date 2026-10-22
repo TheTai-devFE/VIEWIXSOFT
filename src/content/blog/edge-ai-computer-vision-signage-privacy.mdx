@@ -1,0 +1,27 @@
+---
+title: "Edge AI Computer Vision vs Privacy Regulations: Measuring Signage Audiences Legally"
+seoTitle: "Measuring Signage Audiences Under GDPR and CCPA"
+description: "How to calculate real-world billboard audience impressions, dwell times, and attention metrics while strictly complying with GDPR and CCPA."
+product: tracking
+category: "Analytics & AI"
+tags: ["Edge AI","Computer Vision","GDPR","Audience Measurement"]
+publishedAt: "2026-07-04"
+updatedAt: "2026-08-01"
+author: viewixsoft-team
+cover: {"src":"/devices/stock/bar-menu-screens.webp","alt":"Bar with a wall of digital menu screens"}
+keyTakeaways: ["Storing or transmitting facial photos or video footage in public spaces violates GDPR, CCPA, and global biometric laws.","Edge AI vision models transform camera frames into mathematical vectors in volatile RAM, instantly discarding pixel data.","Audience metrics empower dynamic programmatic bidding based on real-time pedestrian and vehicular crowd density."]
+# TODO(content): sample post. The figures in it have no sources yet; verify
+# or remove them, then set draft to false to publish.
+draft: true
+---
+## Audience Telemetry Without Privacy Violations
+
+Advertisers want to know: Did pedestrians actually look at our display? How long did they pause? What was the general demographic composition?
+
+However, privacy regulations such as the EU's GDPR, California's CCPA, and global biometric statutes strictly prohibit capturing or storing personal facial images in public areas without explicit consent.
+
+### The Edge-Only Mathematical Pipeline
+Viewixsoft Tracking resolves this tension through strict privacy-by-design edge processing:
+1. **Volatile In-Memory Analysis**: An on-device optical sensor feeds video frames directly to an onboard neural accelerator (e.g., Google Coral, Nvidia Jetson, or Intel NPU).
+2. **Instant Vectorization**: The neural network calculates bounding boxes, gaze vectors (orientation toward display), and duration in milliseconds.
+3. **Immediate Frame Destruction**: The raw video frame is never written to disk, never compressed into a file, and never sent across the internet. Only the scalar counter numbers (e.g., `\{ impressions: 14, avgDwellSeconds: 3.2 }`) are transmitted to the cloud.

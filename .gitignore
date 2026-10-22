@@ -3,7 +3,8 @@ node_modules
 .nitro
 dist
 .env
-.env.local
+.env.*
+!.env.example
 *.log
 .DS_Store
 .tanstack

@@ -1,0 +1,32 @@
+---
+title: "Proof-of-Play Demystified: Why DOOH Networks Must Move to Cryptographic Audit Trails"
+seoTitle: "Proof-of-Play for DOOH: Why Audit Trails Matter"
+description: "Why simple text log files are no longer accepted by institutional media buyers, and how cryptographic proof-of-play guarantees programmatic revenue."
+product: tracking
+category: "DOOH & Advertising"
+tags: ["DOOH","Proof-of-Play","Advertising","Security"]
+publishedAt: "2026-08-10"
+updatedAt: "2026-09-05"
+author: viewixsoft-team
+cover: {"src":"/devices/stock/transit-display.webp","alt":"Digital arrival board under a transit shelter"}
+keyTakeaways: ["Simple CSV log files are vulnerable to tampering and are routinely scrutinized or rejected during media agency audits.","Cryptographic proof-of-play couples hardware frame rendering, display power status, and clock timestamps into immutable SHA-256 blocks.","Automated reconciliation with programmatic DSPs accelerates payment disbursement cycles from 90 days to under 14 days."]
+# TODO(content): sample post. The figures in it have no sources yet; verify
+# or remove them, then set draft to false to publish.
+draft: true
+---
+## The Billion-Dollar Verification Problem in DOOH
+
+Digital Out-of-Home (DOOH) advertising has become one of the fastest-growing advertising mediums in the world. However, as programmatic ad spending surges, institutional media buyers demand the same level of verifiable delivery they receive in online digital ads.
+
+### Why Legacy Logs Fail Agency Audits
+Traditionally, billboard software wrote a simple line to a text file: `2026-08-10 14:02:11, Ad_Nike_Summer.mp4, Played`.
+Media auditors reject this because:
+1. The player may have output video data while the actual physical LED screen was powered off or blacked out.
+2. Unencrypted text logs can easily be edited or fabricated.
+3. Network jitter may cause delayed batch uploads that misrepresent peak rush-hour impressions.
+
+### The Viewixsoft Cryptographic Standard
+Viewixsoft Tracking implements hardware-backed verification:
+- **HDMI/CEC Handshake Monitoring**: Verifies that the display panel received active signal and confirmed display illumination.
+- **Hardware Frame Hash**: Calculates checksums of the rendered video frame in GPU memory.
+- **Cryptographic Signature**: Signs each play event with the player's asymmetric private key, creating an auditable ledger that programmatic ad exchanges verify instantly.

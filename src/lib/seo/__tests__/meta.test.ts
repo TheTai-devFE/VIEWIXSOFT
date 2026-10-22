@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BLOG_POSTS } from '~/content/blog-posts'
+import { parseAllPosts } from '~/content/blog'
 import { PRODUCTS } from '~/content/products'
 import { USE_CASES } from '~/content/useCases'
 import { blogPostSeo, productSeo, useCaseSeo } from '~/lib/seo/page-seo'
@@ -42,7 +42,7 @@ describe('content SEO limits', () => {
   const pages = [
     ...PRODUCTS.map((p) => ({ id: `product:${p.slug}`, ...productSeo(p) })),
     ...USE_CASES.map((u) => ({ id: `use-case:${u.slug}`, ...useCaseSeo(u) })),
-    ...BLOG_POSTS.map((b) => ({ id: `blog:${b.slug}`, ...blogPostSeo(b) })),
+    ...parseAllPosts().map((b) => ({ id: `blog:${b.slug}`, ...blogPostSeo(b) })),
   ]
 
   it.each(pages)('$id title fits in $TITLE_MAX characters', ({ title }) => {

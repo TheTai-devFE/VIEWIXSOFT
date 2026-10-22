@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && tsc --noEmit",
+    "build": "vitest run src/content && vite build && tsc --noEmit",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
@@ -14,7 +14,8 @@
     "db:studio": "drizzle-kit studio",
     "admin:create": "node --env-file-if-exists=.env scripts/create-admin.mjs",
     "cf:preview": "pnpm build && wrangler dev",
-    "cf:deploy": "pnpm build && wrangler deploy"
+    "cf:deploy": "pnpm build && wrangler deploy",
+    "content:check": "vitest run src/content"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
@@ -37,13 +38,18 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@mdx-js/rollup": "^3.1.1",
     "@tailwindcss/vite": "^4.0.9",
+    "@types/mdx": "^2.0.14",
     "@types/node": "^22.13.5",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^6.1.2",
     "drizzle-kit": "^0.31.11",
     "nitro": "3.0.260903-beta",
+    "remark-frontmatter": "^5.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-mdx-frontmatter": "^6.0.0",
     "shadcn": "^4.21.5",
     "tailwindcss": "^4.0.9",
     "typescript": "^5.7.3",

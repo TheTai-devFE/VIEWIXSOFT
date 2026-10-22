@@ -23,95 +23,72 @@ Every product name strictly follows the full brand standard: **Viewixsoft** + pr
 
 ## 2. Technology Architecture
 
-| Layer | Choice | Rationale |
+| Layer | Choice | Notes |
 |---|---|---|
-| **Framework** | TanStack Start (React 19, Vite 8, Nitro) | Full-document SSR and static asset generation for international search engines |
-| **Routing** | TanStack Router (File-based) | Type-safe loaders, per-route `head()` meta tags, preloading |
-| **Styling** | Tailwind CSS v4 + Design Tokens | Dark-first aesthetic, CSS variable tokens, WCAG 2.2 AA contrast |
-| **State & Forms** | TanStack Form + Zod | Shared validation schemas between client and server functions |
-| **Database** | Drizzle ORM (PostgreSQL) | Type-safe schema for leads and newsletter subscribers |
-| **Admin Table** | TanStack Table | Full-featured lead dashboard with search, filters, and CSV export |
-| **Security** | Turnstile + Honeypot + IP Hash | Protection against bots, privacy-compliant IP hashing (no raw IPs stored) |
-| **Testing** | Vitest | Schema and repository unit tests |
+| **Framework** | TanStack Start (React 19, Vite 8, Nitro) | Full SSR; production builds target Cloudflare Workers (`cloudflare_module`) |
+| **Routing** | TanStack Router (file-based) | Per-route `head()`, typed loaders and search params |
+| **Styling** | Tailwind CSS v4 + design tokens | Light and dark themes, WCAG 2.2 AA |
+| **Forms** | TanStack Form + Zod 4 | One schema shared by the form and the server function |
+| **Database** | Neon Postgres + Drizzle ORM (HTTP driver) | Leads, newsletter, admin auth, site settings |
+| **Auth** | Better Auth (email + password) | Protects `/admin/**` and every admin server function |
+| **Email** | Resend HTTP API | Sales notification, visitor confirmation, newsletter double opt-in |
+| **Images** | Cloudflare R2 (S3 API) | Admin-uploaded images for named slots |
+| **Anti-spam** | Turnstile + honeypot + rate limit | Rate limit counted in Postgres; only hashed IPs are stored |
+| **Blog** | MDX compiled at build time | `src/content/blog/*.mdx`, frontmatter validated by Zod |
+| **Testing** | Vitest | Schemas, lead pipeline, SEO builders, content |
 
 ---
 
 ## 3. Getting Started
 
 ### Prerequisites
-- **Node.js**: v20+ (v24 recommended)
-- **Package Manager**: `pnpm` (v11+)
+- **Node.js** 22+ (24 recommended) and **pnpm** 11+
+- A **Neon** project (use a separate branch for development)
 
-### Installation
+### Install and run
 ```bash
-# Clone and enter directory
-git clone https://github.com/TheTai-devFE/VIEWIXSOFT.git
-cd VIEWIXSOFT
-
-# Install dependencies
 pnpm install
-
-# Copy environment variables
-cp .env.example .env
+cp .env.example .env      # fill DATABASE_URL at least; everything else is optional in dev
+pnpm db:migrate           # create the tables in Neon
+pnpm admin:create you@company.com   # create your admin login (prompts for a password)
+pnpm dev                  # http://localhost:3000, admin at /admin
 ```
+Without `DATABASE_URL` the marketing site still runs with default settings; forms and admin need the database.
 
-### Local Development Server
-```bash
-pnpm dev
-```
-The application will launch at `http://localhost:3000`.
+### Commands
 
-### Type Checking & Testing
-```bash
-# Run strict TypeScript validation
-pnpm typecheck
+| Task | Command |
+|---|---|
+| Dev server | `pnpm dev` |
+| Type check | `pnpm typecheck` |
+| Unit tests | `pnpm test` |
+| Check blog content | `pnpm content:check` |
+| Build (Cloudflare Workers) | `pnpm build` |
+| Preview the Worker locally | `pnpm cf:preview` (reads `.dev.vars`) |
+| Deploy | `pnpm cf:deploy` |
+| DB: new migration after editing the schema | `pnpm db:generate` |
+| DB: apply migrations | `pnpm db:migrate` |
+| DB: browse data | `pnpm db:studio` |
+| Create or reset an admin | `pnpm admin:create <email>` |
 
-# Run unit tests
-pnpm test
-```
-
-### Production Build
-```bash
-# Generate production SSR bundle and static public assets
-pnpm build
-
-# Preview build locally
-pnpm preview
-```
+Deployment steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md).
 
 ---
 
-## 4. Content Authoring Guide
+## 4. Admin and content
 
-All marketing and technical content is centralized in typed, Git-versioned data models in `src/content/`.
+### Admin (`/admin`)
+- **Leads**: search, filter, update status and notes, export CSV.
+- **Site sections**: show, hide and reorder sections on Home, About, use case pages and the Viewixsoft CMS page; set each product to available, coming soon or hidden; enter the home stats (each needs a source and a date); manage customer quotes (shown only when approved with a written-consent date).
+- **Images**: replace hardware photos, use case covers and screen photos without touching code.
 
-### Adding or Editing Products
-Edit [src/content/products.ts](file:///Users/tailuong/Documents/gitclone/VIEWIXSOFT/src/content/products.ts):
-```ts
-export const PRODUCTS: Product[] = [
-  {
-    id: 'cms',
-    name: 'Viewixsoft CMS',
-    slug: 'cms',
-    tagline: 'Enterprise Cloud Content Management...',
-    shortDescription: '...',
-    heroBadge: 'Core Network Engine',
-    features: [...],
-    supportedOS: ['Android 9+', 'Windows 10/11', 'Linux', ...],
-    specs: [...],
-    faq: [...]
-  }
-]
-```
-The Navbar mega-menu, Footer, Product detail routes (`/products/$slug`), and JSON-LD structured schemas update automatically.
+Sections that depend on real data (stats, quotes, use case results) stay hidden on the live site until that data exists. Sample content renders only in the dev server.
 
-### Adding Use Cases
-Add entries to [src/content/useCases.ts](file:///Users/tailuong/Documents/gitclone/VIEWIXSOFT/src/content/useCases.ts) with `slug`, `title`, `industry`, `challenge`, `solution`, `results`, and `quote`.
+### Products and use cases
+Edit [src/content/products.ts](src/content/products.ts) and [src/content/useCases.ts](src/content/useCases.ts). Every product and use case needs a `seoTitle` (at most 47 characters, so "Title — Viewixsoft" fits in 60) and an `updatedAt` date; `pnpm test` fails on long or duplicate titles. Use case `evidence: 'sample'` keeps results and quotes out of production until you set `'verified'`.
 
-### Adding Engineering Blog Posts
-Add entries to [src/content/blog-posts.ts](src/content/blog-posts.ts) with `slug`, `title`, `seoTitle`, `category`, `author`, `keyTakeaways`, and `content`.
-
-Every product, use case and post needs a `seoTitle` (at most 47 characters, so "Title — Viewixsoft" fits in 60) and an `updatedAt` date. `pnpm test` fails if a title or description is too long or duplicated.
+### Blog posts
+One MDX file per post in `src/content/blog/`. Follow [docs/blog-writing-guide.md](docs/blog-writing-guide.md) and start from [docs/blog-template.mdx](docs/blog-template.mdx).
 
 ---
 

@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { z } from 'zod'
 import { Calendar } from 'lucide-react'
-import { BLOG_POSTS, BLOG_PRODUCTS } from '~/content/blog-posts'
+import { BLOG_POSTS, BLOG_PRODUCTS } from '~/content/blog'
+import { NewsletterSignup } from '~/components/blocks/NewsletterSignup'
 import { PRODUCTS } from '~/content/products'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { getBreadcrumbSchema } from '~/lib/seo/jsonld'
@@ -13,13 +14,13 @@ const searchSchema = z.object({
 
 const productName = (slug: string) => PRODUCTS.find((p) => p.slug === slug)?.name ?? slug
 
-const POSTS = [...BLOG_POSTS].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+const POSTS = BLOG_POSTS
 
 export const Route = createFileRoute('/blog/')({
   validateSearch: searchSchema,
   head: () => {
     const seo = generateMetaTags({
-      title: 'Blog — Viewixsoft',
+      title: 'Digital Signage Blog: Guides and How-Tos',
       description:
         'Guides on digital signage software: cloud CMS, POS menu boards, proof-of-play and NFC, written by the Viewixsoft team.',
       canonicalUrl: '/blog',
@@ -89,7 +90,9 @@ function BlogIndexPage() {
 
         {posts.length === 0 ? (
           <p className="rounded-3xl border border-dashed border-ink-700 p-10 text-center text-ink-400">
-            No posts for {product ? productName(product) : 'this product'} yet.
+            {product
+              ? `No posts about ${productName(product)} yet.`
+              : 'The first guides are on the way. Subscribe below to get them by email.'}
           </p>
         ) : (
           <ul className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -135,6 +138,8 @@ function BlogIndexPage() {
             ))}
           </ul>
         )}
+
+        <NewsletterSignup />
       </div>
     </div>
   )

@@ -1,5 +1,8 @@
-import { BLOG_POSTS } from '~/content/blog-posts'
-import type { BlogPost } from '~/content/blog-posts'
+import { BLOG_POSTS } from '~/content/blog'
+import type { BlogPost } from '~/content/blog'
+
+// Drafts are visible in the dev server but never published to crawlers.
+const PUBLISHED_POSTS = BLOG_POSTS.filter((p) => !p.draft)
 import { PRODUCTS, PRODUCT_ONE_LINERS } from '~/content/products'
 import type { Product } from '~/content/products'
 import { USE_CASES } from '~/content/useCases'
@@ -35,7 +38,7 @@ export interface SitemapEntry {
 export function sitemapEntries(products: Product[] = PRODUCTS): SitemapEntry[] {
   const productsLastmod = latest(products.map((p) => p.updatedAt))
   const useCasesLastmod = latest(USE_CASES.map((u) => u.updatedAt))
-  const blogLastmod = latest(BLOG_POSTS.map((b) => b.updatedAt))
+  const blogLastmod = latest(PUBLISHED_POSTS.map((b) => b.updatedAt))
   // Index pages change whenever an item in their collection does.
   const collectionLastmod: Record<string, string> = {
     '/products': productsLastmod,
@@ -50,7 +53,7 @@ export function sitemapEntries(products: Product[] = PRODUCTS): SitemapEntry[] {
     })),
     ...products.map((p) => ({ path: `/products/${p.slug}`, lastmod: p.updatedAt })),
     ...USE_CASES.map((u) => ({ path: `/use-cases/${u.slug}`, lastmod: u.updatedAt })),
-    ...BLOG_POSTS.map((b) => ({ path: `/blog/${b.slug}`, lastmod: b.updatedAt })),
+    ...PUBLISHED_POSTS.map((b) => ({ path: `/blog/${b.slug}`, lastmod: b.updatedAt })),
   ]
 }
 
@@ -77,7 +80,7 @@ function rfc822(date: string) {
   return new Date(`${date}T00:00:00Z`).toUTCString()
 }
 
-export function buildRssXml(posts: BlogPost[] = BLOG_POSTS) {
+export function buildRssXml(posts: BlogPost[] = PUBLISHED_POSTS) {
   const sorted = [...posts].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
   const items = sorted
     .map((p) => {
@@ -132,7 +135,7 @@ export function buildLlmsTxt(published: Product[] = PRODUCTS) {
     (p) => `- [${p.name}](${SITE_URL}/products/${p.slug}.md) (${statusLabel(p)}): ${PRODUCT_ONE_LINERS[p.slug] ?? p.tagline}`,
   )
   const useCases = USE_CASES.map((u) => `- [${u.title}](${SITE_URL}/use-cases/${u.slug}.md): ${u.tagline}`)
-  const posts = BLOG_POSTS.map((b) => `- [${b.title}](${SITE_URL}/blog/${b.slug}.md): ${b.description}`)
+  const posts = PUBLISHED_POSTS.map((b) => `- [${b.title}](${SITE_URL}/blog/${b.slug}.md): ${b.description}`)
   return [
     `# ${SITE_NAME}`,
     '',
@@ -221,7 +224,8 @@ export function useCaseMarkdown(u: UseCase) {
   ].join('\n')
 }
 
-export function blogPostMarkdown(b: BlogPost) {
+/** `body` is the post's Markdown without frontmatter (see ~/server/content/blog-raw). */
+export function blogPostMarkdown(b: BlogPost, body: string) {
   return [
     `# ${b.title}`,
     '',
@@ -233,12 +237,13 @@ export function blogPostMarkdown(b: BlogPost) {
     '',
     ...b.keyTakeaways.map((t) => `- ${t}`),
     '',
-    b.content.trim(),
+    body,
     '',
+    ...(b.faq?.length ? ['## FAQ', '', ...faqMarkdown(b.faq)] : []),
   ].join('\n')
 }
 
-export function buildLlmsFullTxt(published: Product[] = PRODUCTS) {
+export function buildLlmsFullTxt(published: Product[] = PRODUCTS, postBody: (slug: string) => string | null = () => null) {
   return [
     `# ${SITE_NAME}`,
     '',
@@ -252,7 +257,7 @@ export function buildLlmsFullTxt(published: Product[] = PRODUCTS) {
     ...faqMarkdown(PRICING_FAQ),
     ...published.map((p) => productMarkdown(p).replace(/^# /, '## ').replace(/\n## /g, '\n### ')),
     ...USE_CASES.map((u) => useCaseMarkdown(u).replace(/^# /, '## ').replace(/\n## /g, '\n### ')),
-    ...BLOG_POSTS.map((b) => blogPostMarkdown(b).replace(/^# /, '## ')),
+    ...PUBLISHED_POSTS.map((b) => blogPostMarkdown(b, postBody(b.slug) ?? '').replace(/^# /, '## ')),
   ].join('\n')
 }
 

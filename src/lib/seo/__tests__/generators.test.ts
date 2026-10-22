@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BLOG_POSTS } from '~/content/blog-posts'
+import { BLOG_POSTS } from '~/content/blog'
 import { PRODUCTS } from '~/content/products'
 import { USE_CASES } from '~/content/useCases'
 import {
@@ -29,7 +29,8 @@ describe('sitemap', () => {
     const paths = entries.map((e) => e.path)
     for (const p of PRODUCTS) expect(paths).toContain(`/products/${p.slug}`)
     for (const u of USE_CASES) expect(paths).toContain(`/use-cases/${u.slug}`)
-    for (const b of BLOG_POSTS) expect(paths).toContain(`/blog/${b.slug}`)
+    for (const b of BLOG_POSTS.filter((p) => !p.draft)) expect(paths).toContain(`/blog/${b.slug}`)
+    for (const b of BLOG_POSTS.filter((p) => p.draft)) expect(paths).not.toContain(`/blog/${b.slug}`)
   })
 
   it('never lists noindex or redirecting pages', () => {
@@ -76,8 +77,10 @@ describe('robots.txt', () => {
 describe('rss', () => {
   it('includes every post, newest first, with escaped text', () => {
     const xml = buildRssXml()
-    expect(xml.match(/<item>/g)).toHaveLength(BLOG_POSTS.length)
-    const newest = [...BLOG_POSTS].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))[0]
+    const published = BLOG_POSTS.filter((p) => !p.draft)
+    expect(xml.match(/<item>/g) ?? []).toHaveLength(published.length)
+    if (published.length === 0) return
+    const newest = [...published].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))[0]
     expect(xml.indexOf(`/blog/${newest?.slug}<`)).toBeLessThan(xml.indexOf('</item>'))
     expect(xml).not.toMatch(/<title>[^<]*&[^a#][^<]*<\/title>/)
   })

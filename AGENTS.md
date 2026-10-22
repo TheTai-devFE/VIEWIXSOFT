@@ -42,13 +42,16 @@ Keep this table up to date once the project is scaffolded.
 | Install | `pnpm install` |
 | Dev server | `pnpm dev` |
 | Type check | `pnpm typecheck` |
-| Lint / format | `pnpm lint` / `pnpm format` |
 | Unit tests | `pnpm test` |
-| E2E tests | `pnpm test:e2e` |
-| Build | `pnpm build` |
+| Blog content check | `pnpm content:check` |
+| Build (Cloudflare Workers) | `pnpm build` |
+| Preview / deploy Worker | `pnpm cf:preview` / `pnpm cf:deploy` |
 | DB: generate migration | `pnpm db:generate` |
 | DB: apply migrations | `pnpm db:migrate` |
 | DB: studio | `pnpm db:studio` |
+| Create admin | `pnpm admin:create <email>` |
+
+Not set up yet: `pnpm lint` / `pnpm format` (ESLint, Prettier) and `pnpm test:e2e` (Playwright).
 
 Use **pnpm only**. Never commit `package-lock.json` or `yarn.lock`.
 

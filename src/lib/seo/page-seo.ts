@@ -1,4 +1,4 @@
-import type { BlogPost } from '~/content/blog-posts'
+import type { BlogPost } from '~/content/blog'
 import type { Product } from '~/content/products'
 import { PRODUCT_ONE_LINERS } from '~/content/products'
 import type { UseCase } from '~/content/useCases'
