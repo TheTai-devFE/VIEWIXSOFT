@@ -1,0 +1,182 @@
+/*
+ * Viewixsoft design tokens — light-first "violet signal" direction.
+ * The page is white with a cool neutral scale; the brand hue is a violet
+ * gradient. Screens inside the story stay dark (`.screen-dark`), like real displays.
+ *
+ * The `ink-*` and `signal-*` scales are written from the dark room's point of
+ * view (ink-950 = room, ink-50 = text). The light theme mirrors both scales, so
+ * a class like `bg-ink-950 text-ink-50` means "room surface, primary text" in
+ * either theme.
+ */
+
+@theme {
+  /* Typography */
+  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Neutral "ink" scale (warm carbon → newsprint paper) */
+  --color-ink-50: #f5f4ef;
+  --color-ink-100: #eae8e1;
+  --color-ink-200: #d6d4cc;
+  --color-ink-300: #b5b8b6;
+  --color-ink-400: #959b9f;
+  --color-ink-500: #7a8187;
+  --color-ink-600: #42474c;
+  --color-ink-700: #2a2e32;
+  --color-ink-800: #1a1d20;
+  --color-ink-850: #111315;
+  --color-ink-900: #0c0e10;
+  --color-ink-950: #070809;
+
+  /* Official logo blue (from the logo file). Logo use only: 2.6:1 on ink-950, too low for text. */
+  --color-brand: #0052cc;
+
+  /* Signal: violet, the brand hue on chrome (dark-room values) */
+  --color-signal-50: #f5f3ff;
+  --color-signal-100: #ede9fe;
+  --color-signal-200: #ddd6fe;
+  --color-signal-300: #c4b5fd;
+  --color-signal-400: #a78bfa;
+  --color-signal-500: #8b5cf6;
+  --color-signal-600: #7c3aed;
+  --color-signal-700: #6d28d9;
+  --color-signal-800: #5b21b6;
+  --color-signal-900: #4c1d95;
+  --color-signal-950: #2e1065;
+
+  /* Brand gradient: indigo → violet → fuchsia. White text passes AA on every stop. */
+  --color-gradient-from: #4f46e5;
+  --color-gradient-via: #7c3aed;
+  --color-gradient-to: #c026d3;
+  --color-on-gradient: #ffffff;
+
+  /* Screen light: each product glows its own color, but only inside a screen */
+  --color-light-cms: #8fd3ff;
+  --color-light-pos: #fbbf24;
+  --color-light-nfc: #b49cff;
+  --color-light-tracking: #4ade80;
+  --color-alert: #ff5a4f;
+
+  /* Crisp, hardware-like radii (overrides Tailwind defaults site-wide) */
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.625rem;
+  --radius-3xl: 0.75rem;
+
+  /* Motion */
+  --ease-broadcast: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 600ms;
+
+  /* Fluid type scale */
+  --text-hero: clamp(2.25rem, 3.4vw + 0.9rem, 4.25rem);
+  --text-hero--line-height: 0.95;
+  --text-scene: clamp(1.875rem, 3.2vw + 0.75rem, 3.5rem);
+  --text-scene--line-height: 1.02;
+}
+
+:root {
+  /* Light theme (default): mirrored ink scale, white room, cool neutrals. */
+  --color-ink-950: #ffffff;
+  --color-ink-900: #f8f8fc;
+  --color-ink-850: #f2f2f8;
+  --color-ink-800: #e7e7f0;
+  --color-ink-700: #d6d6e2;
+  --color-ink-600: #b3b3c4;
+  --color-ink-500: #67677c;
+  --color-ink-400: #545468;
+  --color-ink-300: #3d3d50;
+  --color-ink-200: #2a2a3b;
+  --color-ink-100: #1b1b29;
+  --color-ink-50: #0e0e1a;
+
+  /* Mirrored violet: "-400" stays the strong accent, which is darker on white. */
+  --color-signal-50: #2e1065;
+  --color-signal-100: #4c1d95;
+  --color-signal-200: #5b21b6;
+  --color-signal-300: #6d28d9;
+  --color-signal-400: #7c3aed;
+  --color-signal-500: #8b5cf6;
+  --color-signal-600: #a78bfa;
+  --color-signal-700: #c4b5fd;
+  --color-signal-800: #ddd6fe;
+  --color-signal-900: #ede9fe;
+  --color-signal-950: #f5f3ff;
+
+  --surface-room: #ffffff;
+  --surface-panel: #f8f8fc;
+  --surface-bezel: #1b1b29;
+  --line: #e7e7f0;
+  --fg: #0e0e1a;
+  --fg-muted: #545468;
+  --signal: #6d28d9;
+  --on-signal: #ffffff;
+}
+
+/* Dark theme, and every story screen in either theme. */
+.dark,
+.screen-dark {
+  --color-ink-50: #f5f4ef;
+  --color-ink-100: #eae8e1;
+  --color-ink-200: #d6d4cc;
+  --color-ink-300: #b5b8b6;
+  --color-ink-400: #959b9f;
+  --color-ink-500: #7a8187;
+  --color-ink-600: #42474c;
+  --color-ink-700: #2a2e32;
+  --color-ink-800: #1a1d20;
+  --color-ink-850: #111315;
+  --color-ink-900: #0c0e10;
+  --color-ink-950: #070809;
+
+  --color-signal-50: #f5f3ff;
+  --color-signal-100: #ede9fe;
+  --color-signal-200: #ddd6fe;
+  --color-signal-300: #c4b5fd;
+  --color-signal-400: #a78bfa;
+  --color-signal-500: #8b5cf6;
+  --color-signal-600: #7c3aed;
+  --color-signal-700: #6d28d9;
+  --color-signal-800: #5b21b6;
+  --color-signal-900: #4c1d95;
+  --color-signal-950: #2e1065;
+
+  --surface-room: #070809;
+  --surface-panel: #0c0e10;
+  --surface-bezel: #111315;
+  --line: #1a1d20;
+  --fg: #f5f4ef;
+  --fg-muted: #959b9f;
+  --signal: #a78bfa;
+  --on-signal: #070809;
+  color: var(--fg);
+}
+
+/*
+ * shadcn/ui semantic names, mapped onto the Viewixsoft semantic surfaces so
+ * primitives in components/ui follow the light/dark theme without their own palette.
+ */
+@theme inline {
+  --color-background: var(--surface-room);
+  --color-foreground: var(--fg);
+  --color-card: var(--surface-panel);
+  --color-card-foreground: var(--fg);
+  --color-popover: var(--surface-panel);
+  --color-popover-foreground: var(--fg);
+  --color-primary: var(--signal);
+  --color-primary-foreground: var(--on-signal);
+  --color-secondary: var(--surface-panel);
+  --color-secondary-foreground: var(--fg);
+  --color-muted: var(--surface-panel);
+  --color-muted-foreground: var(--fg-muted);
+  --color-accent: var(--surface-panel);
+  --color-accent-foreground: var(--fg);
+  --color-destructive: var(--color-alert);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--signal);
+}

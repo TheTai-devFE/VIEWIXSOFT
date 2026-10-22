@@ -1,0 +1,13 @@
+node_modules
+.output
+.nitro
+dist
+.env
+.env.local
+*.log
+.DS_Store
+.tanstack
+.wrangler
+.dev.vars
+.dev.vars.*
+.data

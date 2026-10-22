@@ -1,0 +1,325 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    background-color: var(--surface-room);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background-color: var(--color-signal-400);
+    color: var(--color-ink-950);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 2px;
+  }
+}
+
+/* Brand gradient fill for primary CTAs and highlights. */
+@utility bg-brand-gradient {
+  background-image: linear-gradient(
+    135deg,
+    var(--color-gradient-from),
+    var(--color-gradient-via),
+    var(--color-gradient-to)
+  );
+}
+
+/* Gradient text for one highlighted phrase per heading. */
+@utility text-brand-gradient {
+  background-image: linear-gradient(
+    120deg,
+    var(--color-gradient-from),
+    var(--color-gradient-via),
+    var(--color-gradient-to)
+  );
+  background-clip: text;
+  color: transparent;
+}
+
+/*
+ * Shine: port of Magic UI's Shiny Button sweep. A registered `--shine-x`
+ * travels across and drives a diagonal band, then rests, like
+ * the original's repeatDelay. CSS instead of Motion because it runs on many
+ * CTAs at once with no JS; it works on links as well as buttons.
+ */
+@property --shine-x {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 100%;
+}
+
+@keyframes shine-sweep {
+  0% {
+    --shine-x: 80%;
+  }
+  55%,
+  100% {
+    --shine-x: -130%;
+  }
+}
+
+/* Light band sweeping across a filled CTA. */
+@utility shine {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background-image: linear-gradient(
+      -75deg,
+      transparent calc(var(--shine-x) + 20%),
+      color-mix(in oklab, var(--color-on-gradient) 50%, transparent) calc(var(--shine-x) + 35%),
+      transparent calc(var(--shine-x) + 50%)
+    );
+    animation: shine-sweep 3.2s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      content: none;
+    }
+  }
+}
+
+/* Magic UI's masked-content shimmer, for artwork such as the logo. */
+@utility shine-text {
+  mask-image: linear-gradient(
+    -75deg,
+    black calc(var(--shine-x) + 20%),
+    rgb(0 0 0 / 0.25) calc(var(--shine-x) + 35%),
+    black calc(var(--shine-x) + 50%)
+  );
+  animation: shine-sweep 4s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    mask-image: none;
+    animation: none;
+  }
+}
+
+/* Solid console panel: replaces the old glass/glow cards. */
+@utility panel {
+  background-color: var(--surface-panel);
+  border: 1px solid var(--line);
+}
+
+@utility panel-card {
+  background-color: var(--surface-panel);
+  border: 1px solid var(--line);
+  transition: border-color var(--duration-base) var(--ease-broadcast),
+    transform var(--duration-base) var(--ease-broadcast);
+
+  &:hover {
+    border-color: var(--color-signal-700);
+    transform: translateY(-2px);
+  }
+}
+
+/* Small monospace "broadcast label", e.g. CH 02 · CMS */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--signal);
+}
+
+/* CRT scanlines, used inside screens only */
+@utility scanlines {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--color-ink-50) 6%, transparent) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+/* Endless horizontal scroll. The track holds its items twice, so moving it by
+   half its width loops seamlessly. Use with motion-safe:. */
+@keyframes marquee-x {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@utility animate-marquee {
+  animation: marquee-x 40s linear infinite;
+}
+
+/* Diagonal hatch band used as a section divider */
+@utility hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in oklab, var(--color-ink-50) 8%, transparent) 0 1px,
+    transparent 1px 8px
+  );
+}
+
+/* Broadcast safe-area corner marks ⌜ ⌝ ⌞ ⌟ */
+@utility safe-marks {
+  --mark: color-mix(in oklab, var(--color-ink-50) 45%, transparent);
+  background:
+    linear-gradient(var(--mark), var(--mark)) top left / 14px 1px no-repeat,
+    linear-gradient(var(--mark), var(--mark)) top left / 1px 14px no-repeat,
+    linear-gradient(var(--mark), var(--mark)) top right / 14px 1px no-repeat,
+    linear-gradient(var(--mark), var(--mark)) top right / 1px 14px no-repeat,
+    linear-gradient(var(--mark), var(--mark)) bottom left / 14px 1px no-repeat,
+    linear-gradient(var(--mark), var(--mark)) bottom left / 1px 14px no-repeat,
+    linear-gradient(var(--mark), var(--mark)) bottom right / 14px 1px no-repeat,
+    linear-gradient(var(--mark), var(--mark)) bottom right / 1px 14px no-repeat;
+}
+
+@keyframes led-blink {
+  0%, 60% { opacity: 1; }
+  61%, 100% { opacity: 0.25; }
+}
+
+@keyframes pulse-ring {
+  from { transform: scale(0.6); opacity: 0.9; }
+  to { transform: scale(2.6); opacity: 0; }
+}
+
+@utility animate-led {
+  animation: led-blink 1.4s steps(1) infinite;
+}
+
+@utility animate-pulse-ring {
+  animation: pulse-ring 2.4s var(--ease-broadcast) infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Slow bob for floating illustration parts, e.g. the cloud in isometric scenes. */
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@utility animate-float {
+  animation: float-y 5s var(--ease-broadcast) infinite;
+  transform-box: fill-box;
+}
+
+/* Upload particles: drift up and fade, looping. */
+@keyframes rise-fade {
+  0% { transform: translateY(8px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateY(-18px); opacity: 0; }
+}
+
+@utility animate-rise {
+  animation: rise-fade 2.4s var(--ease-broadcast) infinite;
+  transform-box: fill-box;
+}
+
+/* Dots along a path lit one after another, so content reads as travelling. */
+@keyframes travel-blink {
+  0%, 100% { opacity: 0; }
+  15% { opacity: 1; }
+  40% { opacity: 0; }
+}
+
+@utility animate-travel {
+  animation: travel-blink 1.8s linear infinite;
+}
+
+/* Drives an element across a video wall, left to right. Use with motion-safe:
+   so reduced-motion users see it parked at its resting position mid-wall. */
+@keyframes drive-across {
+  from { transform: translateX(-230px); }
+  to { transform: translateX(230px); }
+}
+
+@utility animate-drive {
+  animation: drive-across 7s linear infinite;
+}
+
+/* Indeterminate progress sweep, e.g. a "launching soon" bar. */
+@keyframes progress-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(250%); }
+}
+
+@utility animate-progress {
+  animation: progress-sweep 2.2s var(--ease-broadcast) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes glitch {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4%); }
+  40% { transform: translateX(3%) skewX(6deg); }
+  60% { transform: translateX(-2%); }
+  80% { transform: translateX(5%) skewX(-4deg); }
+}
+
+@utility animate-glitch {
+  animation: glitch 0.6s steps(2) infinite;
+}
+
+/* Full-screen channel guide (SiteHeader). Native <dialog> + @starting-style. */
+dialog.site-menu {
+  opacity: 0;
+  transition:
+    opacity var(--duration-base) var(--ease-broadcast),
+    overlay var(--duration-base) allow-discrete,
+    display var(--duration-base) allow-discrete;
+}
+dialog.site-menu[open] {
+  opacity: 1;
+}
+@starting-style {
+  dialog.site-menu[open] {
+    opacity: 0;
+  }
+}
+
+dialog.site-menu .menu-item {
+  opacity: 0;
+  transform: translateY(0.75rem);
+  transition:
+    opacity var(--duration-slow) var(--ease-broadcast),
+    transform var(--duration-slow) var(--ease-broadcast);
+}
+dialog.site-menu[open] .menu-item {
+  opacity: 1;
+  transform: none;
+}
+@starting-style {
+  dialog.site-menu[open] .menu-item {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+html:has(dialog.site-menu[open]) {
+  overflow: hidden;
+}
