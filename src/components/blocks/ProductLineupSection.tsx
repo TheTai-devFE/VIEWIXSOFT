@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, Bell, Check } from 'lucide-react'
-import { PRODUCTS, PRODUCT_ONE_LINERS } from '~/content/products'
+import { PRODUCT_ONE_LINERS } from '~/content/products'
+import { useProducts } from '~/lib/use-site-config'
 import type { Product } from '~/content/products'
 import { Reveal } from '~/components/ui/reveal'
 
@@ -13,8 +14,9 @@ const CMS_FEATURES = [
 ]
 
 export function ProductLineupSection() {
-  const available = PRODUCTS.filter((p) => p.status === 'available')
-  const upcoming = PRODUCTS.filter((p) => p.status === 'coming-soon')
+  const products = useProducts()
+  const available = products.filter((p) => p.status === 'available')
+  const upcoming = products.filter((p) => p.status === 'coming-soon')
 
   return (
     <section aria-labelledby="products-title" className="border-t border-ink-800 bg-ink-950">

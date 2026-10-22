@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { z } from 'zod'
 import { USE_CASES } from '~/content/useCases'
+import { imageUrl, useMedia } from '~/lib/use-media'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { getBreadcrumbSchema } from '~/lib/seo/jsonld'
 import { cn } from '~/lib/cn'
@@ -87,15 +88,7 @@ function UseCasesIndexPage() {
           <li key={uc.slug}>
             <article className="group relative">
               <div className="aspect-video overflow-hidden rounded-3xl bg-ink-900">
-                <img
-                  src={uc.cover.src}
-                  alt={uc.cover.alt}
-                  width={960}
-                  height={540}
-                  loading={idx < 2 ? 'eager' : 'lazy'}
-                  decoding="async"
-                  className="size-full object-cover transition-transform duration-500 ease-broadcast group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-                />
+                <UseCaseCover slug={uc.slug} eager={idx < 2} />
               </div>
               <div className="mt-6 flex items-start justify-between gap-4 font-mono text-sm uppercase tracking-wide text-ink-400">
                 <span className="shrink-0">{uc.industry}</span>
@@ -118,5 +111,22 @@ function UseCasesIndexPage() {
         ))}
       </ul>
     </div>
+  )
+}
+
+/** Cover photo; replaceable per use case in /admin/media. */
+function UseCaseCover({ slug, eager }: { slug: string; eager: boolean }) {
+  const image = useMedia(`use-case.${slug}.cover`)
+  if (!image) return null
+  return (
+    <img
+      src={imageUrl(image.src, 960)}
+      alt={image.alt}
+      width={image.width}
+      height={image.height}
+      loading={eager ? 'eager' : 'lazy'}
+      decoding="async"
+      className="size-full object-cover transition-transform duration-500 ease-broadcast group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+    />
   )
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, X } from 'lucide-react'
-import { PRODUCTS } from '~/content/products'
+import { useProducts } from '~/lib/use-site-config'
 import { SUPPORTED_HARDWARE } from '~/components/story/story-content'
 import { ViewixLogo } from '~/components/blocks/ViewixLogo'
 import { cn } from '~/lib/cn'
@@ -42,6 +42,7 @@ export function SiteHeader() {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const [open, setOpen] = useState(false)
+  const products = useProducts()
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -145,7 +146,7 @@ export function SiteHeader() {
             <div className="lg:col-span-7">
               <p className="eyebrow">Channel guide · Products</p>
               <ul className="mt-6 divide-y divide-ink-800 border-y border-ink-800">
-                {PRODUCTS.map((p, i) => (
+                {products.map((p, i) => (
                   <li key={p.id} className="menu-item" style={{ transitionDelay: `${60 + i * 40}ms` }}>
                     <Link
                       to="/products/$slug"

@@ -1,6 +1,10 @@
+import { Fragment } from 'react'
 import { createFileRoute, notFound, Link } from '@tanstack/react-router'
 import { PRODUCTS } from '~/content/products'
 import { productSeo } from '~/lib/seo/page-seo'
+import { orderSections, productStatus } from '~/lib/site-config'
+import { useSiteConfig } from '~/lib/use-site-config'
+import { getSiteConfigFn } from '~/server/functions/site'
 import type { Product } from '~/content/products'
 import { Breadcrumbs } from '~/components/layout/Breadcrumbs'
 import { generateMetaTags } from '~/lib/seo/meta'
@@ -19,12 +23,13 @@ import {
 } from 'lucide-react'
 
 export const Route = createFileRoute('/products/$slug')({
-  loader: ({ params }) => {
-    const product = PRODUCTS.find((p) => p.slug === params.slug)
-    if (!product) {
-      throw notFound()
-    }
-    return { product }
+  loader: async ({ params }) => {
+    const base = PRODUCTS.find((p) => p.slug === params.slug)
+    if (!base) throw notFound()
+    // The admin can switch a product between available, coming soon and hidden.
+    const status = productStatus(await getSiteConfigFn(), base)
+    if (status === 'hidden') throw notFound()
+    return { product: { ...base, status } }
   },
   head: ({ loaderData }) => {
     if (!loaderData?.product) return {}
@@ -78,7 +83,120 @@ export const Route = createFileRoute('/products/$slug')({
 
 function ProductDetailPage() {
   const { product } = Route.useLoaderData()
+  const config = useSiteConfig()
   if (product.status === 'coming-soon') return <ProductComingSoon product={product} />
+
+  const specs = (
+    <section aria-labelledby="specs-title" className="space-y-8">
+      <Reveal className="max-w-3xl space-y-3">
+        <span className="text-xs uppercase tracking-widest text-signal-400 font-bold">Specifications</span>
+        <h2 id="specs-title" className="text-2xl sm:text-3xl font-extrabold text-ink-50">
+          What does {product.name} support?
+        </h2>
+        <p className="text-ink-400">
+          Supported file formats, player devices and operating systems, screen resolutions and, where offered, the
+          server needed to host {product.name} yourself.
+        </p>
+      </Reveal>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {product.specs.map((specCat, idx) => (
+          <Reveal key={specCat.category} delay={(idx % 2) * 100} className="h-full">
+            <div className="h-full rounded-2xl panel border border-ink-800 overflow-hidden">
+              <div className="px-6 py-4 bg-ink-900 border-b border-ink-800">
+                <h3 className="font-bold text-sm text-signal-400 font-mono">{specCat.category}</h3>
+                {specCat.note && <p className="mt-1 text-xs text-ink-400">{specCat.note}</p>}
+              </div>
+              <dl className="divide-y divide-ink-800/60">
+                {specCat.items.map((item) => (
+                  <div key={item.label} className="px-6 py-3.5 grid gap-1 text-xs sm:grid-cols-[8.5rem_1fr] sm:gap-4">
+                    <dt className="text-ink-400 font-medium">{item.label}</dt>
+                    <dd className="text-ink-50 font-mono">{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  )
+  const useCases = (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-ink-50">Recommended Use Cases for {product.name}</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {product.relatedUseCases.map((uc, idx) => (
+          <Link
+            key={idx}
+            to="/use-cases/$slug"
+            params={{ slug: uc.slug }}
+            className="p-5 rounded-xl panel border border-ink-800 hover:border-signal-500/40 transition-all flex items-center justify-between group"
+          >
+            <span className="font-semibold text-ink-50 group-hover:text-signal-400 transition-colors text-sm">
+              {uc.title}
+            </span>
+            <ArrowRight className="w-4 h-4 text-ink-500 group-hover:text-signal-400 group-hover:translate-x-1 transition-all" />
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+  const faq = (
+    <div className="space-y-8 border-t border-ink-900 pt-16">
+      <div className="text-center max-w-2xl mx-auto space-y-2">
+        <span className="text-xs uppercase tracking-widest text-signal-400 font-bold">Product FAQ</span>
+        <h2 className="text-3xl font-extrabold text-ink-50">Frequently Asked Questions</h2>
+      </div>
+      <FaqAccordion items={product.faq} />
+    </div>
+  )
+
+  // Viewixsoft CMS has its own sections, ordered in /admin/site; other released
+  // products use the generic layout.
+  const sections =
+    product.slug === 'cms'
+      ? orderSections(config, 'product-cms', {
+          why: <WhyChooseSection embedded headingLevel="h1" />,
+          capabilities: <CmsCapabilitiesSection />,
+          screens: <ScreenBandSection />,
+          specs,
+          pricing: <PricingSection />,
+          'use-cases': useCases,
+          faq,
+        })
+      : [
+          { key: 'hero', node: <ProductHero product={product} /> },
+          {
+            key: 'features',
+            node: (
+                <div className="space-y-12">
+                  <div className="text-center max-w-3xl mx-auto space-y-3">
+                    <span className="text-xs uppercase tracking-widest text-signal-400 font-bold">Capabilities</span>
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-ink-50">What can {product.name} do?</h2>
+      
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {product.features.map((feat, idx) => (
+                      <div key={idx} className="p-6 rounded-2xl panel border border-ink-800 space-y-3">
+                        <div className="flex items-center gap-2.5 text-base font-bold text-ink-50">
+                          <CheckCircle2 className="w-5 h-5 text-signal-400" />
+                          <span>{feat.title}</span>
+                        </div>
+                        <p className="text-sm text-ink-300 leading-relaxed pl-7">
+                          {feat.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+            ),
+          },
+          { key: 'specs', node: specs },
+          { key: 'use-cases', node: useCases },
+          { key: 'faq', node: faq },
+          { key: 'cta', node: <CtaBand /> },
+        ]
 
   return (
     <div className="py-12 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
@@ -87,108 +205,9 @@ function ProductDetailPage() {
         { name: 'Products', path: '/products' },
         { name: product.name, path: `/products/${product.slug}` },
       ]} />
-
-      {/* Viewixsoft CMS opens with the Why choose section instead, which holds its H1. */}
-      {product.slug !== 'cms' && <ProductHero product={product} />}
-
-      {product.slug === 'cms' && <WhyChooseSection embedded headingLevel="h1" />}
-
-      {product.slug === 'cms' && <CmsCapabilitiesSection />}
-
-      {product.slug === 'cms' && <ScreenBandSection />}
-
-      {/* Key Features. Viewixsoft CMS covers these in its capabilities section and links out to the full feature tour. */}
-      {product.slug !== 'cms' && (
-        <div className="space-y-12">
-          <div className="text-center max-w-3xl mx-auto space-y-3">
-            <span className="text-xs uppercase tracking-widest text-signal-400 font-bold">Capabilities</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-ink-50">What can {product.name} do?</h2>
-            
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {product.features.map((feat, idx) => (
-              <div key={idx} className="p-6 rounded-2xl panel border border-ink-800 space-y-3">
-                <div className="flex items-center gap-2.5 text-base font-bold text-ink-50">
-                  <CheckCircle2 className="w-5 h-5 text-signal-400" />
-                  <span>{feat.title}</span>
-                </div>
-                <p className="text-sm text-ink-300 leading-relaxed pl-7">
-                  {feat.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Specs Tables */}
-      <section aria-labelledby="specs-title" className="space-y-8">
-        <Reveal className="max-w-3xl space-y-3">
-          <span className="text-xs uppercase tracking-widest text-signal-400 font-bold">Specifications</span>
-          <h2 id="specs-title" className="text-2xl sm:text-3xl font-extrabold text-ink-50">
-            What does {product.name} support?
-          </h2>
-          <p className="text-ink-400">
-            Supported file formats, player devices and operating systems, screen resolutions and, where offered, the
-            server needed to host {product.name} yourself.
-          </p>
-        </Reveal>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {product.specs.map((specCat, idx) => (
-            <Reveal key={specCat.category} delay={(idx % 2) * 100} className="h-full">
-              <div className="h-full rounded-2xl panel border border-ink-800 overflow-hidden">
-                <div className="px-6 py-4 bg-ink-900 border-b border-ink-800">
-                  <h3 className="font-bold text-sm text-signal-400 font-mono">{specCat.category}</h3>
-                  {specCat.note && <p className="mt-1 text-xs text-ink-400">{specCat.note}</p>}
-                </div>
-                <dl className="divide-y divide-ink-800/60">
-                  {specCat.items.map((item) => (
-                    <div key={item.label} className="px-6 py-3.5 grid gap-1 text-xs sm:grid-cols-[8.5rem_1fr] sm:gap-4">
-                      <dt className="text-ink-400 font-medium">{item.label}</dt>
-                      <dd className="text-ink-50 font-mono">{item.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {product.slug === 'cms' && <PricingSection />}
-
-      {/* Related Use Cases */}
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-ink-50">Recommended Use Cases for {product.name}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {product.relatedUseCases.map((uc, idx) => (
-            <Link
-              key={idx}
-              to="/use-cases/$slug"
-              params={{ slug: uc.slug }}
-              className="p-5 rounded-xl panel border border-ink-800 hover:border-signal-500/40 transition-all flex items-center justify-between group"
-            >
-              <span className="font-semibold text-ink-50 group-hover:text-signal-400 transition-colors text-sm">
-                {uc.title}
-              </span>
-              <ArrowRight className="w-4 h-4 text-ink-500 group-hover:text-signal-400 group-hover:translate-x-1 transition-all" />
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Product FAQs */}
-      <div className="space-y-8 border-t border-ink-900 pt-16">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
-          <span className="text-xs uppercase tracking-widest text-signal-400 font-bold">Product FAQ</span>
-          <h2 className="text-3xl font-extrabold text-ink-50">Frequently Asked Questions</h2>
-        </div>
-        <FaqAccordion items={product.faq} />
-      </div>
-
-      {product.slug !== 'cms' && <CtaBand />}
+      {sections.map((s) => (
+        <Fragment key={s.key}>{s.node}</Fragment>
+      ))}
     </div>
   )
 }

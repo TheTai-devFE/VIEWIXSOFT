@@ -2,15 +2,12 @@ import { Link } from '@tanstack/react-router'
 import { ArrowRight, ArrowUpRight } from 'lucide-react'
 import { ThreeDMarquee } from '~/components/ui/3d-marquee'
 import { USE_CASES } from '~/content/useCases'
-import { STOCK_SCREEN_IMAGES } from '~/data/compatible-devices'
 import { Reveal } from '~/components/ui/reveal'
-
-// TODO(content): swap in photos of real Viewixsoft installs per industry. Until
-// then the wall reuses the self-hosted stock screens, repeated so each of the
-// three columns is tall enough to drift without showing its end.
-const WALL_IMAGES = [...STOCK_SCREEN_IMAGES, ...STOCK_SCREEN_IMAGES.slice(0, 4)]
+import { useScreenWall } from '~/lib/use-media'
 
 export function UseCasesSection() {
+  // Screen photos are replaceable in /admin/media (Screen photos group).
+  const wallImages = useScreenWall()
   return (
     <section aria-labelledby="use-cases-title" className="overflow-hidden border-t border-ink-800 bg-ink-950">
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-28">
@@ -68,7 +65,7 @@ export function UseCasesSection() {
         {/* Decorative: the wall repeats photos, so it is hidden from assistive tech. */}
         <Reveal variant="scale" delay={150}>
           <div aria-hidden="true" className="relative">
-            <ThreeDMarquee images={WALL_IMAGES} className="max-sm:h-80" />
+            <ThreeDMarquee images={wallImages} className="max-sm:h-80" />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,var(--color-ink-950))]" />
           </div>
         </Reveal>

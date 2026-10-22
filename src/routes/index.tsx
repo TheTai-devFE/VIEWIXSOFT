@@ -1,4 +1,7 @@
+import { Fragment } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
+import { orderSections } from '~/lib/site-config'
+import { useSiteConfig } from '~/lib/use-site-config'
 import { HeroOne } from '~/components/blocks/hero-01'
 import { IntroVideoSection } from '~/components/blocks/IntroVideoSection'
 import { SolutionsSection } from '~/components/blocks/SolutionsSection'
@@ -38,20 +41,25 @@ export const Route = createFileRoute('/')({
 })
 
 function HomePage() {
+  const config = useSiteConfig()
+  // Order and visibility come from /admin/site; see src/data/site-sections.ts.
+  const sections = orderSections(config, 'home', {
+    hero: <HeroOne showHeader={false} underFixedHeader />,
+    'intro-video': <IntroVideoSection />,
+    products: <ProductLineupSection />,
+    'how-it-works': <HowItWorks />,
+    devices: <CompatibleDevicesSection />,
+    'use-cases': <UseCasesSection />,
+    vision: <SolutionsSection id="solutions" />,
+    pricing: <PricingTeaser />,
+    faq: <HomeFaqSection />,
+    'demo-form': <LeadFormSection />,
+  })
   return (
     <>
-      {/* Order: what it is → what you can buy → how it works → where it runs →
-          who uses it → the bigger vision → what it costs → questions → demo. */}
-      <HeroOne showHeader={false} underFixedHeader />
-      <IntroVideoSection />
-      <ProductLineupSection />
-      <HowItWorks />
-      <CompatibleDevicesSection />
-      <UseCasesSection />
-      <SolutionsSection id="solutions" />
-      <PricingTeaser />
-      <HomeFaqSection />
-      <LeadFormSection />
+      {sections.map((s) => (
+        <Fragment key={s.key}>{s.node}</Fragment>
+      ))}
     </>
   )
 }

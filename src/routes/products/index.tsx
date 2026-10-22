@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowRight, Bell, Check } from 'lucide-react'
-import { PRODUCTS, PRODUCT_ONE_LINERS } from '~/content/products'
+import { PRODUCT_ONE_LINERS } from '~/content/products'
+import { useProducts } from '~/lib/use-site-config'
 import type { Product } from '~/content/products'
 import { Breadcrumbs } from '~/components/layout/Breadcrumbs'
 import { CtaBand } from '~/components/blocks/CtaBand'
@@ -31,8 +32,9 @@ export const Route = createFileRoute('/products/')({
 })
 
 function ProductsIndexPage() {
-  const available = PRODUCTS.filter((p) => p.status === 'available')
-  const upcoming = PRODUCTS.filter((p) => p.status === 'coming-soon')
+  const products = useProducts()
+  const available = products.filter((p) => p.status === 'available')
+  const upcoming = products.filter((p) => p.status === 'coming-soon')
 
   return (
     <div className="mx-auto max-w-7xl space-y-16 px-4 py-12 sm:px-6 md:py-20 lg:px-8">

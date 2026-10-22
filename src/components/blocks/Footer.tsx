@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router'
 import type { LinkProps } from '@tanstack/react-router'
 import { ArrowRight } from 'lucide-react'
 import { ViewixLogo } from '~/components/blocks/ViewixLogo'
-import { PRODUCTS } from '~/content/products'
+import { useProducts } from '~/lib/use-site-config'
 import { USE_CASES } from '~/content/useCases'
 import { CONTACT_EMAILS, LEGAL_ENTITY } from '~/data/company'
 
@@ -32,6 +32,7 @@ function ColumnHeading({ id, children }: { id: string; children: string }) {
 }
 
 export function Footer() {
+  const products = useProducts()
   return (
     <footer className="border-t border-ink-800 bg-ink-950 text-sm">
       <div className="mx-auto max-w-7xl px-4 pt-16 pb-8 sm:px-6 lg:px-8">
@@ -56,7 +57,7 @@ export function Footer() {
           <nav aria-labelledby="footer-products">
             <ColumnHeading id="footer-products">Products</ColumnHeading>
             <ul className="mt-4 space-y-3">
-              {PRODUCTS.map((p) => (
+              {products.map((p) => (
                 <li key={p.slug}>
                   <Link to="/products/$slug" params={{ slug: p.slug }} className={linkClass}>
                     {p.name}

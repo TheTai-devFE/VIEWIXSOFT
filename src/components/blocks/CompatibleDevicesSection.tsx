@@ -2,6 +2,9 @@ import { MonitorSmartphone } from 'lucide-react'
 import { VIEWIX_HARDWARE } from '~/data/compatible-devices'
 import type { HardwareLine } from '~/data/compatible-devices'
 import { Reveal } from '~/components/ui/reveal'
+import { hardwareSlotKey } from '~/data/media-slots'
+import { imageUrl, useMedia } from '~/lib/use-media'
+
 export function CompatibleDevicesSection() {
   return (
     <section aria-labelledby="devices-title" className="border-t border-ink-800 bg-ink-950">
@@ -36,15 +39,17 @@ export function CompatibleDevicesSection() {
 }
 
 function HardwareCard({ line }: { line: HardwareLine }) {
+  // Photos are uploaded in /admin/media; until then the card shows a placeholder.
+  const image = useMedia(hardwareSlotKey(line.name))
   return (
     <article className="flex h-full flex-col items-center rounded-2xl border border-ink-800 bg-ink-900 p-4 text-center sm:p-5">
       <div className="flex aspect-square w-full max-w-40 items-center justify-center">
-        {line.image ? (
+        {image ? (
           <img
-            src={line.image}
-            alt={`Viewix ${line.name}`}
-            width={400}
-            height={400}
+            src={imageUrl(image.src, 400)}
+            alt={image.alt}
+            width={image.width}
+            height={image.height}
             loading="lazy"
             decoding="async"
             className="size-full object-contain"

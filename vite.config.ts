@@ -9,7 +9,7 @@ import path from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   server: {
     port: 3000,
   },
@@ -24,6 +24,7 @@ export default defineConfig({
       srcDirectory: 'src',
     }),
     viteReact(),
-    nitro(),
+    // Production builds target Cloudflare Workers; `pnpm dev` stays on Node.
+    nitro(command === 'build' ? { preset: 'cloudflare_module' } : {}),
   ],
-})
+}))

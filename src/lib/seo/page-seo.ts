@@ -22,7 +22,7 @@ export function productSeo(p: Product): PageSeo {
   return { title: p.seoTitle, description: p.shortDescription }
 }
 
-export function useCaseSeo(uc: UseCase): PageSeo {
+export function useCaseSeo(uc: Pick<UseCase, 'seoTitle' | 'tagline'>): PageSeo {
   return { title: uc.seoTitle, description: uc.tagline }
 }
 

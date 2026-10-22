@@ -9,6 +9,8 @@ export interface UseCase {
   solutionHeading: string
   publishedAt: string
   updatedAt: string
+  /** `sample` results and quote render only in the dev server; set `verified` for real, approved ones. */
+  evidence: 'sample' | 'verified'
   /** 16:9 card image; TODO(content): swap the shared stock photos for real deployment photos. */
   cover: { src: string; alt: string }
   tagline: string
@@ -41,6 +43,7 @@ export const USE_CASES: UseCase[] = [
     solutionHeading: 'How does Viewixsoft run retail screens from one place?',
     publishedAt: '2026-10-15',
     updatedAt: '2026-10-22',
+    evidence: 'sample',
     cover: { src: '/devices/stock/retail-screens.webp', alt: 'Retail store wall with several portrait screens' },
     tagline: 'Transform retail foot traffic into measurable omnichannel sales with interactive storefronts and shelf displays.',
     challenge: 'Retailers struggled with static paper signage that was costly to print and impossible to synchronize with weekly flash sales and local stock levels across hundreds of branches.',
@@ -70,6 +73,7 @@ export const USE_CASES: UseCase[] = [
     solutionHeading: 'How does Viewixsoft keep menu boards in sync?',
     publishedAt: '2026-10-15',
     updatedAt: '2026-10-22',
+    evidence: 'sample',
     cover: { src: '/devices/stock/digital-menu-boards.webp', alt: 'Row of digital menu boards above a food counter' },
     tagline: 'Synchronize menus, prices, and drive-thru boards automatically with your kitchen POS in under 250 milliseconds.',
     challenge: 'Quick-service restaurant chains face heavy compliance penalties when prices on digital boards differ from registers, and manual item 86-ing causes customer frustration in drive-thru lanes.',
@@ -99,6 +103,7 @@ export const USE_CASES: UseCase[] = [
     solutionHeading: 'How does Viewixsoft reach every office screen?',
     publishedAt: '2026-10-15',
     updatedAt: '2026-10-22',
+    evidence: 'sample',
     cover: { src: '/devices/stock/menu-stand.webp', alt: 'Portrait screen showing the daily menu in an office canteen' },
     tagline: 'Unify employee engagement, live executive town halls, and real-time KPI dashboards across global offices.',
     challenge: 'Hybrid workforce models left multinational offices feeling disconnected, with email newsletters suffering under 20% open rates.',
@@ -128,6 +133,7 @@ export const USE_CASES: UseCase[] = [
     solutionHeading: 'How does Viewixsoft keep passenger screens running?',
     publishedAt: '2026-10-15',
     updatedAt: '2026-10-22',
+    evidence: 'sample',
     cover: { src: '/devices/stock/transit-display.webp', alt: 'Digital arrival board under a transit shelter' },
     tagline: 'Deliver mission-critical flight & transit departure schedules alongside high-yield programmatic advertising.',
     challenge: 'Airport and metro authorities required 100% fail-safe display architectures that could split screens between live GTFS/FIDS transit schedules and commercial advertising.',
@@ -157,6 +163,7 @@ export const USE_CASES: UseCase[] = [
     solutionHeading: 'How does Viewixsoft turn hotel screens into a concierge?',
     publishedAt: '2026-10-15',
     updatedAt: '2026-10-22',
+    evidence: 'sample',
     cover: { src: '/devices/stock/bar-menu-screens.webp', alt: 'Bar with a wall of digital menu screens' },
     tagline: 'Deliver curated guest experiences, digital concierge wayfinding, and contactless amenity reservations.',
     challenge: 'Luxury hotels needed visually stunning, branded digital displays that complemented boutique architecture without looking like sterile commercial screens.',
@@ -186,6 +193,7 @@ export const USE_CASES: UseCase[] = [
     solutionHeading: 'How does Viewixsoft prove every ad played?',
     publishedAt: '2026-10-15',
     updatedAt: '2026-10-22',
+    evidence: 'sample',
     cover: { src: '/devices/stock/interactive-display.webp', alt: 'Two people using a tall interactive display in a store' },
     tagline: 'Maximize programmatic advertising yields with cryptographic proof-of-play and high-throughput content scheduling.',
     challenge: 'Outdoor billboard operators struggled with media buyer skepticism regarding whether purchased ad slots actually played at peak rush hours.',

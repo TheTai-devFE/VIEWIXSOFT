@@ -2,7 +2,14 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useState, useMemo } from 'react'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { getLeadsFn, updateLeadStatusFn } from '~/server/functions/admin'
+import { LEAD_STATUSES } from '~/lib/enums'
 import type { Lead } from '~/server/db/schema'
+
+/** Quotes a CSV cell and defuses spreadsheet formulas (=, +, -, @) in visitor-supplied text. */
+function csvCell(value: string) {
+  const safe = /^[=+\-@]/.test(value) ? `'${value}` : value
+  return `"${safe.replace(/"/g, '""')}"`
+}
 import { 
   Search, Download, Filter, RefreshCw, X, ChevronLeft, 
   ChevronRight, ArrowUpDown, CheckCircle2, Shield, Calendar 
@@ -11,7 +18,7 @@ import {
 export const Route = createFileRoute('/admin/leads')({
   loader: async () => {
     const res = await getLeadsFn()
-    return { initialLeads: res.leads }
+    return { initialLeads: res.leads, loadFailed: !res.ok }
   },
   head: () => {
     const seo = generateMetaTags({
@@ -29,7 +36,7 @@ export const Route = createFileRoute('/admin/leads')({
 })
 
 function AdminLeadsPage() {
-  const { initialLeads } = Route.useLoaderData()
+  const { initialLeads, loadFailed } = Route.useLoaderData()
   const [leadsList, setLeadsList] = useState<Lead[]>(initialLeads)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -38,6 +45,7 @@ function AdminLeadsPage() {
   const [drawerNotes, setDrawerNotes] = useState('')
   const [drawerStatus, setDrawerStatus] = useState('new')
   const [isUpdating, setIsUpdating] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   // Filtered and searched leads
   const filteredLeads = useMemo(() => {
@@ -66,22 +74,24 @@ function AdminLeadsPage() {
   const handleSaveStatus = async () => {
     if (!selectedLead) return
     setIsUpdating(true)
+    setSaveError('')
     try {
       const res = await updateLeadStatusFn({
         data: {
           leadId: selectedLead.id,
-          status: drawerStatus as any,
+          status: LEAD_STATUSES.find((st) => st === drawerStatus) ?? 'new',
           notes: drawerNotes,
         },
       })
-      if (res.lead) {
-        setLeadsList((prev) =>
-          prev.map((item) => (item.id === res.lead.id ? res.lead : item))
-        )
-        setSelectedLead(res.lead)
+      if (res.ok) {
+        const updated = res.lead
+        setLeadsList((prev) => prev.map((item) => (item.id === updated.id ? updated : item)))
+        setSelectedLead(updated)
+      } else {
+        setSaveError('This lead no longer exists. Refresh the list.')
       }
-    } catch (err) {
-      console.error('Update failed:', err)
+    } catch {
+      setSaveError('Saving failed. Check your connection and try again.')
     } finally {
       setIsUpdating(false)
     }
@@ -93,24 +103,25 @@ function AdminLeadsPage() {
     const rows = filteredLeads.map((l) => [
       l.id,
       l.type,
-      `"${l.name}"`,
+      l.name,
       l.email,
-      `"${l.company}"`,
+      l.company,
       l.country,
       l.screenCount || 'N/A',
       l.status,
       l.utmSource || '',
-      new Date(l.createdAt).toISOString()
+      new Date(l.createdAt).toISOString(),
     ])
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
-    const encodedUri = encodeURI(csvContent)
+    const csvContent = [headers, ...rows].map((r) => r.map(csvCell).join(',')).join('\n')
+    const url = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8' }))
     const link = document.createElement('a')
-    link.setAttribute('href', encodedUri)
+    link.setAttribute('href', url)
     link.setAttribute('download', `viewixsoft-leads-${new Date().toISOString().slice(0, 10)}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   const getStatusBadge = (status: string) => {
@@ -134,6 +145,12 @@ function AdminLeadsPage() {
 
   return (
     <div className="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      {loadFailed && (
+        <p role="alert" className="rounded-xl border border-destructive/40 p-4 text-sm text-destructive">
+          Leads could not be loaded. Check DATABASE_URL and the server logs.
+        </p>
+      )}
+
       {/* Dashboard Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ink-800 pb-6">
         <div>
@@ -325,6 +342,11 @@ function AdminLeadsPage() {
                     {isUpdating ? 'Saving...' : 'Save'}
                   </button>
                 </div>
+                {saveError && (
+                  <p role="alert" className="text-xs text-destructive">
+                    {saveError}
+                  </p>
+                )}
               </div>
 
               {/* Contact Information */}

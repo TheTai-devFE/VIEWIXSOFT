@@ -27,6 +27,10 @@ import { ViewixLogo } from '~/components/blocks/ViewixLogo'
 import { NumberTicker } from '~/components/ui/number-ticker'
 import { cn } from '~/lib/cn'
 import { Reveal } from '~/components/ui/reveal'
+import { METRIC_DEFS } from '~/data/site-sections'
+import type { MetricKey } from '~/data/site-sections'
+import { SHOW_SAMPLE_CONTENT } from '~/lib/site-config'
+import { useSiteConfig } from '~/lib/use-site-config'
 
 interface Pillar {
   slug: 'cms' | 'pos' | 'tracking' | 'nfc'
@@ -69,22 +73,31 @@ const PILLARS: Pillar[] = [
   },
 ]
 
-// Business metrics. Real figures only: each needs a source (CRM, device
-// registry, playback logs) and an `asOf` date, which is shown under the stats.
-// TODO(content): fill `value` and `asOf` with real numbers (e.g. from the backend);
-// until every value is set the strip is hidden in production.
-const METRICS_AS_OF: string | null = null
-const STATS: { value: number | null; preview: number; suffix?: string; label: string }[] = [
-  { value: null, preview: 50, suffix: '+', label: 'Customers' },
-  { value: null, preview: 1200, suffix: '+', label: 'Connected devices' },
-  { value: null, preview: 250, suffix: 'K+', label: 'Content plays' },
-]
+// Made-up figures for design review only: they render in the dev server, never
+// in production. Real values are entered in /admin/site with a source and date.
+const SAMPLE_VALUES: Record<MetricKey, number> = { customers: 50, devices: 1200, plays: 250_000 }
 
-// `preview` numbers are made up for design review. They render only in the dev
-// server so a fabricated figure can never reach the public site.
-function statValue(stat: (typeof STATS)[number]) {
-  if (stat.value !== null) return stat.value
-  return import.meta.env.DEV ? stat.preview : null
+/** Large counts read better compacted: 250,000 → 250 with a "K+" suffix. */
+function display(value: number, suffix: string) {
+  return value >= 10_000 ? { value: Math.round(value / 1000), suffix: `K${suffix}` } : { value, suffix }
+}
+
+function useStats() {
+  const config = useSiteConfig()
+  const real = METRIC_DEFS.map((def) => ({ def, metric: config.metrics.find((m) => m.key === def.key) }))
+  if (real.every((r) => r.metric)) {
+    const asOf = real.reduce((latest, r) => ((r.metric?.asOf ?? '') > latest ? (r.metric?.asOf ?? '') : latest), '')
+    const sources = [...new Set(real.map((r) => r.metric?.source ?? ''))].filter(Boolean)
+    return {
+      items: real.map((r) => ({ label: r.def.label, ...display(r.metric?.value ?? 0, r.def.suffix) })),
+      note: `Figures as of ${asOf}. Source: ${sources.join('; ')}.`,
+    }
+  }
+  if (!SHOW_SAMPLE_CONTENT) return null
+  return {
+    items: METRIC_DEFS.map((def) => ({ label: def.label, ...display(SAMPLE_VALUES[def.key], def.suffix) })),
+    note: 'Sample figures (dev only). Enter real ones in /admin/site.',
+  }
 }
 
 const AUTO_ADVANCE_MS = 5000
@@ -100,10 +113,7 @@ export function SolutionsSection({ id }: { id?: string }) {
     return () => window.clearInterval(t)
   }, [reduce])
 
-  const stats = STATS.flatMap((stat) => {
-    const value = statValue(stat)
-    return value === null ? [] : [{ label: stat.label, value, suffix: stat.suffix }]
-  })
+  const stats = useStats()
   const current = PILLARS[active] ?? PILLARS[0]
   if (!current) return null
 
@@ -125,10 +135,10 @@ export function SolutionsSection({ id }: { id?: string }) {
             such as taps, plays and campaign performance, that you can use to plan better ad campaigns.
           </p>
 
-          {/* Production hides the strip until real figures exist; dev shows the sample values. */}
-          {stats.length > 0 && (
+          {/* Hidden in production until all figures are entered with a source and date. */}
+          {stats && (
             <dl className="mt-10 grid gap-x-6 gap-y-8 border-t border-ink-800 pt-8 sm:grid-cols-3">
-              {stats.map(({ label, value, suffix }) => (
+              {stats.items.map(({ label, value, suffix }) => (
                 <div key={label} className="flex flex-col">
                   <dt className="order-2 mt-2 text-sm font-medium text-ink-400">{label}</dt>
                   <dd className="order-1">
@@ -142,7 +152,7 @@ export function SolutionsSection({ id }: { id?: string }) {
               ))}
             </dl>
           )}
-          {METRICS_AS_OF && <p className="mt-4 text-xs text-ink-500">Figures as of {METRICS_AS_OF}.</p>}
+          {stats && <p className="mt-4 text-xs text-ink-500">{stats.note}</p>}
 
           <Link
             to="/products"

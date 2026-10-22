@@ -5,10 +5,12 @@ import { ArrowRight, CheckCircle2, ChevronRight } from 'lucide-react'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { Reveal } from '~/components/ui/reveal'
-import { PRODUCTS, PRODUCT_ONE_LINERS } from '~/content/products'
+import { PRODUCT_ONE_LINERS } from '~/content/products'
+import { useProducts } from '~/lib/use-site-config'
 import type { Product } from '~/content/products'
 import { NewsletterSchema } from '~/server/schema/validation'
 import { subscribeNewsletterFn } from '~/server/functions/leads'
+import { Turnstile } from '~/components/ui/turnstile'
 
 // The product slug is added on submit, so the form only collects these two.
 const NotifySchema = NewsletterSchema.pick({ email: true, consent: true })
@@ -24,7 +26,7 @@ function firstError(meta: { errors: unknown[]; isBlurred: boolean }, attempts: n
 
 /** Shown on /products/$slug while a product's status is coming-soon. */
 export function ProductComingSoon({ product }: { product: Product }) {
-  const others = PRODUCTS.filter((p) => p.slug !== product.slug)
+  const others = useProducts().filter((p) => p.slug !== product.slug)
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-20 lg:px-8">
@@ -108,7 +110,10 @@ export function ProductComingSoon({ product }: { product: Product }) {
 
 function NotifyForm({ product }: { product: Product }) {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
   const [sentTo, setSentTo] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState<string | undefined>()
+  const [turnstileReset, setTurnstileReset] = useState(0)
 
   const form = useForm({
     defaultValues: { email: '', consent: false },
@@ -118,13 +123,18 @@ function NotifyForm({ product }: { product: Product }) {
       setStatus('idle')
       try {
         const slug = NewsletterSchema.shape.product.unwrap().parse(product.slug)
-        const res = await subscribeNewsletterFn({ data: { ...value, product: slug } })
-        if (!res.success) throw new Error('rejected')
-        setSentTo(value.email)
-        setStatus('success')
+        const res = await subscribeNewsletterFn({ data: { ...value, product: slug, turnstileToken } })
+        if (res.ok) {
+          setSentTo(value.email)
+          setStatus('success')
+          return
+        }
+        setErrorMessage(res.message)
       } catch {
-        setStatus('error')
+        setErrorMessage("We couldn't save your email. Please try again.")
       }
+      setTurnstileReset((n) => n + 1)
+      setStatus('error')
     },
   })
 
@@ -133,8 +143,8 @@ function NotifyForm({ product }: { product: Product }) {
       <div role="status" className="mt-8 flex max-w-xl items-start gap-3 rounded-2xl border border-ink-800 bg-ink-900 p-5">
         <CheckCircle2 aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-signal-400" />
         <p className="text-sm text-ink-300">
-          You are on the list. We will email <strong className="text-ink-50">{sentTo}</strong> when {product.name}{' '}
-          launches.
+          Almost done. Check <strong className="text-ink-50">{sentTo}</strong> and confirm your email, and we will
+          tell you when {product.name} launches.
         </p>
       </div>
     )
@@ -151,7 +161,7 @@ function NotifyForm({ product }: { product: Product }) {
     >
       {status === 'error' && (
         <p role="alert" className="mb-4 text-sm text-destructive">
-          We couldn't save your email. Please try again.
+          {errorMessage}
         </p>
       )}
       <form.Field name="email">
@@ -231,6 +241,7 @@ function NotifyForm({ product }: { product: Product }) {
           )
         }}
       </form.Field>
+      <Turnstile onToken={setTurnstileToken} resetKey={turnstileReset} />
     </form>
   )
 }

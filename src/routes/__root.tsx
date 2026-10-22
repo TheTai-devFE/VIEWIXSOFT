@@ -11,9 +11,14 @@ import { Footer } from '~/components/blocks/Footer'
 import { DefaultCatchBoundary } from '~/components/DefaultCatchBoundary'
 import { NotFound } from '~/components/NotFound'
 import { getOrganizationSchema, getWebSiteSchema } from '~/lib/seo/jsonld'
+import { getSiteConfigFn } from '~/server/functions/site'
 import appCss from '~/styles/app.css?url'
 
 export const Route = createRootRoute({
+  // Admin site settings (sections, product status, stats, quotes, images).
+  // The server caches them for 30s; the client reuses them for 30s too.
+  loader: () => getSiteConfigFn(),
+  staleTime: 30_000,
   head: () => ({
     meta: [
       { charSet: 'utf-8' },

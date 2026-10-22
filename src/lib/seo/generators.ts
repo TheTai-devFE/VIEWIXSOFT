@@ -31,8 +31,9 @@ export interface SitemapEntry {
   lastmod: string
 }
 
-export function sitemapEntries(): SitemapEntry[] {
-  const productsLastmod = latest(PRODUCTS.map((p) => p.updatedAt))
+/** Products as published: pass `visibleProducts(config)` so hidden ones drop out. */
+export function sitemapEntries(products: Product[] = PRODUCTS): SitemapEntry[] {
+  const productsLastmod = latest(products.map((p) => p.updatedAt))
   const useCasesLastmod = latest(USE_CASES.map((u) => u.updatedAt))
   const blogLastmod = latest(BLOG_POSTS.map((b) => b.updatedAt))
   // Index pages change whenever an item in their collection does.
@@ -47,7 +48,7 @@ export function sitemapEntries(): SitemapEntry[] {
       path: p.path,
       lastmod: latest([p.updatedAt, collectionLastmod[p.path] ?? '']),
     })),
-    ...PRODUCTS.map((p) => ({ path: `/products/${p.slug}`, lastmod: p.updatedAt })),
+    ...products.map((p) => ({ path: `/products/${p.slug}`, lastmod: p.updatedAt })),
     ...USE_CASES.map((u) => ({ path: `/use-cases/${u.slug}`, lastmod: u.updatedAt })),
     ...BLOG_POSTS.map((b) => ({ path: `/blog/${b.slug}`, lastmod: b.updatedAt })),
   ]
@@ -109,15 +110,25 @@ ${items}
 `
 }
 
-const SUMMARY =
-  'Viewixsoft is digital signage software for advertising screens, kiosks and menu boards. It is the software arm of Viewix, which builds the screens. Viewixsoft CMS is available now; Viewixsoft POS, Viewixsoft Tracking and Viewixsoft NFC are coming soon.'
+function summary(products: Product[]) {
+  const names = (status: Product['status']) => products.filter((p) => p.status === status).map((p) => p.name)
+  const available = names('available')
+  const upcoming = names('coming-soon')
+  return [
+    'Viewixsoft is digital signage software for advertising screens, kiosks and menu boards. It is the software arm of Viewix, which builds the screens.',
+    available.length ? `Available now: ${available.join(', ')}.` : '',
+    upcoming.length ? `Coming soon: ${upcoming.join(', ')}.` : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+}
 
 function statusLabel(p: Product) {
   return p.status === 'available' ? 'available now' : 'coming soon'
 }
 
-export function buildLlmsTxt() {
-  const products = PRODUCTS.map(
+export function buildLlmsTxt(published: Product[] = PRODUCTS) {
+  const products = published.map(
     (p) => `- [${p.name}](${SITE_URL}/products/${p.slug}.md) (${statusLabel(p)}): ${PRODUCT_ONE_LINERS[p.slug] ?? p.tagline}`,
   )
   const useCases = USE_CASES.map((u) => `- [${u.title}](${SITE_URL}/use-cases/${u.slug}.md): ${u.tagline}`)
@@ -125,7 +136,7 @@ export function buildLlmsTxt() {
   return [
     `# ${SITE_NAME}`,
     '',
-    `> ${SUMMARY}`,
+    `> ${summary(published)}`,
     '',
     '## Products',
     '',
@@ -227,11 +238,11 @@ export function blogPostMarkdown(b: BlogPost) {
   ].join('\n')
 }
 
-export function buildLlmsFullTxt() {
+export function buildLlmsFullTxt(published: Product[] = PRODUCTS) {
   return [
     `# ${SITE_NAME}`,
     '',
-    `> ${SUMMARY}`,
+    `> ${summary(published)}`,
     '',
     '## Frequently asked questions',
     '',
@@ -239,7 +250,7 @@ export function buildLlmsFullTxt() {
     '## Pricing',
     '',
     ...faqMarkdown(PRICING_FAQ),
-    ...PRODUCTS.map((p) => productMarkdown(p).replace(/^# /, '## ').replace(/\n## /g, '\n### ')),
+    ...published.map((p) => productMarkdown(p).replace(/^# /, '## ').replace(/\n## /g, '\n### ')),
     ...USE_CASES.map((u) => useCaseMarkdown(u).replace(/^# /, '## ').replace(/\n## /g, '\n### ')),
     ...BLOG_POSTS.map((b) => blogPostMarkdown(b).replace(/^# /, '## ')),
   ].join('\n')

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
@@ -19,19 +20,26 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as RssDotxmlRouteImport } from './routes/rss[.]xml'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminLeadsRouteImport } from './routes/admin/leads'
+import { Route as AdminLoginRouteImport } from './routes/admin/login'
+import { Route as AdminMediaRouteImport } from './routes/admin/media'
+import { Route as AdminSiteRouteImport } from './routes/admin/site'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as BlogChar123slugChar125DotmdRouteImport } from './routes/blog/{$slug}[.]md'
 import { Route as LegalCookiesRouteImport } from './routes/legal/cookies'
 import { Route as LegalPrivacyRouteImport } from './routes/legal/privacy'
 import { Route as LegalTermsRouteImport } from './routes/legal/terms'
+import { Route as MediaDevSplatRouteImport } from './routes/media-dev/$'
+import { Route as NewsletterConfirmRouteImport } from './routes/newsletter/confirm'
 import { Route as ProductsIndexRouteImport } from './routes/products/index'
 import { Route as ProductsSlugRouteImport } from './routes/products/$slug'
 import { Route as ProductsChar123slugChar125DotmdRouteImport } from './routes/products/{$slug}[.]md'
 import { Route as UseCasesIndexRouteImport } from './routes/use-cases/index'
 import { Route as UseCasesSlugRouteImport } from './routes/use-cases/$slug'
 import { Route as UseCasesChar123slugChar125DotmdRouteImport } from './routes/use-cases/{$slug}[.]md'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as BlogCategorySlugRouteImport } from './routes/blog/category/$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -42,6 +50,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -84,10 +97,30 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminLeadsRoute = AdminLeadsRouteImport.update({
-  id: '/admin/leads',
-  path: '/admin/leads',
-  getParentRoute: () => rootRouteImport,
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminMediaRoute = AdminMediaRouteImport.update({
+  id: '/media',
+  path: '/media',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSiteRoute = AdminSiteRouteImport.update({
+  id: '/site',
+  path: '/site',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
@@ -118,6 +151,16 @@ const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
 const LegalTermsRoute = LegalTermsRouteImport.update({
   id: '/legal/terms',
   path: '/legal/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MediaDevSplatRoute = MediaDevSplatRouteImport.update({
+  id: '/media-dev/$',
+  path: '/media-dev/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsletterConfirmRoute = NewsletterConfirmRouteImport.update({
+  id: '/newsletter/confirm',
+  path: '/newsletter/confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductsIndexRoute = ProductsIndexRouteImport.update({
@@ -152,6 +195,11 @@ const UseCasesChar123slugChar125DotmdRoute =
     path: '/use-cases/{$slug}.md',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogCategorySlugRoute = BlogCategorySlugRouteImport.update({
   id: '/blog/category/$slug',
   path: '/blog/category/$slug',
@@ -160,6 +208,7 @@ const BlogCategorySlugRoute = BlogCategorySlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/design-system': typeof DesignSystemRoute
@@ -170,18 +219,25 @@ export interface FileRoutesByFullPath {
   '/rss.xml': typeof RssDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/leads': typeof AdminLeadsRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/media': typeof AdminMediaRoute
+  '/admin/site': typeof AdminSiteRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/{$slug}.md': typeof BlogChar123slugChar125DotmdRoute
   '/legal/cookies': typeof LegalCookiesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/media-dev/$': typeof MediaDevSplatRoute
+  '/newsletter/confirm': typeof NewsletterConfirmRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/products/{$slug}.md': typeof ProductsChar123slugChar125DotmdRoute
   '/use-cases/$slug': typeof UseCasesSlugRoute
   '/use-cases/{$slug}.md': typeof UseCasesChar123slugChar125DotmdRoute
+  '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/products/': typeof ProductsIndexRoute
   '/use-cases/': typeof UseCasesIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
 }
 export interface FileRoutesByTo {
@@ -196,23 +252,31 @@ export interface FileRoutesByTo {
   '/rss.xml': typeof RssDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/leads': typeof AdminLeadsRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/media': typeof AdminMediaRoute
+  '/admin/site': typeof AdminSiteRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/{$slug}.md': typeof BlogChar123slugChar125DotmdRoute
   '/legal/cookies': typeof LegalCookiesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/media-dev/$': typeof MediaDevSplatRoute
+  '/newsletter/confirm': typeof NewsletterConfirmRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/products/{$slug}.md': typeof ProductsChar123slugChar125DotmdRoute
   '/use-cases/$slug': typeof UseCasesSlugRoute
   '/use-cases/{$slug}.md': typeof UseCasesChar123slugChar125DotmdRoute
+  '/admin': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
   '/products': typeof ProductsIndexRoute
   '/use-cases': typeof UseCasesIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/design-system': typeof DesignSystemRoute
@@ -223,24 +287,32 @@ export interface FileRoutesById {
   '/rss.xml': typeof RssDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/leads': typeof AdminLeadsRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/media': typeof AdminMediaRoute
+  '/admin/site': typeof AdminSiteRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/{$slug}.md': typeof BlogChar123slugChar125DotmdRoute
   '/legal/cookies': typeof LegalCookiesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/media-dev/$': typeof MediaDevSplatRoute
+  '/newsletter/confirm': typeof NewsletterConfirmRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/products/{$slug}.md': typeof ProductsChar123slugChar125DotmdRoute
   '/use-cases/$slug': typeof UseCasesSlugRoute
   '/use-cases/{$slug}.md': typeof UseCasesChar123slugChar125DotmdRoute
+  '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/products/': typeof ProductsIndexRoute
   '/use-cases/': typeof UseCasesIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/about'
     | '/contact'
     | '/design-system'
@@ -251,18 +323,25 @@ export interface FileRouteTypes {
     | '/rss.xml'
     | '/sitemap.xml'
     | '/admin/leads'
+    | '/admin/login'
+    | '/admin/media'
+    | '/admin/site'
     | '/blog/$slug'
     | '/blog/{$slug}.md'
     | '/legal/cookies'
     | '/legal/privacy'
     | '/legal/terms'
+    | '/media-dev/$'
+    | '/newsletter/confirm'
     | '/products/$slug'
     | '/products/{$slug}.md'
     | '/use-cases/$slug'
     | '/use-cases/{$slug}.md'
+    | '/admin/'
     | '/blog/'
     | '/products/'
     | '/use-cases/'
+    | '/api/auth/$'
     | '/blog/category/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -277,22 +356,30 @@ export interface FileRouteTypes {
     | '/rss.xml'
     | '/sitemap.xml'
     | '/admin/leads'
+    | '/admin/login'
+    | '/admin/media'
+    | '/admin/site'
     | '/blog/$slug'
     | '/blog/{$slug}.md'
     | '/legal/cookies'
     | '/legal/privacy'
     | '/legal/terms'
+    | '/media-dev/$'
+    | '/newsletter/confirm'
     | '/products/$slug'
     | '/products/{$slug}.md'
     | '/use-cases/$slug'
     | '/use-cases/{$slug}.md'
+    | '/admin'
     | '/blog'
     | '/products'
     | '/use-cases'
+    | '/api/auth/$'
     | '/blog/category/$slug'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/about'
     | '/contact'
     | '/design-system'
@@ -303,23 +390,31 @@ export interface FileRouteTypes {
     | '/rss.xml'
     | '/sitemap.xml'
     | '/admin/leads'
+    | '/admin/login'
+    | '/admin/media'
+    | '/admin/site'
     | '/blog/$slug'
     | '/blog/{$slug}.md'
     | '/legal/cookies'
     | '/legal/privacy'
     | '/legal/terms'
+    | '/media-dev/$'
+    | '/newsletter/confirm'
     | '/products/$slug'
     | '/products/{$slug}.md'
     | '/use-cases/$slug'
     | '/use-cases/{$slug}.md'
+    | '/admin/'
     | '/blog/'
     | '/products/'
     | '/use-cases/'
+    | '/api/auth/$'
     | '/blog/category/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
   DesignSystemRoute: typeof DesignSystemRoute
@@ -329,12 +424,13 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   RssDotxmlRoute: typeof RssDotxmlRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  AdminLeadsRoute: typeof AdminLeadsRoute
   BlogSlugRoute: typeof BlogSlugRoute
   BlogChar123slugChar125DotmdRoute: typeof BlogChar123slugChar125DotmdRoute
   LegalCookiesRoute: typeof LegalCookiesRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalTermsRoute: typeof LegalTermsRoute
+  MediaDevSplatRoute: typeof MediaDevSplatRoute
+  NewsletterConfirmRoute: typeof NewsletterConfirmRoute
   ProductsSlugRoute: typeof ProductsSlugRoute
   ProductsChar123slugChar125DotmdRoute: typeof ProductsChar123slugChar125DotmdRoute
   UseCasesSlugRoute: typeof UseCasesSlugRoute
@@ -342,6 +438,7 @@ export interface RootRouteChildren {
   BlogIndexRoute: typeof BlogIndexRoute
   ProductsIndexRoute: typeof ProductsIndexRoute
   UseCasesIndexRoute: typeof UseCasesIndexRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   BlogCategorySlugRoute: typeof BlogCategorySlugRoute
 }
 
@@ -359,6 +456,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -417,12 +521,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/leads': {
       id: '/admin/leads'
-      path: '/admin/leads'
+      path: '/leads'
       fullPath: '/admin/leads'
       preLoaderRoute: typeof AdminLeadsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/media': {
+      id: '/admin/media'
+      path: '/media'
+      fullPath: '/admin/media'
+      preLoaderRoute: typeof AdminMediaRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/site': {
+      id: '/admin/site'
+      path: '/site'
+      fullPath: '/admin/site'
+      preLoaderRoute: typeof AdminSiteRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/blog/': {
       id: '/blog/'
@@ -464,6 +596,20 @@ declare module '@tanstack/react-router' {
       path: '/legal/terms'
       fullPath: '/legal/terms'
       preLoaderRoute: typeof LegalTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/media-dev/$': {
+      id: '/media-dev/$'
+      path: '/media-dev/$'
+      fullPath: '/media-dev/$'
+      preLoaderRoute: typeof MediaDevSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/newsletter/confirm': {
+      id: '/newsletter/confirm'
+      path: '/newsletter/confirm'
+      fullPath: '/newsletter/confirm'
+      preLoaderRoute: typeof NewsletterConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/products/': {
@@ -508,6 +654,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UseCasesChar123slugChar125DotmdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/category/$slug': {
       id: '/blog/category/$slug'
       path: '/blog/category/$slug'
@@ -518,8 +671,29 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteRouteChildren {
+  AdminLeadsRoute: typeof AdminLeadsRoute
+  AdminLoginRoute: typeof AdminLoginRoute
+  AdminMediaRoute: typeof AdminMediaRoute
+  AdminSiteRoute: typeof AdminSiteRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminLeadsRoute: AdminLeadsRoute,
+  AdminLoginRoute: AdminLoginRoute,
+  AdminMediaRoute: AdminMediaRoute,
+  AdminSiteRoute: AdminSiteRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
   DesignSystemRoute: DesignSystemRoute,
@@ -529,12 +703,13 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   RssDotxmlRoute: RssDotxmlRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  AdminLeadsRoute: AdminLeadsRoute,
   BlogSlugRoute: BlogSlugRoute,
   BlogChar123slugChar125DotmdRoute: BlogChar123slugChar125DotmdRoute,
   LegalCookiesRoute: LegalCookiesRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalTermsRoute: LegalTermsRoute,
+  MediaDevSplatRoute: MediaDevSplatRoute,
+  NewsletterConfirmRoute: NewsletterConfirmRoute,
   ProductsSlugRoute: ProductsSlugRoute,
   ProductsChar123slugChar125DotmdRoute: ProductsChar123slugChar125DotmdRoute,
   UseCasesSlugRoute: UseCasesSlugRoute,
@@ -542,6 +717,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogIndexRoute: BlogIndexRoute,
   ProductsIndexRoute: ProductsIndexRoute,
   UseCasesIndexRoute: UseCasesIndexRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
   BlogCategorySlugRoute: BlogCategorySlugRoute,
 }
 export const routeTree = rootRouteImport

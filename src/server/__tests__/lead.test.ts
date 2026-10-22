@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { ContactLeadSchema, NewsletterSchema } from '../schema/validation'
-import { leadRepo } from '../db/client'
 
 describe('Lead Capture Validation', () => {
   it('should accept valid enterprise demo lead input', () => {
@@ -79,43 +78,5 @@ describe('Lead Capture Validation', () => {
       product: 'printer',
     })
     expect(result.success).toBe(false)
-  })
-})
-
-describe('Lead Repository Persistence', () => {
-  it('should create and retrieve new leads', async () => {
-    const initialLeads = await leadRepo.getAllLeads()
-    const initialCount = initialLeads.length
-
-    const created = await leadRepo.createLead({
-      name: 'Test Executive',
-      email: 'test@signagenetwork.com',
-      company: 'Test Signage Network',
-      country: 'Singapore',
-      message: 'Pilot testing lead repository storage',
-      consent: true,
-      products: ['Viewixsoft CMS'],
-    })
-
-    expect(created.id).toBeDefined()
-    expect(created.name).toBe('Test Executive')
-
-    const updatedLeads = await leadRepo.getAllLeads()
-    expect(updatedLeads.length).toBe(initialCount + 1)
-  })
-
-  it('should update lead pipeline status and internal notes', async () => {
-    const leads = await leadRepo.getAllLeads()
-    const targetLead = leads[0]
-
-    const updated = await leadRepo.updateLeadStatus(
-      targetLead.id,
-      'qualified',
-      'Follow-up call completed with positive feedback.'
-    )
-
-    expect(updated).not.toBeNull()
-    expect(updated?.status).toBe('qualified')
-    expect(updated?.notes).toBe('Follow-up call completed with positive feedback.')
   })
 })

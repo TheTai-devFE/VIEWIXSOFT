@@ -10,6 +10,7 @@ import { COUNTRIES } from '~/data/countries'
 import { cn } from '~/lib/cn'
 import { ContactLeadSchema } from '~/server/schema/validation'
 import { submitLeadFn } from '~/server/functions/leads'
+import { Turnstile } from '~/components/ui/turnstile'
 
 // One schema for both variants: the extra /contact fields are optional, so the
 // quick form simply leaves them empty.
@@ -103,7 +104,10 @@ interface LeadFormProps {
 
 export function LeadForm({ variant, idPrefix, initialValues }: LeadFormProps) {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
   const [sentTo, setSentTo] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState<string | undefined>()
+  const [turnstileReset, setTurnstileReset] = useState(0)
   const isFull = variant === 'full'
   const id = (name: string) => `${idPrefix}-${name}`
 
@@ -116,14 +120,21 @@ export function LeadForm({ variant, idPrefix, initialValues }: LeadFormProps) {
     onSubmit: async ({ value }) => {
       setStatus('idle')
       try {
-        const res = await submitLeadFn({ data: { ...value, type: isFull ? 'contact' : 'demo', ...utmFromLocation() } })
-        if (!res.success) throw new Error('rejected')
-        setSentTo(value.email)
-        setStatus('success')
+        const res = await submitLeadFn({
+          data: { ...value, type: isFull ? 'contact' : 'demo', turnstileToken, ...utmFromLocation() },
+        })
+        if (res.ok) {
+          setSentTo(value.email)
+          setStatus('success')
+          return
+        }
+        setErrorMessage(res.message)
       } catch {
-        // Server details stay on the server; the visitor gets a plain retry message.
-        setStatus('error')
+        setErrorMessage("We couldn't send your request. Check your connection and try again.")
       }
+      // A Turnstile token is single-use, so get a fresh one before the next try.
+      setTurnstileReset((n) => n + 1)
+      setStatus('error')
     },
   })
 
@@ -238,7 +249,7 @@ export function LeadForm({ variant, idPrefix, initialValues }: LeadFormProps) {
 
       {status === 'error' && (
         <p role="alert" className="mb-6 rounded-xl border border-destructive/40 p-4 text-sm text-destructive">
-          We couldn't send your request. Check your connection and try again.
+          {errorMessage}
         </p>
       )}
 
@@ -387,6 +398,8 @@ export function LeadForm({ variant, idPrefix, initialValues }: LeadFormProps) {
           )
         }}
       </form.Field>
+
+      <Turnstile onToken={setTurnstileToken} resetKey={turnstileReset} />
 
       <form.Subscribe selector={(s) => s.isSubmitting}>
         {(isSubmitting) => (

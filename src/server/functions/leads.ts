@@ -1,90 +1,79 @@
 import { createServerFn } from '@tanstack/react-start'
-import { ContactLeadSchema, NewsletterSchema } from '~/server/schema/validation'
-import { leadRepo } from '~/server/db/client'
+import { z } from 'zod'
+import { PRODUCTS } from '~/content/products'
+import { sendEmail } from '~/server/email/send'
+import { leadConfirmationEmail, newsletterConfirmEmail, salesNotificationEmail } from '~/server/email/templates'
+import { getEnv, requireSecret } from '~/server/env'
+import { confirmSubscriber, countRecentLeads, insertLead, upsertSubscriber } from '~/server/leads/repository'
+import { processLead, processNewsletter } from '~/server/leads/process'
+import type { SubmitResult } from '~/server/leads/process'
+import { errorFields, logger } from '~/server/logger'
+import { hashIp, signToken, verifyToken } from '~/server/security/crypto'
+import { getClientIp, getUserAgent } from '~/server/security/request'
+import { verifyTurnstile } from '~/server/security/turnstile'
 
-// Helper to hash IP for GDPR compliance
-function hashIp(ip: string): string {
-  let hash = 0
-  for (let i = 0; i < ip.length; i++) {
-    const char = ip.charCodeAt(i)
-    hash = (hash << 5) - hash + char
-    hash |= 0
-  }
-  return 'ip_' + Math.abs(hash).toString(16)
+const NEWSLETTER_PURPOSE = 'newsletter-confirm'
+
+function context() {
+  return { ip: getClientIp(), userAgent: getUserAgent(), now: new Date() }
 }
 
+// Input is validated inside the pipeline with the shared Zod schema, so the
+// result can carry field errors instead of throwing.
 export const submitLeadFn = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => ContactLeadSchema.parse(data))
-  .handler(async ({ data }) => {
-    // 1. Anti-spam honeypot check
-    if (data.honeypot && data.honeypot.trim().length > 0) {
-      console.warn('[Anti-Spam] Honeypot triggered, dropping submission quietly.')
-      return { success: true, message: 'Your request has been received.' }
-    }
-
-    // 2. Anonymize IP
-    const clientIp = '127.0.0.1' // Server-side extracted IP in production
-    const ipHash = hashIp(clientIp)
-
-    // 3. Save lead to repository
-    const lead = await leadRepo.createLead({
-      type: data.type,
-      name: data.name,
-      email: data.email,
-      company: data.company,
-      jobTitle: data.jobTitle,
-      country: data.country,
-      phone: data.phone,
-      companySize: data.companySize,
-      screenCount: data.screenCount,
-      products: data.products,
-      message: data.message,
-      consent: data.consent,
-      utmSource: data.utmSource,
-      utmMedium: data.utmMedium,
-      utmCampaign: data.utmCampaign,
-      utmTerm: data.utmTerm,
-      utmContent: data.utmContent,
-      referrer: data.referrer,
-      landingPage: data.landingPage,
-      ipHash,
-      userAgent: 'Web Client',
-      status: 'new',
+  .validator((data: unknown) => data)
+  .handler(async ({ data }): Promise<SubmitResult> => {
+    const env = getEnv()
+    const production = env.NODE_ENV === 'production'
+    const result = await processLead(data, context(), {
+      verifyCaptcha: (token, ip) => verifyTurnstile(token, ip, env.TURNSTILE_SECRET_KEY, production),
+      hashIp: (ip) => hashIp(ip, requireSecret('IP_HASH_SALT')),
+      countRecent: countRecentLeads,
+      insertLead,
+      notify: async (lead, id) => {
+        const sales = salesNotificationEmail(lead, { adminUrl: `${env.SITE_URL}/admin/leads?lead=${id}` })
+        const visitor = leadConfirmationEmail(lead)
+        await Promise.all([
+          sendEmail({ to: env.SALES_NOTIFICATION_EMAIL, replyTo: lead.email, tag: 'lead.sales', ...sales }),
+          sendEmail({ to: lead.email, replyTo: env.SALES_NOTIFICATION_EMAIL, tag: 'lead.confirmation', ...visitor }),
+        ])
+      },
+      onEmailError: (error) => logger.error('lead.email_failed', errorFields(error)),
     })
-
-    // 4. Trigger Email notification (Mock/Console log for Resend in dev)
-    console.info('[Email Notification - Resend Mock]')
-    console.info(`-> To Sales (sales@viewixsoft.com): New Lead from ${lead.name} (${lead.company}) — ${lead.products?.join(', ')}`)
-    console.info(`-> To User (${lead.email}): Thank you for requesting a Viewixsoft demo. Our team will contact you within 2 hours.`)
-
-    return {
-      success: true,
-      leadId: lead.id,
-      message: 'Thank you! Your demo request has been received. Our solutions team will reach out within 2 hours.',
-    }
+    logger.info('lead.submitted', { ok: result.ok, error: result.ok ? undefined : result.error })
+    return result
   })
 
 export const subscribeNewsletterFn = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => NewsletterSchema.parse(data))
-  .handler(async ({ data }) => {
-    await leadRepo.createLead({
-      type: 'newsletter',
-      name: 'Newsletter Subscriber',
-      email: data.email,
-      company: 'N/A',
-      country: 'Global',
-      message: data.product ? `Launch notification: ${data.product}` : 'Newsletter subscription',
-      consent: data.consent,
-      status: 'new',
-      products: data.product ? [data.product] : [],
+  .validator((data: unknown) => data)
+  .handler(async ({ data }): Promise<SubmitResult> => {
+    const env = getEnv()
+    const result = await processNewsletter(data, context(), {
+      verifyCaptcha: (token, ip) => verifyTurnstile(token, ip, env.TURNSTILE_SECRET_KEY, env.NODE_ENV === 'production'),
+      upsertSubscriber,
+      sendConfirmation: async (email, topic) => {
+        const token = await signToken(requireSecret('BETTER_AUTH_SECRET'), NEWSLETTER_PURPOSE, email)
+        const url = `${env.SITE_URL}/newsletter/confirm?email=${encodeURIComponent(email)}&token=${token}`
+        const productName = PRODUCTS.find((p) => p.slug === topic)?.name
+        await sendEmail({ to: email, tag: 'newsletter.confirm', ...newsletterConfirmEmail(url, productName) })
+      },
+      onEmailError: (error) => logger.error('newsletter.email_failed', errorFields(error)),
     })
+    logger.info('newsletter.submitted', { ok: result.ok, error: result.ok ? undefined : result.error })
+    return result
+  })
 
-    // No email address in logs (PII).
-    console.info(`[Newsletter] New ${data.product ? `launch notification (${data.product})` : 'subscriber'}`)
-    return {
-      success: true,
-      message: data.product
-        ? 'Thanks. We will email you when it launches.'
-        : 'You have been subscribed to Viewixsoft updates.',
+const ConfirmSchema = z.object({ email: z.string().email().max(254), token: z.string().min(10).max(200) })
+
+export const confirmNewsletterFn = createServerFn({ method: 'POST' })
+  .validator((data: unknown) => ConfirmSchema.parse(data))
+  .handler(async ({ data }) => {
+    try {
+      const valid = await verifyToken(requireSecret('BETTER_AUTH_SECRET'), NEWSLETTER_PURPOSE, data.email, data.token)
+      if (!valid) return { ok: false as const }
+      return { ok: await confirmSubscriber(data.email) }
+    } catch (error) {
+      logger.error('newsletter.confirm_failed', errorFields(error))
+      return { ok: false as const }
     }
   })

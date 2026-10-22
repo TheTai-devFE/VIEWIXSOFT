@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Worker settings. `pnpm build` merges this into .output/server/wrangler.json
+  // and points `wrangler dev` / `wrangler deploy` at it. Secrets are set with
+  // `wrangler secret put`, never here.
+  "name": "viewixsoft",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".output/public",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "NODE_ENV": "production",
+    "SITE_URL": "https://viewixsoft.com",
+    "BETTER_AUTH_URL": "https://viewixsoft.com",
+    "EMAIL_FROM": "Viewixsoft <hello@viewixsoft.com>",
+    "SALES_NOTIFICATION_EMAIL": "sales@viewix.hk",
+    "R2_BUCKET": "viewixsoft-media",
+    "R2_PUBLIC_URL": "https://media.viewixsoft.com"
+  }
+}

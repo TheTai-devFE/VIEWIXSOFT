@@ -8,24 +8,33 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "start": "node .output/server/index.mjs"
+    "start": "node .output/server/index.mjs",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "admin:create": "node --env-file-if-exists=.env scripts/create-admin.mjs",
+    "cf:preview": "pnpm build && wrangler dev",
+    "cf:deploy": "pnpm build && wrangler deploy"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
     "@tanstack/react-form": "^1.33.5",
     "@tanstack/react-query": "^5.104.2",
     "@tanstack/react-router": "^1.170.44",
     "@tanstack/react-start": "^1.169.2",
     "@tanstack/react-table": "^8.21.3",
+    "aws4fetch": "^1.0.20",
+    "better-auth": "^1.7.12",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "drizzle-orm": "^0.39.3",
+    "drizzle-orm": "^0.45.4",
     "lucide-react": "^1.57.0",
     "motion": "^14.2.0",
     "radix-ui": "^1.8.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.0.2",
-    "zod": "^3.24.2"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.9",
@@ -33,17 +42,13 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^6.1.2",
-    "drizzle-kit": "^0.30.6",
+    "drizzle-kit": "^0.31.11",
     "nitro": "3.0.260903-beta",
     "shadcn": "^4.21.5",
     "tailwindcss": "^4.0.9",
     "typescript": "^5.7.3",
     "vite": "^8.3.4",
-    "vitest": "^5.0.4"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
+    "vitest": "^5.0.4",
+    "wrangler": "^4.151.3"
   }
 }
