@@ -22,6 +22,8 @@ export interface AdminNavItem {
     | '/admin/media'
   label: string
   icon: LucideIcon
+  /** Rendered as the collapsible list of every page instead of a single link. */
+  tree?: 'pages'
 }
 
 /** Sidebar modules, grouped. Order here is the order in the sidebar. */
@@ -37,8 +39,8 @@ export const ADMIN_NAV: { group: string; items: AdminNavItem[] }[] = [
   {
     group: 'Website',
     items: [
-      { to: '/admin/pages', label: 'Pages & sections', icon: PanelsTopLeft },
-      { to: '/admin/products', label: 'Products', icon: Package },
+      { to: '/admin/pages', label: 'Pages', icon: PanelsTopLeft, tree: 'pages' },
+      { to: '/admin/products', label: 'Product status', icon: Package },
       { to: '/admin/stats', label: 'Home stats', icon: BarChart3 },
       { to: '/admin/testimonials', label: 'Customer quotes', icon: Quote },
     ],

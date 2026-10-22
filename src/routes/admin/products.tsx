@@ -12,7 +12,7 @@ function ProductsModule() {
   const data = Route.useLoaderData()
   return (
     <>
-      <AdminPageHeader title="Products" description="Release state of each product. Only mark one available once it can be bought." />
+      <AdminPageHeader title="Product status" description="Release state of each product. Only mark one available once it can be bought." />
       {data.ok ? (
         <ProductsEditor saved={data.products} />
       ) : (

@@ -2,6 +2,7 @@ import { Link, useRouter, useRouterState } from '@tanstack/react-router'
 import { Loader2, LogOut } from 'lucide-react'
 import { useState } from 'react'
 import { ADMIN_NAV } from '~/components/admin/admin-nav'
+import { PagesNavTree } from '~/components/admin/PagesNavTree'
 import { ViewixLogo } from '~/components/blocks/ViewixLogo'
 import { AnimatedThemeToggler } from '~/components/ui/animated-theme-toggler'
 import type { AdminTheme } from '~/hooks/use-admin-theme'
@@ -52,7 +53,10 @@ export function AdminSidebar({ email, theme, onThemeChange, onNavigate }: Props)
               {section.group}
             </p>
             <ul className="space-y-0.5">
-              {section.items.map(({ to, label, icon: Icon }) => (
+              {section.items.map(({ to, label, icon: Icon, tree }) =>
+                tree === 'pages' ? (
+                  <PagesNavTree key={to} onNavigate={onNavigate} isPending={isPending} />
+                ) : (
                 <li key={to}>
                   <Link
                     to={to}
@@ -72,7 +76,8 @@ export function AdminSidebar({ email, theme, onThemeChange, onNavigate }: Props)
                     {label}
                   </Link>
                 </li>
-              ))}
+                ),
+              )}
             </ul>
           </div>
         ))}
