@@ -1,7 +1,10 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
 import { AdminPageHeader, LoadError, Panel } from '~/components/admin/admin-ui'
+import { PageContentEditor } from '~/components/admin/PageContentEditor'
 import { SectionsEditor } from '~/components/admin/SectionsEditor'
+import { pageDefaults } from '~/data/page-content'
+import { useSiteConfig } from '~/lib/use-site-config'
 import { findAdminPage, pagesSharingSections } from '~/data/admin-pages'
 import { getSiteAdminDataFn } from '~/server/functions/site-admin'
 
@@ -17,12 +20,16 @@ export const Route = createFileRoute('/admin/pages/$page')({
 function PageEditor() {
   const { page, group, settings } = Route.useLoaderData()
   const shared = pagesSharingSections(page)
+  const config = useSiteConfig()
+  // Product defaults depend on the product's current release status.
+  const defaults = pageDefaults(page.key, config.products)
+  const saved = settings.ok ? settings.pages.find((p) => p.key === page.key) : undefined
 
   return (
     <>
       <AdminPageHeader
         title={page.label}
-        description={`${group.label} page`}
+        description={`${group.label} · ${page.path}`}
         actions={
           <a
             href={page.path}
@@ -38,6 +45,11 @@ function PageEditor() {
       />
 
       <div className="space-y-6">
+        {defaults && settings.ok && (
+          // Keyed so moving between pages starts from that page's saved text.
+          <PageContentEditor key={page.key} page={page} defaults={defaults} saved={saved} />
+        )}
+
         {page.sections ? (
           <>
             {shared.length > 0 && (
@@ -58,12 +70,6 @@ function PageEditor() {
             <p className="text-sm text-muted-foreground">This page has no sections that can be shown, hidden or reordered yet.</p>
           </Panel>
         )}
-
-        <Panel title="Hero and search appearance">
-          <p className="text-sm text-muted-foreground">
-            Next step: edit this page's heading and intro text, and the title and description shown in Google.
-          </p>
-        </Panel>
       </div>
     </>
   )

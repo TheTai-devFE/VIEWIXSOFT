@@ -1,7 +1,10 @@
 import { Fragment } from 'react'
 import { createFileRoute, notFound, Link } from '@tanstack/react-router'
 import { PRODUCTS } from '~/content/products'
-import { productSeo } from '~/lib/seo/page-seo'
+import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
+import { usePageContent } from '~/lib/use-page-content'
+import { HeroTitle } from '~/components/ui/hero-heading'
+import type { PageHero } from '~/data/page-content'
 import { orderSections, productStatus } from '~/lib/site-config'
 import { useSiteConfig } from '~/lib/use-site-config'
 import { getSiteConfigFn } from '~/server/functions/site'
@@ -31,12 +34,12 @@ export const Route = createFileRoute('/products/$slug')({
     if (status === 'hidden') throw notFound()
     return { product: { ...base, status } }
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches }) => {
     if (!loaderData?.product) return {}
     const p = loaderData.product
     const comingSoon = p.status === 'coming-soon'
     const seo = generateMetaTags({
-      ...productSeo(p),
+      ...pageContent(siteConfigFromMatches(matches), `product-${p.slug}`).seo,
       canonicalUrl: `/products/${p.slug}`,
       markdownPath: `/products/${p.slug}.md`,
     })
@@ -84,7 +87,9 @@ export const Route = createFileRoute('/products/$slug')({
 function ProductDetailPage() {
   const { product } = Route.useLoaderData()
   const config = useSiteConfig()
-  if (product.status === 'coming-soon') return <ProductComingSoon product={product} />
+  // Hero text is editable in /admin/pages/product-<slug>.
+  const { hero } = usePageContent(`product-${product.slug}`)
+  if (product.status === 'coming-soon') return <ProductComingSoon product={product} hero={hero} />
 
   const specs = (
     <section aria-labelledby="specs-title" className="space-y-8">
@@ -156,7 +161,7 @@ function ProductDetailPage() {
   const sections =
     product.slug === 'cms'
       ? orderSections(config, 'product-cms', {
-          why: <WhyChooseSection embedded headingLevel="h1" />,
+          why: <WhyChooseSection embedded headingLevel="h1" hero={hero} />,
           capabilities: <CmsCapabilitiesSection />,
           screens: <ScreenBandSection />,
           specs,
@@ -165,7 +170,7 @@ function ProductDetailPage() {
           faq,
         })
       : [
-          { key: 'hero', node: <ProductHero product={product} /> },
+          { key: 'hero', node: <ProductHero product={product} hero={hero} /> },
           {
             key: 'features',
             node: (
@@ -212,7 +217,7 @@ function ProductDetailPage() {
   )
 }
 
-function ProductHero({ product }: { product: Product }) {
+function ProductHero({ product, hero }: { product: Product; hero: PageHero }) {
   const getIcon = (slug: string) => {
     switch (slug) {
       case 'cms': return <Monitor className="w-10 h-10 text-signal-400" />
@@ -226,15 +231,15 @@ function ProductHero({ product }: { product: Product }) {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
       <div className="lg:col-span-7 space-y-6">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-signal-500/10 border border-signal-500/20 text-xs font-mono text-signal-400 font-medium">
-          <span>{product.heroBadge}</span>
+          <span>{hero.eyebrow ?? product.heroBadge}</span>
         </div>
 
         <h1 className="text-4xl sm:text-6xl font-black text-ink-50 tracking-tight leading-tight">
-          {product.name}
+          <HeroTitle hero={hero} />
         </h1>
 
         <p className="text-xl text-ink-200 font-medium">
-          {product.tagline}
+          {hero.description ?? product.tagline}
         </p>
 
         <p className="text-base text-ink-400 leading-relaxed">

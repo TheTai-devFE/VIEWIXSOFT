@@ -1,11 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
+import { usePageContent } from '~/lib/use-page-content'
 import { generateMetaTags } from '~/lib/seo/meta'
 
 export const Route = createFileRoute('/legal/terms')({
-  head: () => {
+  head: ({ matches }) => {
     const seo = generateMetaTags({
-      title: 'Terms of Service — Viewixsoft',
-      description: 'Terms and conditions governing the use of Viewixsoft digital signage platform and software licenses.',
+      ...pageContent(siteConfigFromMatches(matches), 'legal-terms').seo,
       canonicalUrl: '/legal/terms',
     })
     return {
@@ -17,11 +18,12 @@ export const Route = createFileRoute('/legal/terms')({
 })
 
 function TermsPage() {
+  const { hero } = usePageContent('legal-terms')
   return (
     <div className="py-16 md:py-24 max-w-4xl mx-auto px-4 sm:px-6 space-y-12">
       <div className="space-y-4 border-b border-ink-800 pb-8">
-        <h1 className="text-3xl sm:text-5xl font-black text-ink-50">Terms of Service</h1>
-        <p className="text-ink-400 text-sm">Effective as of October 2026</p>
+        <h1 className="text-3xl sm:text-5xl font-black text-ink-50">{hero.title}</h1>
+        {hero.description && <p className="text-ink-400 text-sm">{hero.description}</p>}
       </div>
 
       <div className="prose prose-invert prose-cyan max-w-none space-y-6 text-ink-300 text-sm leading-relaxed">

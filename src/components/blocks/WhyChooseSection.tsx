@@ -2,6 +2,9 @@ import { LazyMotion, domAnimation, m, useReducedMotion } from 'motion/react'
 import { CalendarClock, ChartColumn, ImageUp, MapPin, MonitorSmartphone } from 'lucide-react'
 import { ViewixLogo } from '~/components/blocks/ViewixLogo'
 import { cn } from '~/lib/cn'
+import { HeroTitle } from '~/components/ui/hero-heading'
+import { pageDefaults } from '~/data/page-content'
+import type { PageHero } from '~/data/page-content'
 import type { LucideIcon } from 'lucide-react'
 
 type OrbitItem = { label: string; icon: LucideIcon }
@@ -30,10 +33,13 @@ const OUTER_SPIN_S = 60
 export function WhyChooseSection({
   embedded = false,
   headingLevel = 'h2',
+  hero = pageDefaults('product-cms')?.hero,
 }: {
   embedded?: boolean
   // h1 where this section opens the page, as on /products/cms.
   headingLevel?: 'h1' | 'h2'
+  /** Heading text; on /products/cms it comes from /admin/pages/product-cms. */
+  hero?: PageHero
 }) {
   const Heading = headingLevel
   return (
@@ -48,18 +54,14 @@ export function WhyChooseSection({
         )}
       >
         <div>
-          <p className="eyebrow">Viewixsoft CMS</p>
+          {hero?.eyebrow && <p className="eyebrow">{hero.eyebrow}</p>}
           <Heading
             id="why-title"
             className="mt-3 font-display text-4xl font-semibold tracking-tight text-balance text-ink-50 sm:text-6xl"
           >
-            Why choose <span className="text-brand-gradient">Viewixsoft CMS?</span>
+            {hero && <HeroTitle hero={hero} />}
           </Heading>
-          <p className="mt-6 max-w-xl text-lg text-pretty text-ink-400">
-            Viewixsoft CMS runs every advertising screen from one cloud dashboard. Connect your devices, upload media,
-            schedule content by time and location, check analytics and see where every screen is, without visiting a
-            single site.
-          </p>
+          {hero?.description && <p className="mt-6 max-w-xl text-lg text-pretty text-ink-400">{hero.description}</p>}
           <ul className="mt-8 flex flex-wrap gap-2">
             {TAGS.map((t) => (
               <li

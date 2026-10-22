@@ -3,6 +3,8 @@ import { PRODUCTS } from '~/content/products'
 import { METRIC_DEFS, SECTION_PAGES, SECTION_PAGE_KEYS } from '~/data/site-sections'
 import type { SectionPage } from '~/data/site-sections'
 import { PRODUCT_STATUSES } from '~/lib/enums'
+import { ADMIN_PAGES } from '~/data/admin-pages'
+import { buildTitle, DESCRIPTION_MAX, TITLE_MAX } from '~/lib/seo/meta'
 
 /** Shared by the /admin/site forms and the server functions that save them. */
 
@@ -93,3 +95,34 @@ export const TestimonialSchema = z.object({
 
 export type MetricInput = z.input<typeof MetricSchema>
 export type TestimonialInput = z.input<typeof TestimonialSchema>
+
+/** Optional text field: trimmed, empty means "use the default" (stored as null). */
+function overrideText(max: number, min = 1) {
+  return z
+    .string()
+    .max(max, `Keep it under ${max} characters`)
+    .transform((v) => v.trim())
+    .refine((v) => v === '' || v.length >= min, `Use at least ${min} characters, or leave it empty`)
+    .refine((v) => !/[<>]/.test(v), 'Remove < and >; HTML is not allowed')
+    // Any spelling other than the exact brand ("viewixsoft", "ViewixSoft"…) is rejected.
+    .refine((v) => !/viewixsoft/i.test(v.replace(/Viewixsoft/g, '')), 'Write the brand as "Viewixsoft"')
+    .transform((v) => (v === '' ? null : v))
+}
+
+const pageKeys = ADMIN_PAGES.map((p) => p.key) as [string, ...string[]]
+
+/** Hero and search snippet overrides for one page (see src/data/page-content.ts). */
+export const PageOverrideSchema = z.object({
+  key: z.enum(pageKeys),
+  heroEyebrow: overrideText(40),
+  heroTitle: overrideText(120, 3),
+  heroHighlight: overrideText(80),
+  heroDescription: overrideText(400, 10),
+  seoTitle: overrideText(120, 10).refine(
+    (v) => v === null || buildTitle(v).length <= TITLE_MAX,
+    `With " — Viewixsoft" added the title must fit in ${TITLE_MAX} characters`,
+  ),
+  seoDescription: overrideText(DESCRIPTION_MAX, 50),
+})
+
+export type PageOverrideInput = z.input<typeof PageOverrideSchema>

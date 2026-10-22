@@ -2,10 +2,13 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowRight, Bell, Check } from 'lucide-react'
 import { PRODUCT_ONE_LINERS } from '~/content/products'
 import { useProducts } from '~/lib/use-site-config'
+import { usePageContent } from '~/lib/use-page-content'
+import { HeroTitle } from '~/components/ui/hero-heading'
 import type { Product } from '~/content/products'
 import { Breadcrumbs } from '~/components/layout/Breadcrumbs'
 import { CtaBand } from '~/components/blocks/CtaBand'
 import { TERM_PLANS, formatUsd } from '~/data/pricing'
+import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { getBreadcrumbSchema } from '~/lib/seo/jsonld'
 
@@ -15,11 +18,9 @@ const BREADCRUMBS = [
 ]
 
 export const Route = createFileRoute('/products/')({
-  head: () => {
+  head: ({ matches }) => {
     const seo = generateMetaTags({
-      title: 'Digital Signage Software Products',
-      description:
-        'Viewixsoft CMS is available now for managing content on advertising screens. Viewixsoft POS, Tracking and NFC are coming soon and connect to the same CMS.',
+      ...pageContent(siteConfigFromMatches(matches), 'products').seo,
       canonicalUrl: '/products',
     })
     return {
@@ -33,6 +34,7 @@ export const Route = createFileRoute('/products/')({
 
 function ProductsIndexPage() {
   const products = useProducts()
+  const { hero } = usePageContent('products')
   const available = products.filter((p) => p.status === 'available')
   const upcoming = products.filter((p) => p.status === 'coming-soon')
 
@@ -41,14 +43,11 @@ function ProductsIndexPage() {
       <div className="space-y-8">
         <Breadcrumbs items={BREADCRUMBS} />
         <header className="max-w-3xl">
-          <p className="eyebrow">Products</p>
+          {hero.eyebrow && <p className="eyebrow">{hero.eyebrow}</p>}
           <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight text-balance text-ink-50 sm:text-5xl">
-            Which Viewixsoft products can you use?
+            <HeroTitle hero={hero} />
           </h1>
-          <p className="mt-5 text-lg text-pretty text-ink-400">
-            Viewixsoft CMS is available today: it puts content on your advertising screens and lets you manage them
-            from one cloud dashboard. Viewixsoft POS, Tracking and NFC are coming soon and will plug into the same CMS.
-          </p>
+          {hero.description && <p className="mt-5 text-lg text-pretty text-ink-400">{hero.description}</p>}
         </header>
       </div>
 

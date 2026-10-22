@@ -3,6 +3,8 @@ import { ArrowRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from '~/components/ui/button'
 import { cn } from '~/lib/cn'
+import { HeroTitle } from '~/components/ui/hero-heading'
+import type { PageHero } from '~/data/page-content'
 
 export type AvatarList = {
   image: string
@@ -18,28 +20,26 @@ type HeroSectionProps = {
   // Decorative layer painted behind the content (e.g. a particle canvas).
   background?: ReactNode
   className?: string
+  hero: PageHero
 }
 
-export function HeroSection({ avatarList = [], socialProof, headingLevel = 'h1', background, className }: HeroSectionProps) {
+export function HeroSection({ avatarList = [], socialProof, headingLevel = 'h1', background, className, hero }: HeroSectionProps) {
   const Heading = headingLevel
 
   return (
     <section aria-labelledby="hero-01-title" className={cn('relative isolate overflow-hidden bg-background', className)}>
       {background}
       <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center gap-8 px-4 py-20 text-center sm:px-6 md:py-28 lg:px-8">
-        <p className="eyebrow">Digital signage software</p>
+        {hero.eyebrow && <p className="eyebrow">{hero.eyebrow}</p>}
 
         <Heading
           id="hero-01-title"
           className="text-hero font-display font-bold tracking-tight text-balance text-foreground"
         >
-          Run every advertising screen <span className="text-brand-gradient">from one cloud platform</span>
+          <HeroTitle hero={hero} />
         </Heading>
 
-        <p className="max-w-2xl text-lg text-pretty text-muted-foreground">
-          Viewixsoft is digital signage software that schedules content, syncs POS menus, tracks proof-of-play and adds
-          NFC tap-to-interact on any screen.
-        </p>
+        {hero.description && <p className="max-w-2xl text-lg text-pretty text-muted-foreground">{hero.description}</p>}
 
         <div className="flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row">
           <Button asChild size="lg" className="w-full sm:w-auto">

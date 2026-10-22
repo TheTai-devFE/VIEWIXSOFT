@@ -2,6 +2,9 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { z } from 'zod'
 import { USE_CASES } from '~/content/useCases'
 import { imageUrl, useMedia } from '~/lib/use-media'
+import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
+import { usePageContent } from '~/lib/use-page-content'
+import { HeroTitle } from '~/components/ui/hero-heading'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { getBreadcrumbSchema } from '~/lib/seo/jsonld'
 import { cn } from '~/lib/cn'
@@ -16,10 +19,9 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute('/use-cases/')({
   validateSearch: searchSchema,
-  head: () => {
+  head: ({ matches }) => {
     const seo = generateMetaTags({
-      title: 'Digital Signage Use Cases by Industry — Viewixsoft',
-      description: 'Discover how Viewixsoft powers retail stores, QSR menu boards, corporate campuses, airports, and DOOH billboard networks.',
+      ...pageContent(siteConfigFromMatches(matches), 'use-cases').seo,
       canonicalUrl: '/use-cases',
     })
     return {
@@ -62,16 +64,17 @@ function FilterChip({ active, industry, children }: { active: boolean; industry?
 function UseCasesIndexPage() {
   const { industry } = Route.useSearch()
   const active = INDUSTRIES.find((i) => i.slug === industry)
+  const { hero } = usePageContent('use-cases')
   const useCases = active ? USE_CASES.filter((u) => u.industry === active.name) : USE_CASES
 
   return (
     <div className="mx-auto max-w-7xl space-y-12 px-4 py-16 sm:px-6 md:py-24 lg:px-8">
       <header className="max-w-3xl space-y-4">
-        <h1 className="text-hero font-bold tracking-tight text-ink-50">Digital signage use cases by industry</h1>
-        <p className="text-pretty text-lg leading-relaxed text-ink-300">
-          See how Viewixsoft software runs screens in stores, restaurants, offices, transit hubs, hotels and
-          out-of-home networks: the challenge, the setup and the results.
-        </p>
+        {hero.eyebrow && <p className="eyebrow">{hero.eyebrow}</p>}
+        <h1 className="text-hero font-bold tracking-tight text-ink-50">
+          <HeroTitle hero={hero} />
+        </h1>
+        {hero.description && <p className="text-pretty text-lg leading-relaxed text-ink-300">{hero.description}</p>}
       </header>
 
       <nav aria-label="Filter by industry" className="flex flex-wrap gap-3">

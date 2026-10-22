@@ -4,6 +4,7 @@ import type { Product } from '~/content/products'
 import { SECTION_PAGES } from '~/data/site-sections'
 import type { SectionKey, SectionPage } from '~/data/site-sections'
 import type { ProductStatus } from '~/lib/enums'
+import type { PageOverride } from '~/data/page-content'
 
 /**
  * Admin-editable site settings, loaded once per request in the root route.
@@ -47,9 +48,18 @@ export interface SiteConfig {
   metrics: PublicMetric[]
   testimonials: PublicTestimonial[]
   media: Record<string, MediaOverride>
+  /** Hero and SEO overrides per /admin/pages key. */
+  pages: Record<string, PageOverride>
 }
 
-export const DEFAULT_SITE_CONFIG: SiteConfig = { sections: {}, products: {}, metrics: [], testimonials: [], media: {} }
+export const DEFAULT_SITE_CONFIG: SiteConfig = {
+  sections: {},
+  products: {},
+  metrics: [],
+  testimonials: [],
+  media: {},
+  pages: {},
+}
 
 /**
  * Sample content (placeholder stats, quotes, results) renders only in the dev

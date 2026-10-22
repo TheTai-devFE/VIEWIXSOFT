@@ -215,6 +215,26 @@ export const mediaSlots = pgTable('media_slots', {
     .$onUpdate(() => new Date()),
 })
 
+/**
+ * Admin overrides of a page's hero text and search snippet, keyed like
+ * /admin/pages/<key>. Null or empty fields fall back to src/data/page-content.ts.
+ */
+export const pageOverrides = pgTable('page_overrides', {
+  key: text('key').primaryKey(),
+  seoTitle: text('seo_title'),
+  seoDescription: text('seo_description'),
+  heroEyebrow: text('hero_eyebrow'),
+  heroTitle: text('hero_title'),
+  heroHighlight: text('hero_highlight'),
+  heroDescription: text('hero_description'),
+  updatedBy: text('updated_by'),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+})
+
+export type PageOverrideRow = typeof pageOverrides.$inferSelect
 export type Testimonial = typeof testimonials.$inferSelect
 export type SiteMetric = typeof siteMetrics.$inferSelect
 export type MediaSlotRow = typeof mediaSlots.$inferSelect

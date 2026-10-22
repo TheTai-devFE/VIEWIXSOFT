@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
+import { usePageContent } from '~/lib/use-page-content'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { ShieldCheck } from 'lucide-react'
 
 export const Route = createFileRoute('/legal/privacy')({
-  head: () => {
+  head: ({ matches }) => {
     const seo = generateMetaTags({
-      title: 'Privacy Policy',
-      description: 'Viewixsoft privacy commitments: edge data processing, strict no-facial-recognition guarantees, and GDPR/CCPA data subject rights.',
+      ...pageContent(siteConfigFromMatches(matches), 'legal-privacy').seo,
       canonicalUrl: '/legal/privacy',
     })
     return {
@@ -18,6 +19,7 @@ export const Route = createFileRoute('/legal/privacy')({
 })
 
 function PrivacyPage() {
+  const { hero } = usePageContent('legal-privacy')
   return (
     <div className="py-16 md:py-24 max-w-4xl mx-auto px-4 sm:px-6 space-y-12">
       <div className="space-y-4 border-b border-ink-800 pb-8">
@@ -25,10 +27,8 @@ function PrivacyPage() {
           <ShieldCheck className="w-4 h-4" />
           <span>Last Updated: October 2026</span>
         </div>
-        <h1 className="text-3xl sm:text-5xl font-black text-ink-50">Privacy Policy</h1>
-        <p className="text-ink-400 text-sm">
-          How Viewixsoft collects, processes, and protects enterprise customer and website visitor information.
-        </p>
+        <h1 className="text-3xl sm:text-5xl font-black text-ink-50">{hero.title}</h1>
+        {hero.description && <p className="text-ink-400 text-sm">{hero.description}</p>}
       </div>
 
       <div className="prose prose-invert prose-cyan max-w-none space-y-6 text-ink-300 text-sm leading-relaxed">

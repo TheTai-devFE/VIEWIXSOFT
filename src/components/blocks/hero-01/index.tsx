@@ -5,6 +5,7 @@ import type { NavigationSection } from './header'
 import { HeroSection } from './hero'
 import { ParticlesBackground } from './particles-background'
 import { PARTNERS } from '~/data/partners'
+import { usePageContent } from '~/lib/use-page-content'
 
 const NAVIGATION: NavigationSection[] = [
   { title: 'Products', to: '/products' },
@@ -33,11 +34,14 @@ type HeroOneProps = {
 
 export function HeroOne({ headingLevel, showHeader = true, underFixedHeader = false }: HeroOneProps) {
   const partners = partnerLogos()
+  // Text is editable in /admin/pages/home.
+  const { hero } = usePageContent('home')
   return (
     <div className="relative">
       {showHeader && <HeroHeader navigationData={NAVIGATION} />}
       <HeroSection
         headingLevel={headingLevel}
+        hero={hero}
         background={<ParticlesBackground />}
         className={underFixedHeader ? '-mt-16 pt-16' : undefined}
       />

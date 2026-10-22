@@ -5,7 +5,9 @@ import { USE_CASES } from '~/content/useCases'
 import { useProducts, useSiteConfig } from '~/lib/use-site-config'
 import { Breadcrumbs } from '~/components/layout/Breadcrumbs'
 import { generateMetaTags, SITE_URL } from '~/lib/seo/meta'
-import { useCaseSeo } from '~/lib/seo/page-seo'
+import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
+import { usePageContent } from '~/lib/use-page-content'
+import { HeroTitle } from '~/components/ui/hero-heading'
 import { getArticleSchema, getBreadcrumbSchema } from '~/lib/seo/jsonld'
 import { CtaBand } from '~/components/blocks/CtaBand'
 import { 
@@ -30,11 +32,11 @@ export const Route = createFileRoute('/use-cases/$slug')({
       },
     }
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches }) => {
     if (!loaderData?.useCase) return {}
     const uc = loaderData.useCase
     const seo = generateMetaTags({
-      ...useCaseSeo(uc),
+      ...pageContent(siteConfigFromMatches(matches), `use-case-${uc.slug}`).seo,
       canonicalUrl: `/use-cases/${uc.slug}`,
       ogType: 'article',
       ogImage: `${SITE_URL}${uc.cover.src}`,
@@ -79,6 +81,8 @@ function UseCaseDetailPage() {
   const { useCase } = Route.useLoaderData()
   const config = useSiteConfig()
   const products = useProducts()
+  // Hero text is editable in /admin/pages/use-case-<slug>.
+  const { hero } = usePageContent(`use-case-${useCase.slug}`)
   const sections = orderSections(config, 'use-case', {
     results: useCase.results.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -182,14 +186,12 @@ function UseCaseDetailPage() {
       {/* Header */}
       <div className="max-w-4xl space-y-4">
         <span className="px-3 py-1 rounded-full bg-signal-950/60 border border-signal-800/40 text-xs font-mono text-signal-400 font-semibold">
-          {useCase.industry} use case
+          {hero.eyebrow ?? `${useCase.industry} use case`}
         </span>
         <h1 className="text-4xl sm:text-6xl font-black text-ink-50 tracking-tight leading-tight">
-          {useCase.title}
+          <HeroTitle hero={hero} />
         </h1>
-        <p className="text-xl text-ink-300 leading-relaxed font-medium">
-          {useCase.tagline}
-        </p>
+        {hero.description && <p className="text-xl text-ink-300 leading-relaxed font-medium">{hero.description}</p>}
       </div>
 
       {sections.map((s) => (

@@ -2,19 +2,26 @@ import '@tanstack/react-start/server-only'
 import { asc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDb } from '~/server/db/client'
-import { productSettings, sectionSettings, siteMetrics, testimonials } from '~/server/db/schema'
+import { pageOverrides, productSettings, sectionSettings, siteMetrics, testimonials } from '~/server/db/schema'
 import { SECTION_PAGES } from '~/data/site-sections'
-import type { MetricSchema, SaveProductStatusSchema, SaveSectionsSchema, TestimonialSchema } from '~/lib/admin-schemas'
+import type {
+  MetricSchema,
+  PageOverrideSchema,
+  SaveProductStatusSchema,
+  SaveSectionsSchema,
+  TestimonialSchema,
+} from '~/lib/admin-schemas'
 
 export async function readAdminSiteData() {
   const db = getDb()
-  const [sections, products, metrics, quotes] = await Promise.all([
+  const [sections, products, metrics, quotes, pages] = await Promise.all([
     db.select().from(sectionSettings),
     db.select().from(productSettings),
     db.select().from(siteMetrics),
     db.select().from(testimonials).orderBy(asc(testimonials.sortOrder), asc(testimonials.createdAt)),
+    db.select().from(pageOverrides),
   ])
-  return { sections, products, metrics, testimonials: quotes }
+  return { sections, products, metrics, testimonials: quotes, pages }
 }
 
 export async function saveSections(input: z.output<typeof SaveSectionsSchema>, by: string) {
@@ -78,4 +85,20 @@ export async function saveTestimonial(input: z.output<typeof TestimonialSchema>)
 
 export async function deleteTestimonial(id: string) {
   await getDb().delete(testimonials).where(eq(testimonials.id, id))
+}
+
+/** Saves a page's overrides; a page with every field empty is removed instead. */
+export async function savePageOverride(input: z.output<typeof PageOverrideSchema>, by: string) {
+  const { key, ...fields } = input
+  const db = getDb()
+  if (Object.values(fields).every((v) => v === null)) {
+    await db.delete(pageOverrides).where(eq(pageOverrides.key, key))
+    return
+  }
+  const values = { ...fields, updatedBy: by }
+  await db.insert(pageOverrides).values({ key, ...values }).onConflictDoUpdate({ target: pageOverrides.key, set: values })
+}
+
+export async function deletePageOverride(key: string) {
+  await getDb().delete(pageOverrides).where(eq(pageOverrides.key, key))
 }

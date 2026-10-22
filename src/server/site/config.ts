@@ -1,7 +1,7 @@
 import '@tanstack/react-start/server-only'
 import { asc, eq } from 'drizzle-orm'
 import { getDb, hasDatabase } from '~/server/db/client'
-import { mediaSlots, productSettings, sectionSettings, siteMetrics, testimonials } from '~/server/db/schema'
+import { mediaSlots, pageOverrides, productSettings, sectionSettings, siteMetrics, testimonials } from '~/server/db/schema'
 import { errorFields, logger } from '~/server/logger'
 import { METRIC_DEFS } from '~/data/site-sections'
 import { DEFAULT_SITE_CONFIG } from '~/lib/site-config'
@@ -13,12 +13,13 @@ let cache: { at: number; config: SiteConfig } | undefined
 
 async function readConfig(): Promise<SiteConfig> {
   const db = getDb()
-  const [sections, products, metrics, quotes, media] = await Promise.all([
+  const [sections, products, metrics, quotes, media, pages] = await Promise.all([
     db.select().from(sectionSettings),
     db.select().from(productSettings),
     db.select().from(siteMetrics),
     db.select().from(testimonials).where(eq(testimonials.approved, true)).orderBy(asc(testimonials.sortOrder)),
     db.select().from(mediaSlots),
+    db.select().from(pageOverrides),
   ])
 
   const byPage: Partial<Record<SectionPage, SectionSetting[]>> = {}
@@ -48,6 +49,19 @@ async function readConfig(): Promise<SiteConfig> {
         rating: t.rating,
       })),
     media: Object.fromEntries(media.map((m) => [m.key, { url: m.url, alt: m.alt, width: m.width, height: m.height }])),
+    pages: Object.fromEntries(
+      pages.map((p) => [
+        p.key,
+        {
+          seoTitle: p.seoTitle,
+          seoDescription: p.seoDescription,
+          heroEyebrow: p.heroEyebrow,
+          heroTitle: p.heroTitle,
+          heroHighlight: p.heroHighlight,
+          heroDescription: p.heroDescription,
+        },
+      ]),
+    ),
   }
 }
 

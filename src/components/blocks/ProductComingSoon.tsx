@@ -11,6 +11,8 @@ import type { Product } from '~/content/products'
 import { NewsletterSchema } from '~/server/schema/validation'
 import { subscribeNewsletterFn } from '~/server/functions/leads'
 import { Turnstile } from '~/components/ui/turnstile'
+import { HeroTitle } from '~/components/ui/hero-heading'
+import type { PageHero } from '~/data/page-content'
 
 // The product slug is added on submit, so the form only collects these two.
 const NotifySchema = NewsletterSchema.pick({ email: true, consent: true })
@@ -25,7 +27,7 @@ function firstError(meta: { errors: unknown[]; isBlurred: boolean }, attempts: n
 }
 
 /** Shown on /products/$slug while a product's status is coming-soon. */
-export function ProductComingSoon({ product }: { product: Product }) {
+export function ProductComingSoon({ product, hero }: { product: Product; hero: PageHero }) {
   const others = useProducts().filter((p) => p.slug !== product.slug)
 
   return (
@@ -51,9 +53,9 @@ export function ProductComingSoon({ product }: { product: Product }) {
             Coming soon
           </span>
           <h1 className="mt-5 font-display text-5xl font-semibold tracking-tight text-balance text-ink-50 sm:text-6xl">
-            {product.name}
+            <HeroTitle hero={hero} />
           </h1>
-          <p className="mt-5 text-xl text-pretty text-ink-200">{PRODUCT_ONE_LINERS[product.slug]}</p>
+          {hero.description && <p className="mt-5 text-xl text-pretty text-ink-200">{hero.description}</p>}
           <p className="mt-4 max-w-xl text-pretty text-ink-400">
             {product.name} is in development. It will connect to Viewixsoft CMS, so the screens you set up today will
             be ready for it on launch day.

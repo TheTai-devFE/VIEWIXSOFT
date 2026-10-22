@@ -1,5 +1,7 @@
 import { Fragment } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
+import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
+import { usePageContent } from '~/lib/use-page-content'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { getBreadcrumbSchema } from '~/lib/seo/jsonld'
 import { ThreeDMarquee } from '~/components/ui/3d-marquee'
@@ -20,11 +22,9 @@ import {
 } from '~/data/company'
 
 export const Route = createFileRoute('/about')({
-  head: () => {
+  head: ({ matches }) => {
     const seo = generateMetaTags({
-      title: 'About Viewixsoft — The Software Arm of Viewix',
-      description:
-        'Viewixsoft builds the software for Viewix, a Hong Kong commercial display manufacturer exporting to 60+ countries with ISO 9001:2015 quality control.',
+      ...pageContent(siteConfigFromMatches(matches), 'about').seo,
       canonicalUrl: '/about',
     })
     return {
@@ -103,6 +103,8 @@ function AboutPage() {
 function AboutHero() {
   // Twelve tiles so each of the marquee's three columns stays full.
   const wall = useScreenWall(12)
+  // About shows the highlight as a muted second line rather than a gradient.
+  const { hero } = usePageContent('about')
   return (
     <header className="relative isolate overflow-hidden px-4 sm:px-6 py-32 md:py-44 text-center">
       <div className="absolute inset-0 -z-10 opacity-60" aria-hidden="true">
@@ -113,14 +115,17 @@ function AboutHero() {
         aria-hidden="true"
       />
       <div className="mx-auto max-w-3xl space-y-6">
+        {hero.eyebrow && <p className="eyebrow">{hero.eyebrow}</p>}
         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.05]">
-          <span className="block text-ink-50">Software built on</span>
-          <span className="block text-ink-400">a hardware foundation</span>
+          <span className="block text-ink-50">{hero.title}</span>
+          {hero.highlight && (
+            <>
+              {/* Keeps the words apart for screen readers and search; the lines are blocks visually. */}{' '}
+              <span className="block text-ink-400">{hero.highlight}</span>
+            </>
+          )}
         </h1>
-        <p className="mx-auto max-w-xl text-lg text-ink-300 leading-relaxed">
-          Viewixsoft is the software arm of Viewix, a Hong Kong display manufacturer. We build the
-          software that runs on the screens Viewix makes.
-        </p>
+        {hero.description && <p className="mx-auto max-w-xl text-lg text-ink-300 leading-relaxed">{hero.description}</p>}
       </div>
     </header>
   )

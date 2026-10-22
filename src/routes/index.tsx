@@ -15,13 +15,13 @@ import { LeadFormSection } from '~/components/blocks/LeadFormSection'
 import { HOME_FAQ } from '~/data/home-faq'
 import { INTRO_VIDEO } from '~/data/intro-video'
 import { generateMetaTags } from '~/lib/seo/meta'
+import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
 import { getFaqSchema, getVideoSchema } from '~/lib/seo/jsonld'
 
 export const Route = createFileRoute('/')({
-  head: () => {
+  head: ({ matches }) => {
     const seo = generateMetaTags({
-      title: 'Viewixsoft — Digital Signage Software for Ad Screens',
-      description: 'Viewixsoft CMS lets you upload, schedule and publish content to every advertising screen from one cloud dashboard. POS, Tracking and NFC are coming soon.',
+      ...pageContent(siteConfigFromMatches(matches), 'home').seo,
       canonicalUrl: '/',
     })
 

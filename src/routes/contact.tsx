@@ -1,6 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { SCREEN_RANGES } from '~/components/story/story-content'
+import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
+import { usePageContent } from '~/lib/use-page-content'
+import { HeroTitle } from '~/components/ui/hero-heading'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { getBreadcrumbSchema, getFaqSchema } from '~/lib/seo/jsonld'
 import { FaqAccordion } from '~/components/blocks/FaqAccordion'
@@ -34,10 +37,9 @@ const contactSearchSchema = z.object({
 
 export const Route = createFileRoute('/contact')({
   validateSearch: contactSearchSchema,
-  head: () => {
+  head: ({ matches }) => {
     const seo = generateMetaTags({
-      title: 'Contact Sales — Viewixsoft',
-      description: 'Talk to the Viewixsoft sales team about digital signage software for your screens. Get advice on setup, hardware and the right products.',
+      ...pageContent(siteConfigFromMatches(matches), 'contact').seo,
       canonicalUrl: '/contact',
     })
     return {
@@ -62,22 +64,20 @@ export const Route = createFileRoute('/contact')({
 
 function ContactPage() {
   const search = Route.useSearch()
+  const { hero } = usePageContent('contact')
 
   return (
     <div className="bg-ink-950">
       <section aria-labelledby="contact-title" className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-12 lg:px-8 lg:py-24">
         <div className="lg:col-span-5">
-          <p className="eyebrow">Contact sales</p>
+          {hero.eyebrow && <p className="eyebrow">{hero.eyebrow}</p>}
           <h1
             id="contact-title"
             className="mt-3 font-display text-4xl font-semibold tracking-tight text-balance text-ink-50 sm:text-5xl"
           >
-            Talk to the <span className="text-brand-gradient">Viewixsoft team</span>
+            <HeroTitle hero={hero} />
           </h1>
-          <p className="mt-5 text-lg text-pretty text-ink-400">
-            Tell us about your screens, locations and the products you need. We'll reply by email with advice on setup,
-            hardware and the right Viewixsoft products.
-          </p>
+          {hero.description && <p className="mt-5 text-lg text-pretty text-ink-400">{hero.description}</p>}
 
           <LeadNextSteps />
 

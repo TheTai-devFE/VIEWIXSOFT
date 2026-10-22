@@ -4,6 +4,9 @@ import { Calendar } from 'lucide-react'
 import { BLOG_POSTS, BLOG_PRODUCTS } from '~/content/blog'
 import { NewsletterSignup } from '~/components/blocks/NewsletterSignup'
 import { PRODUCTS } from '~/content/products'
+import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
+import { usePageContent } from '~/lib/use-page-content'
+import { HeroTitle } from '~/components/ui/hero-heading'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { getBreadcrumbSchema } from '~/lib/seo/jsonld'
 import { cn } from '~/lib/cn'
@@ -18,11 +21,9 @@ const POSTS = BLOG_POSTS
 
 export const Route = createFileRoute('/blog/')({
   validateSearch: searchSchema,
-  head: () => {
+  head: ({ matches }) => {
     const seo = generateMetaTags({
-      title: 'Digital Signage Blog: Guides and How-Tos',
-      description:
-        'Guides on digital signage software: cloud CMS, POS menu boards, proof-of-play and NFC, written by the Viewixsoft team.',
+      ...pageContent(siteConfigFromMatches(matches), 'blog').seo,
       canonicalUrl: '/blog',
     })
     return {
@@ -65,16 +66,21 @@ function FilterChip({ active, product, children }: { active: boolean; product?: 
 function BlogIndexPage() {
   const { product } = Route.useSearch()
   const posts = product ? POSTS.filter((p) => p.product === product) : POSTS
+  // The header sits on the brand gradient, so the highlight stays plain white text.
+  const { hero } = usePageContent('blog')
 
   return (
     <div className="pb-24">
       {/* The text sits in the top half, where the gradient is still solid enough for white text to pass AA. */}
       <header className="bg-[linear-gradient(180deg,var(--color-gradient-from)_0%,var(--color-gradient-via)_50%,var(--surface-room)_100%)] px-4 pt-20 pb-36 text-center sm:px-6 md:pt-28 md:pb-44">
         <div className="mx-auto max-w-3xl space-y-5">
-          <h1 className="text-hero font-bold tracking-tight text-on-gradient">Explore our blog</h1>
-          <p className="text-pretty text-lg leading-relaxed text-on-gradient sm:text-xl">
-            Practical guides on managing content, menus, proof-of-play and NFC across digital signage screens.
-          </p>
+          {hero.eyebrow && <p className="eyebrow text-on-gradient">{hero.eyebrow}</p>}
+          <h1 className="text-hero font-bold tracking-tight text-on-gradient">
+            <HeroTitle hero={hero} highlightClassName="" />
+          </h1>
+          {hero.description && (
+            <p className="text-pretty text-lg leading-relaxed text-on-gradient sm:text-xl">{hero.description}</p>
+          )}
         </div>
       </header>
 
