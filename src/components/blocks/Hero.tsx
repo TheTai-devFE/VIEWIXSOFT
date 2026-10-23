@@ -7,7 +7,7 @@ export function Hero() {
       {/* Background radial glow & screen grid */}
       <div className="absolute inset-0 opacity-40 pointer-events-none"></div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="page-x relative z-10">
         <div className="text-center max-w-4xl mx-auto space-y-6">
           {/* Eyebrow badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full panel border border-signal-500/30 text-xs font-semibold text-signal-400 shadow-lg">

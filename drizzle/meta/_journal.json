@@ -15,6 +15,27 @@
       "when": 1792643708524,
       "tag": "0001_absurd_rafael_vega",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792654462284,
+      "tag": "0002_media_library",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792654470842,
+      "tag": "0003_media_slots_use_library",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792655342605,
+      "tag": "0004_section_content",
+      "breakpoints": true
     }
   ]
 }

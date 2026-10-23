@@ -84,7 +84,7 @@ function BlogIndexPage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl space-y-10 px-4 sm:px-6 lg:px-8">
+      <div className="page-x space-y-10">
         <nav aria-label="Filter by product" className="flex flex-wrap justify-center gap-2">
           <FilterChip active={!product}>All products</FilterChip>
           {BLOG_PRODUCTS.map((slug) => (

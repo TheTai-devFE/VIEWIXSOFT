@@ -34,7 +34,7 @@ export interface Product {
  * home page lineup and on coming-soon product pages.
  */
 export const PRODUCT_ONE_LINERS: Record<string, string> = {
-  cms: 'Cloud content management for advertising screens.',
+  cms: 'Content management for advertising screens.',
   pos: 'Point-of-sale linked to menu boards and promotions on screen.',
   tracking: 'Screen health, proof-of-play reports and campaign dashboards.',
   nfc: 'Tap-to-interact for screens and kiosks, with every tap measured.',
@@ -118,8 +118,8 @@ export const PRODUCTS: Product[] = [
       },
     ],
     relatedUseCases: [
-      { title: 'DOOH Billboard Networks', slug: 'dooh-advertising' },
-      { title: 'Retail In-Store Displays', slug: 'retail' }
+      { title: 'Retail & Shopping Centers', slug: 'retail' },
+      { title: 'Hospitals & Clinics', slug: 'healthcare' }
     ],
     pairedProducts: [
       { name: 'Viewixsoft Tracking', slug: 'tracking', reason: 'Audit campaign delivery with certified proof-of-play and device health telemetry.' }
@@ -262,8 +262,7 @@ export const PRODUCTS: Product[] = [
       }
     ],
     relatedUseCases: [
-      { title: 'DOOH Billboard Networks', slug: 'dooh-advertising' },
-      { title: 'Transportation Hubs', slug: 'transportation' }
+      { title: 'Offices & Corporate Campuses', slug: 'corporate-comms' }
     ],
     pairedProducts: [
       { name: 'Viewixsoft CMS', slug: 'cms', reason: 'Directly embed verified tracking metrics into your CMS scheduling and revenue optimization engine.' }

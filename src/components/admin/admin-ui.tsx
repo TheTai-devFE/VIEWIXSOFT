@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { cn } from '~/lib/cn'
 
 /** Small building blocks shared by the admin editors. */
 
@@ -10,7 +11,7 @@ export function AdminPageHeader({ title, description, actions }: { title: string
         <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{title}</h1>
         {description && <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
   )
 }
@@ -24,12 +25,22 @@ export function LoadError({ children }: { children: ReactNode }) {
   )
 }
 
-export function Panel({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+export function Panel({
+  title,
+  description,
+  className,
+  children,
+}: {
+  title: string
+  description?: string
+  className?: string
+  children: ReactNode
+}) {
   return (
-    <section className="rounded-2xl border border-ink-800 bg-ink-900 p-6">
+    <section className={cn('rounded-2xl border border-ink-800 bg-ink-900 p-6', className)}>
       <h2 className="font-display text-xl font-semibold text-ink-50">{title}</h2>
       {description && <p className="mt-1 text-sm text-ink-400">{description}</p>}
-      <div className="mt-5">{children}</div>
+      <div className="mt-4">{children}</div>
     </section>
   )
 }
@@ -51,6 +62,45 @@ export function SaveStatus({ state }: { state: { kind: 'idle' | 'saving' | 'save
 }
 
 export type SaveState = { kind: 'idle' | 'saving' | 'saved' } | { kind: 'error'; message: string }
+
+/** Header actions of a module saved by one button: status, extra actions, then Save. */
+export function SaveAllActions({
+  state,
+  isDirty,
+  onSave,
+  children,
+}: {
+  state: SaveState
+  isDirty: boolean
+  onSave: () => void
+  children?: ReactNode
+}) {
+  const saving = state.kind === 'saving'
+  return (
+    <>
+      {isDirty && (state.kind === 'idle' || state.kind === 'saved') ? (
+        <p className="text-sm text-muted-foreground">Unsaved changes</p>
+      ) : (
+        <SaveStatus state={state} />
+      )}
+      {children}
+      <button type="button" onClick={onSave} disabled={!isDirty || saving} className={buttonPrimary}>
+        {saving ? 'Saving…' : 'Save'}
+        <kbd aria-hidden="true" className="hidden font-mono text-xs opacity-70 sm:inline">
+          ⌘S
+        </kbd>
+      </button>
+    </>
+  )
+}
+
+export type SaveResult = { ok: true } | { ok: false; error: string }
+
+/** What an editor exposes so one Save button in the page header can save it. */
+export interface EditorHandle {
+  /** Saves pending changes; resolves to null when there is nothing to save. */
+  save: () => Promise<SaveResult | null>
+}
 
 export const buttonPrimary =
   'bg-brand-gradient inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-on-gradient hover:opacity-90 disabled:opacity-60'

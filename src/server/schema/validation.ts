@@ -10,7 +10,7 @@ export const ContactLeadSchema = z.object({
   phone: z.string().trim().max(40).optional(),
   companySize: z.string().max(60).optional(),
   screenCount: z.string().max(60).optional(),
-  products: z.array(z.string().max(60)).min(1, 'Please select at least one product of interest').max(8),
+  products: z.array(z.string().max(60)).max(8).default([]),
   message: z.string().trim().min(5, 'Please provide details about your screen network or requirements').max(5000),
   consent: z.boolean().refine((val) => val === true, {
     message: 'You must consent to the privacy policy to submit',

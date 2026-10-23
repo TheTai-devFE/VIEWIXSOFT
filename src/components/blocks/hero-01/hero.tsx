@@ -29,7 +29,7 @@ export function HeroSection({ avatarList = [], socialProof, headingLevel = 'h1',
   return (
     <section aria-labelledby="hero-01-title" className={cn('relative isolate overflow-hidden bg-background', className)}>
       {background}
-      <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center gap-8 px-4 py-20 text-center sm:px-6 md:py-28 lg:px-8">
+      <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center gap-8 px-4 py-20 text-center sm:px-6 md:py-24 lg:px-8">
         {hero.eyebrow && <p className="eyebrow">{hero.eyebrow}</p>}
 
         <Heading
@@ -43,8 +43,8 @@ export function HeroSection({ avatarList = [], socialProof, headingLevel = 'h1',
 
         <div className="flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row">
           <Button asChild size="lg" className="w-full sm:w-auto">
-            <Link to="/contact" preload="intent">
-              Book a demo
+            <Link to="/products/$slug" params={{ slug: 'cms' }} preload="intent">
+              Get started
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">

@@ -17,11 +17,11 @@ interface SavedMetric {
   asOf: string
 }
 
-/** The home stats strip shows only when all three figures are filled in. */
+/** The stats under the vision on About show only when all three figures are filled in. */
 export function MetricsEditor({ saved }: { saved: SavedMetric[] }) {
   return (
     <Panel
-      title="Home stats"
+      title="Company stats"
       description="Enter real figures only, with where each comes from and the date it was taken. The strip stays hidden until all three are set."
     >
       <div className="grid gap-4 lg:grid-cols-3">

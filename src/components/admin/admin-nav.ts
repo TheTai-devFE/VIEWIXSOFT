@@ -7,6 +7,7 @@ import {
   Package,
   PanelsTopLeft,
   Quote,
+  Search,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -16,6 +17,7 @@ export interface AdminNavItem {
     | '/admin/leads'
     | '/admin/subscribers'
     | '/admin/pages'
+    | '/admin/seo'
     | '/admin/products'
     | '/admin/stats'
     | '/admin/testimonials'
@@ -40,10 +42,11 @@ export const ADMIN_NAV: { group: string; items: AdminNavItem[] }[] = [
     group: 'Website',
     items: [
       { to: '/admin/pages', label: 'Pages', icon: PanelsTopLeft, tree: 'pages' },
+      { to: '/admin/seo', label: 'SEO & GEO', icon: Search },
       { to: '/admin/products', label: 'Product status', icon: Package },
-      { to: '/admin/stats', label: 'Home stats', icon: BarChart3 },
+      { to: '/admin/stats', label: 'Company stats', icon: BarChart3 },
       { to: '/admin/testimonials', label: 'Customer quotes', icon: Quote },
     ],
   },
-  { group: 'Media', items: [{ to: '/admin/media', label: 'Images', icon: ImageIcon }] },
+  { group: 'Media', items: [{ to: '/admin/media', label: 'Images & videos', icon: ImageIcon }] },
 ]

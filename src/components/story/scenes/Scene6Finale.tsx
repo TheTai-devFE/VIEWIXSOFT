@@ -33,7 +33,7 @@ export function Scene6Finale() {
 
   return (
     <section id="ch-your-network" aria-labelledby="ch-your-network-title" className="scroll-mt-16 border-t border-ink-800">
-      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28 xl:pl-20">
+      <div className="page-x py-20 lg:py-28 xl:pl-20">
         <div className="max-w-2xl">
           <p className="eyebrow">CH 06 · Your network</p>
           <h2 id="ch-your-network-title" className="mt-3 font-display text-scene font-semibold tracking-tight text-balance text-ink-50">

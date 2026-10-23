@@ -1,26 +1,22 @@
 import { Link } from '@tanstack/react-router'
+import { ArrowRight, Plus } from 'lucide-react'
 import { Reveal } from '~/components/ui/reveal'
-import { LeadForm } from '~/components/blocks/LeadForm'
+import { useSectionContent } from '~/lib/use-section-content'
 
-export const LEAD_NEXT_STEPS = [
-  'We review your screens and locations.',
-  'We email you to book a call at a time that suits you.',
-  'You see Viewixsoft CMS running on a setup like yours.',
-]
-
-/** Numbered "what happens next" list shared by the home section and /contact. */
+/** Numbered "what happens next" list on /contact. */
 export function LeadNextSteps({ animate = false }: { animate?: boolean }) {
+  const { steps } = useSectionContent('home:demo-form')
   return (
     <ol className="mt-10 space-y-5">
-      {LEAD_NEXT_STEPS.map((step, i) => {
+      {steps.map((step, i) => {
         const content = (
           <>
             <span className="font-mono text-sm text-signal-400">0{i + 1}</span>
-            <span className="text-ink-200">{step}</span>
+            <span className="text-ink-200">{step.text}</span>
           </>
         )
         return (
-          <li key={step} className={animate ? undefined : 'flex gap-4'}>
+          <li key={step.id} className={animate ? undefined : 'flex gap-4'}>
             {animate ? (
               <Reveal variant="left" delay={150 + i * 120} className="flex gap-4">
                 {content}
@@ -35,35 +31,69 @@ export function LeadNextSteps({ animate = false }: { animate?: boolean }) {
   )
 }
 
-export function LeadFormSection() {
+/** Corner crosshair of the framed band; centred on the frame's corner. */
+function CornerMark({ className }: { className: string }) {
+  return <Plus aria-hidden="true" strokeWidth={1.25} className={`absolute size-6 text-ink-500 ${className}`} />
+}
+
+/**
+ * Home page contact band: the partner pitch with links to /contact and the Viewixsoft CMS page.
+ * The demo form itself lives on /contact.
+ */
+export function ContactCtaSection() {
+  const { partner } = useSectionContent('home:demo-form')
+  if (!partner.show) return null
   return (
-    <section id="demo" aria-labelledby="lead-form-title" className="border-t border-ink-800 bg-ink-950">
-      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-12 lg:px-8 lg:py-28">
-        <Reveal className="lg:col-span-5">
-          <p className="eyebrow">Book a demo</p>
-          <h2
-            id="lead-form-title"
-            className="mt-3 font-display text-4xl font-semibold tracking-tight text-balance text-ink-50 sm:text-5xl"
-          >
-            See Viewixsoft on <span className="text-brand-gradient">your screens</span>
-          </h2>
-          <p className="mt-5 text-lg text-pretty text-ink-400">
-            Tell us how many screens you run and where. The Viewixsoft team will show you how to manage them from one
-            dashboard.
-          </p>
+    <section id="contact" aria-labelledby="contact-cta-title" className="bg-ink-950">
+      <div className="section-y page-x">
+        <Reveal className="relative">
+          {/* Guide lines run past the frame, like a drafting sheet. */}
+          <span aria-hidden="true" className="absolute inset-x-0 -top-px h-px bg-ink-800 sm:-inset-x-6" />
+          <span aria-hidden="true" className="absolute inset-x-0 -bottom-px h-px bg-ink-800 sm:-inset-x-6" />
+          <span aria-hidden="true" className="absolute inset-y-0 -left-px w-px bg-ink-800 sm:-inset-y-6" />
+          <span aria-hidden="true" className="absolute inset-y-0 -right-px w-px bg-ink-800 sm:-inset-y-6" />
+          <CornerMark className="-top-3 -left-3" />
+          <CornerMark className="-top-3 -right-3" />
+          <CornerMark className="-bottom-3 -left-3" />
+          <CornerMark className="-right-3 -bottom-3" />
 
-          <LeadNextSteps animate />
+          <div className="relative overflow-hidden px-6 py-12 text-center sm:px-12 sm:py-16">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -top-1/2 -left-1/4 h-full w-3/4 rounded-full bg-[radial-gradient(closest-side,var(--color-ink-800),transparent)] opacity-80 blur-2xl"
+            />
+            <span aria-hidden="true" className="absolute inset-y-0 left-1/2 border-l border-dashed border-ink-800" />
 
-          <p className="mt-10 text-sm text-ink-400">
-            Need to share more detail?{' '}
-            <Link to="/contact" className="font-semibold text-signal-400 hover:text-signal-300">
-              Use the full contact form
-            </Link>
-          </p>
-        </Reveal>
+            <div className="relative mx-auto max-w-2xl">
+              {partner.eyebrow && <p className="eyebrow">{partner.eyebrow}</p>}
+              <h2
+                id="contact-cta-title"
+                className="mt-3 font-display text-3xl font-semibold tracking-tight text-balance text-ink-50 sm:text-4xl"
+              >
+                {partner.title}
+              </h2>
+              {partner.description && <p className="mt-4 text-lg text-pretty text-ink-400">{partner.description}</p>}
 
-        <Reveal variant="right" delay={120} className="lg:col-span-7">
-          <LeadForm variant="quick" idPrefix="lead" />
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  to="/contact"
+                  preload="intent"
+                  className="inline-flex w-full items-center justify-center rounded-lg border border-ink-700 bg-ink-950 px-5 py-2.5 text-sm font-semibold text-ink-50 transition-colors hover:border-ink-500 sm:w-auto"
+                >
+                  {partner.cta}
+                </Link>
+                <Link
+                  to="/products/$slug"
+                  params={{ slug: 'cms' }}
+                  preload="intent"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ink-50 px-5 py-2.5 text-sm font-semibold text-ink-950 transition-opacity hover:opacity-90 sm:w-auto"
+                >
+                  Get started
+                  <ArrowRight aria-hidden="true" className="size-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
         </Reveal>
       </div>
     </section>

@@ -28,9 +28,12 @@ describe('resolvePageContent', () => {
   const defaults = { seo: { title: 'Default title', description: 'Default description' }, hero: { title: 'Hero', highlight: 'part' } }
 
   it('applies only the fields that are filled in', () => {
-    const out = resolvePageContent(defaults, { heroTitle: 'New hero', seoDescription: '  ', heroHighlight: null })
-    expect(out.hero).toEqual({ eyebrow: undefined, title: 'New hero', highlight: 'part', description: undefined })
-    expect(out.seo).toEqual({ title: 'Default title', description: 'Default description' })
+    const out = resolvePageContent(defaults, { seoTitle: 'New title', seoDescription: '  ' })
+    expect(out.seo).toEqual({ title: 'New title', description: 'Default description' })
+  })
+
+  it('always keeps the hero text from the code', () => {
+    expect(resolvePageContent(defaults, { seoTitle: 'New title' }).hero).toBe(defaults.hero)
   })
 
   it('returns the defaults with no override', () => {
@@ -39,18 +42,22 @@ describe('resolvePageContent', () => {
 })
 
 describe('PageOverrideSchema', () => {
-  const base = { key: 'home', heroEyebrow: '', heroTitle: '', heroHighlight: '', heroDescription: '', seoTitle: '', seoDescription: '' }
+  const base = { key: 'home', seoTitle: '', seoDescription: '' }
 
   it('turns empty fields into null (use the default)', () => {
-    const out = PageOverrideSchema.parse({ ...base, heroTitle: '  Run every screen  ' })
-    expect(out.heroTitle).toBe('Run every screen')
-    expect(out.seoTitle).toBeNull()
+    const out = PageOverrideSchema.parse({ ...base, seoTitle: '  Run every screen  ' })
+    expect(out.seoTitle).toBe('Run every screen')
+    expect(out.seoDescription).toBeNull()
   })
 
   it('rejects HTML and a misspelled brand', () => {
-    expect(PageOverrideSchema.safeParse({ ...base, heroTitle: 'Hi <script>' }).success).toBe(false)
-    expect(PageOverrideSchema.safeParse({ ...base, heroTitle: 'Meet viewixsoft today' }).success).toBe(false)
-    expect(PageOverrideSchema.safeParse({ ...base, heroTitle: 'Meet Viewixsoft today' }).success).toBe(true)
+    expect(PageOverrideSchema.safeParse({ ...base, seoTitle: 'Hi <script> there' }).success).toBe(false)
+    expect(PageOverrideSchema.safeParse({ ...base, seoTitle: 'Meet viewixsoft today' }).success).toBe(false)
+    expect(PageOverrideSchema.safeParse({ ...base, seoTitle: 'Meet Viewixsoft today' }).success).toBe(true)
+  })
+
+  it('drops hero fields, which are no longer editable', () => {
+    expect(PageOverrideSchema.parse({ ...base, heroTitle: 'Old hero' })).not.toHaveProperty('heroTitle')
   })
 
   it('enforces the search title and description limits', () => {

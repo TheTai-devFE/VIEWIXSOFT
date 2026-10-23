@@ -31,7 +31,7 @@ export function ProductComingSoon({ product, hero }: { product: Product; hero: P
   const others = useProducts().filter((p) => p.slug !== product.slug)
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-20 lg:px-8">
+    <div className="page-x py-12 md:py-20">
       <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-ink-400">
         <Link to="/" className="hover:text-ink-200">
           Home

@@ -3,38 +3,32 @@ import { createFileRoute } from '@tanstack/react-router'
 import { orderSections } from '~/lib/site-config'
 import { useSiteConfig } from '~/lib/use-site-config'
 import { HeroOne } from '~/components/blocks/hero-01'
-import { IntroVideoSection } from '~/components/blocks/IntroVideoSection'
-import { SolutionsSection } from '~/components/blocks/SolutionsSection'
 import { ProductLineupSection } from '~/components/blocks/ProductLineupSection'
 import { CompatibleDevicesSection } from '~/components/blocks/CompatibleDevicesSection'
 import { UseCasesSection } from '~/components/blocks/UseCasesSection'
 import { HowItWorks } from '~/components/blocks/HowItWorks'
 import { PricingTeaser } from '~/components/blocks/PricingTeaser'
 import { HomeFaqSection } from '~/components/blocks/HomeFaqSection'
-import { LeadFormSection } from '~/components/blocks/LeadFormSection'
-import { HOME_FAQ } from '~/data/home-faq'
-import { INTRO_VIDEO } from '~/data/intro-video'
+import { ContactCtaSection } from '~/components/blocks/LeadFormSection'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
-import { getFaqSchema, getVideoSchema } from '~/lib/seo/jsonld'
+import { getFaqSchema } from '~/lib/seo/jsonld'
+import { resolveSectionContent } from '~/lib/section-content'
 
 export const Route = createFileRoute('/')({
   head: ({ matches }) => {
+    const config = siteConfigFromMatches(matches)
+    // The JSON-LD lists the same questions the FAQ section shows, edited or not.
+    const faq = resolveSectionContent('home:faq', config.content['home:faq']).items
     const seo = generateMetaTags({
-      ...pageContent(siteConfigFromMatches(matches), 'home').seo,
+      ...pageContent(config, 'home').seo,
       canonicalUrl: '/',
     })
 
     return {
       meta: seo.meta,
       links: seo.links,
-      scripts: [
-        { type: 'application/ld+json', children: JSON.stringify(getFaqSchema(HOME_FAQ)) },
-        // VideoObject needs a real file, thumbnail and date, so it waits for all three.
-        ...(INTRO_VIDEO.src && INTRO_VIDEO.poster && INTRO_VIDEO.uploadDate
-          ? [{ type: 'application/ld+json', children: JSON.stringify(getVideoSchema(INTRO_VIDEO)) }]
-          : []),
-      ],
+      scripts: [{ type: 'application/ld+json', children: JSON.stringify(getFaqSchema(faq)) }],
     }
   },
   component: HomePage,
@@ -44,16 +38,14 @@ function HomePage() {
   const config = useSiteConfig()
   // Order and visibility come from /admin/site; see src/data/site-sections.ts.
   const sections = orderSections(config, 'home', {
-    hero: <HeroOne showHeader={false} underFixedHeader />,
-    'intro-video': <IntroVideoSection />,
+    hero: <HeroOne underFixedHeader />,
     products: <ProductLineupSection />,
     'how-it-works': <HowItWorks />,
     devices: <CompatibleDevicesSection />,
     'use-cases': <UseCasesSection />,
-    vision: <SolutionsSection id="solutions" />,
     pricing: <PricingTeaser />,
     faq: <HomeFaqSection />,
-    'demo-form': <LeadFormSection />,
+    'demo-form': <ContactCtaSection />,
   })
   return (
     <>

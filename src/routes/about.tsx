@@ -1,25 +1,22 @@
 import { Fragment } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
-import { usePageContent } from '~/lib/use-page-content'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { getBreadcrumbSchema } from '~/lib/seo/jsonld'
 import { ThreeDMarquee } from '~/components/ui/3d-marquee'
 import { Reveal } from '~/components/ui/reveal'
-import { EarlyCustomersMarquee } from '~/components/blocks/EarlyCustomersMarquee'
+import { CustomerMarquee } from '~/components/blocks/CustomerMarquee'
+import { SectionHeading } from '~/components/blocks/SectionHeading'
+import { AboutVision } from '~/components/blocks/AboutVision'
 import { EARLY_CUSTOMER_PLACEHOLDERS } from '~/data/early-customers'
 import type { EarlyCustomer } from '~/data/early-customers'
+import { AboutResults, resultStories } from '~/components/blocks/AboutResults'
 import { orderSections, SHOW_SAMPLE_CONTENT } from '~/lib/site-config'
+import { useSectionContent } from '~/lib/use-section-content'
 import { useSiteConfig } from '~/lib/use-site-config'
-import { useScreenWall } from '~/lib/use-media'
-import {
-  CERTIFICATIONS,
-  COMPANY_FACTS_SOURCE,
-  CONTACT_EMAILS,
-  LEGAL_ENTITY,
-  ORIGIN_STORY,
-  VIEWIX_STATS,
-} from '~/data/company'
+import { imageUrl, useMedia, useScreenWall } from '~/lib/use-media'
+import { RollLink } from '~/components/ui/roll-link'
+import { cn } from '~/lib/cn'
 
 export const Route = createFileRoute('/about')({
   head: ({ matches }) => {
@@ -46,8 +43,6 @@ export const Route = createFileRoute('/about')({
   component: AboutPage,
 })
 
-
-
 /**
  * Approved testimonials from /admin/site. Placeholders show in the dev server
  * only; production hides the section until a real quote is approved.
@@ -72,41 +67,36 @@ function toRating(value: number | null): EarlyCustomer['rating'] {
   return value === 1 || value === 2 || value === 3 || value === 4 || value === 5 ? value : undefined
 }
 
-function HatchBand() {
-  return <div className="h-10 hatch border-y border-dashed border-ink-800" aria-hidden="true" />
-}
+// Same width, gutters and rhythm as the Viewixsoft CMS page.
+const container = 'page-x'
 
 function AboutPage() {
   const config = useSiteConfig()
   const customers = useCustomers()
+  const stories = resultStories()
+  // Order and visibility come from /admin/pages → About; text from each section's editor there.
   const sections = orderSections(config, 'about', {
     hero: <AboutHero />,
     story: <AboutStory />,
-    foundation: <AboutFoundation />,
+    vision: <AboutVision id="vision" />,
+    results: stories.length > 0 && <AboutResults stories={stories} />,
     customers: customers.length > 0 && <AboutCustomers customers={customers} />,
-    company: <AboutCompany />,
   })
-
-  // Hatched bands separate sections, so hiding one never leaves two bands together.
   return (
-    <div className="max-w-7xl mx-auto border-x border-dashed border-ink-800">
-      {sections.map((section, i) => (
-        <Fragment key={section.key}>
-          {i > 0 && <HatchBand />}
-          {section.node}
-        </Fragment>
+    <>
+      {sections.map((section) => (
+        <Fragment key={section.key}>{section.node}</Fragment>
       ))}
-    </div>
+    </>
   )
 }
 
 function AboutHero() {
   // Twelve tiles so each of the marquee's three columns stays full.
   const wall = useScreenWall(12)
-  // About shows the highlight as a muted second line rather than a gradient.
-  const { hero } = usePageContent('about')
+  const { eyebrow, title, highlight, description } = useSectionContent('about:hero')
   return (
-    <header className="relative isolate overflow-hidden px-4 sm:px-6 py-32 md:py-44 text-center">
+    <header className="relative isolate overflow-hidden px-4 py-24 text-center sm:px-6 md:py-32">
       <div className="absolute inset-0 -z-10 opacity-60" aria-hidden="true">
         <ThreeDMarquee images={wall} className="h-full max-xl:h-full max-sm:h-full rounded-none" />
       </div>
@@ -114,137 +104,92 @@ function AboutHero() {
         className="absolute inset-0 -z-10 bg-radial from-ink-950 from-25% via-ink-950/85 to-ink-950/40"
         aria-hidden="true"
       />
-      <div className="mx-auto max-w-3xl space-y-6">
-        {hero.eyebrow && <p className="eyebrow">{hero.eyebrow}</p>}
-        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.05]">
-          <span className="block text-ink-50">{hero.title}</span>
-          {hero.highlight && (
+      <div className="mx-auto max-w-4xl">
+        {eyebrow && <p className="text-base text-ink-400 sm:text-lg">{eyebrow}</p>}
+        <h1 className="mt-4 font-display text-5xl font-semibold tracking-tight text-balance text-ink-50 sm:text-7xl">
+          {title}
+          {highlight && (
             <>
               {/* Keeps the words apart for screen readers and search; the lines are blocks visually. */}{' '}
-              <span className="block text-ink-400">{hero.highlight}</span>
+              <span className="block text-ink-400">{highlight}</span>
             </>
           )}
         </h1>
-        {hero.description && <p className="mx-auto max-w-xl text-lg text-ink-300 leading-relaxed">{hero.description}</p>}
+        {description && <p className="mx-auto mt-6 max-w-2xl text-lg text-pretty text-ink-400">{description}</p>}
       </div>
     </header>
   )
 }
 
-function AboutStory() {
+function StoryPhoto({ slot, className }: { slot: string; className: string }) {
+  const photo = useMedia(slot)
+  if (!photo) return null
   return (
-    <section aria-labelledby="story-heading" className="grid grid-cols-1 md:grid-cols-2">
-      <div className="px-4 sm:px-8 py-12 md:py-16">
-        <h2 id="story-heading" className="text-4xl sm:text-5xl font-black tracking-tight text-ink-50">
-          Our story
-        </h2>
-      </div>
-      <div className="px-4 sm:px-8 py-12 md:py-16 space-y-5 border-t md:border-t-0 md:border-l border-dashed border-ink-800">
-        {ORIGIN_STORY.map((paragraph) => (
-          <p key={paragraph.slice(0, 24)} className="text-ink-300 text-lg leading-relaxed">
-            {paragraph}
-          </p>
-        ))}
-      </div>
-    </section>
+    <img
+      src={imageUrl(photo.src, 1200)}
+      alt={photo.alt}
+      width={photo.width}
+      height={photo.height}
+      loading="lazy"
+      className={`w-full rounded-2xl object-cover ${className}`}
+    />
   )
 }
 
-function AboutFoundation() {
+function AboutStory() {
+  const { eyebrow, title, paragraphs, cta } = useSectionContent('about:story')
+  const [lead, ...rest] = paragraphs
   return (
-    <section aria-labelledby="foundation-heading">
-      <div className="px-4 sm:px-8 py-12 md:py-16 space-y-3 border-b border-dashed border-ink-800">
-        <h2 id="foundation-heading" className="text-4xl sm:text-5xl font-black tracking-tight text-ink-50">
-          The hardware behind us
-        </h2>
-        <p className="text-ink-400">
-          Viewix, our parent company, is certified {CERTIFICATIONS.join(' · ')}.
-        </p>
-      </div>
-      <dl className="grid grid-cols-2 lg:grid-cols-4">
-        {VIEWIX_STATS.map((stat, index) => (
-          <Reveal
-            key={stat.label}
-            delay={index * 80}
-            className="flex flex-col-reverse gap-2 px-4 sm:px-8 py-10 border-dashed border-ink-800 odd:border-r lg:border-r lg:last:border-r-0 nth-[-n+2]:border-b lg:nth-[-n+2]:border-b-0"
-          >
-            <dt className="text-sm text-ink-400">{stat.label}</dt>
-            <dd className="text-3xl sm:text-5xl font-black font-mono text-brand-gradient">
-              {stat.value}
-            </dd>
-          </Reveal>
-        ))}
-      </dl>
-      <p className="px-4 sm:px-8 py-4 border-t border-dashed border-ink-800 text-xs text-ink-400">
-        Source:{' '}
-        <a
-          href={COMPANY_FACTS_SOURCE.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline hover:text-signal-400"
+    <section aria-labelledby="story-heading" className={`${container} py-14 md:py-20`}>
+      <SectionHeading id="story-heading" eyebrow={eyebrow} title={title} />
+
+      {/* Phones: text, then the photos (side by side from sm). Desktop: small photo | text | large photo,
+          the photos sitting on one baseline. One set of elements, placed by the grid. */}
+      <Reveal
+        delay={100}
+        className="mt-12 grid gap-4 sm:grid-cols-[45fr_55fr] sm:gap-5 lg:mt-14 lg:grid-cols-[24%_minmax(0,1fr)_40%] lg:items-end lg:gap-6 xl:gap-8"
+      >
+        <div className="order-first mb-6 text-center sm:col-span-2 lg:order-none lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:mb-0 lg:self-start">
+          {lead && <p className="mx-auto max-w-xl text-lg leading-relaxed font-medium text-pretty text-ink-100 xl:text-xl">{lead.text}</p>}
+          <div className="mt-6 flex justify-center">
+            <RollLink to="/contact">{cta}</RollLink>
+          </div>
+        </div>
+        <StoryPhoto slot="about.story.small" className="aspect-[4/3] lg:col-start-1 lg:row-start-1" />
+        <StoryPhoto slot="about.story.large" className="aspect-[3/2] lg:col-start-3 lg:row-start-1" />
+      </Reveal>
+
+      {rest.length > 0 && (
+        <Reveal
+          delay={150}
+          className={cn(
+            'mx-auto mt-10 grid gap-6 border-t border-ink-800 pt-8',
+            rest.length > 1 ? 'max-w-5xl md:grid-cols-2 md:gap-10' : 'max-w-3xl',
+          )}
         >
-          {COMPANY_FACTS_SOURCE.label}
-        </a>
-        , accessed <time dateTime={COMPANY_FACTS_SOURCE.accessedAt}>Oct 16, 2026</time>.
-      </p>
+          {rest.map((p) => (
+            <p key={p.id} className="text-lg leading-relaxed text-pretty text-ink-400">
+              {p.text}
+            </p>
+          ))}
+        </Reveal>
+      )}
     </section>
   )
 }
 
 function AboutCustomers({ customers }: { customers: EarlyCustomer[] }) {
+  const { eyebrow, title, description } = useSectionContent('about:customers')
   return (
-    <section aria-labelledby="customers-heading">
-      <div className="px-4 sm:px-8 py-12 md:py-16 space-y-3 border-b border-dashed border-ink-800">
-        <h2 id="customers-heading" className="text-4xl sm:text-5xl font-black tracking-tight text-ink-50">
-          Our first customers
-        </h2>
-        <p className="text-ink-400">
-          The first businesses running Viewix screens with Viewixsoft software.
-        </p>
+    // Follows the results section, whose bottom padding already separates the two.
+    // The marquee runs edge to edge; only the heading keeps the page width.
+    <section aria-labelledby="customers-heading" className="pt-6 pb-14 md:pt-8 md:pb-20">
+      <div className={container}>
+        <SectionHeading id="customers-heading" eyebrow={eyebrow} title={title} description={description} />
       </div>
-      <div className="py-10 md:py-14">
-        <EarlyCustomersMarquee customers={customers} />
-      </div>
-    </section>
-  )
-}
-
-function AboutCompany() {
-  return (
-    <section aria-labelledby="company-heading" className="grid grid-cols-1 md:grid-cols-3 text-sm">
-      <div className="px-4 sm:px-8 py-10 space-y-2">
-        <h2 id="company-heading" className="font-bold uppercase tracking-wide text-ink-50">
-          {LEGAL_ENTITY.name}
-        </h2>
-        <p className="text-ink-400">
-          Business Registration No.{' '}
-          <span className="font-mono text-ink-100">{LEGAL_ENTITY.businessRegistrationNo}</span>
-        </p>
-      </div>
-      <div className="px-4 sm:px-8 py-10 space-y-2 border-t md:border-t-0 md:border-l border-dashed border-ink-800">
-        <h3 className="text-ink-400">Registered business address</h3>
-        <address className="not-italic text-ink-100">
-          {LEGAL_ENTITY.addressLines.map((line) => (
-            <div key={line}>{line}</div>
-          ))}
-        </address>
-      </div>
-      <div className="px-4 sm:px-8 py-10 space-y-2 border-t md:border-t-0 md:border-l border-dashed border-ink-800">
-        <h3 className="text-ink-400">Contact</h3>
-        <ul className="space-y-1">
-          {CONTACT_EMAILS.map((contact) => (
-            <li key={contact.email}>
-              <span className="text-ink-400">{contact.department}: </span>
-              <a
-                href={`mailto:${contact.email}`}
-                className="font-mono font-semibold text-ink-50 hover:text-signal-400"
-              >
-                {contact.email}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <Reveal delay={100} className="mt-10">
+        <CustomerMarquee customers={customers} />
+      </Reveal>
     </section>
   )
 }

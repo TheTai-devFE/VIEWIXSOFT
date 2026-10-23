@@ -10,7 +10,7 @@ export function LogoCloud() {
 
   return (
     <section className="py-12 border-y border-ink-900 bg-ink-950/60">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="page-x">
         <p className="text-center text-xs font-semibold uppercase tracking-wider text-ink-500 mb-8">
           Pre-Certified & Native Across Commercial Hardware & SoC Platforms
         </p>

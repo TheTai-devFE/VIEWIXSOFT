@@ -10,7 +10,7 @@ export function CtaBand({
 }) {
   return (
     <section aria-labelledby="cta-band-title" className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="page-x">
         <div className="rounded-3xl border border-ink-800 bg-ink-900 p-8 text-center sm:p-14">
           <div className="mx-auto max-w-2xl space-y-6">
             <h2
@@ -22,11 +22,12 @@ export function CtaBand({
             <p className="text-lg text-pretty text-ink-400">{description}</p>
             <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row">
               <Link
-                to="/contact"
+                to="/products/$slug"
+                params={{ slug: 'cms' }}
                 preload="intent"
                 className="bg-brand-gradient shine inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold text-on-gradient hover:opacity-90 sm:w-auto"
               >
-                Book a demo
+                Get started
                 <ArrowRight aria-hidden="true" className="size-4" />
               </Link>
               <Link

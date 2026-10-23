@@ -58,7 +58,7 @@ export function AdminShell({ email, children }: { email: string; children: React
           id="main-content"
           aria-busy={loading}
           className={cn(
-            'mx-auto max-w-7xl px-4 py-8 transition-opacity duration-200 sm:px-6 lg:px-10 lg:py-10',
+            'mx-auto max-w-(--breakpoint-2xl) px-4 py-8 transition-opacity duration-200 sm:px-6 lg:px-10 lg:py-10',
             // Keep the old page visible but dimmed until the new one is ready.
             loading && 'pointer-events-none opacity-60',
           )}

@@ -1,4 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { DottedWorldMap } from '~/components/ui/dotted-world-map'
+import { MagicCard } from '~/components/ui/magic-card'
+import { Marquee } from '~/components/ui/marquee'
+import { NumberTicker } from '~/components/ui/number-ticker'
+import { RollLink } from '~/components/ui/roll-link'
 import { useState } from 'react'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { Screen, TestBars } from '~/components/story/primitives/Screen'
@@ -7,6 +12,7 @@ import { HeroOne } from '~/components/blocks/hero-01'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 
 const SWATCHES = [
   { name: 'Ink 950 · room', token: '--color-ink-950', className: 'bg-ink-950' },
@@ -46,7 +52,7 @@ function DesignSystemPage() {
   const [checkboxChecked, setCheckboxChecked] = useState(true)
 
   return (
-    <div className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+    <div className="page-x py-16 space-y-16">
       {/* Header */}
       <div className="space-y-4 border-b border-ink-800 pb-8">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-signal-500/10 border border-signal-500/20 text-xs font-mono text-signal-400">
@@ -191,6 +197,35 @@ function DesignSystemPage() {
             </div>
           </div>
 
+          {/* RollLink (components/ui/roll-link): hover or focus it to see the label roll and the arrow turn. */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-ink-50">Roll link</h2>
+            <div className="flex flex-wrap gap-4 items-center p-6 rounded-2xl panel border border-ink-800">
+              <RollLink to="/contact">Talk to our team</RollLink>
+            </div>
+          </div>
+
+          {/* Magic UI ports used on /about (components/ui). */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-ink-50">Magic UI: Dotted world map, Number ticker, Magic card, Marquee</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl panel border border-ink-800 p-6">
+                <NumberTicker value={800000} suffix="+" className="font-display text-4xl font-semibold text-brand-gradient" />
+                <DottedWorldMap className="mt-6" markers={[{ lon: 114.17, lat: 22.3, label: 'Hong Kong' }]} />
+              </div>
+              <MagicCard>
+                <p className="p-6 text-ink-300">Move the pointer over this card: the border and a soft glow follow it.</p>
+              </MagicCard>
+            </div>
+            <Marquee pauseOnHover className="mask-x-from-90% mask-x-to-100%">
+              {['Viewixsoft CMS', 'Viewixsoft POS', 'Viewixsoft Tracking', 'Viewixsoft NFC'].map((name) => (
+                <span key={name} className="rounded-full border border-ink-800 px-4 py-2 text-sm text-ink-300">
+                  {name}
+                </span>
+              ))}
+            </Marquee>
+          </div>
+
           {/* shadcn/ui primitives (components/ui) */}
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-ink-50">shadcn/ui Primitives</h2>
@@ -209,12 +244,25 @@ function DesignSystemPage() {
                 <Label htmlFor="ds-shadcn-email">Work email</Label>
                 <Input id="ds-shadcn-email" type="email" placeholder="you@company.com" />
               </div>
+              <div className="grid max-w-sm gap-2">
+                <Label htmlFor="ds-select-screens">Number of screens</Label>
+                <Select id="ds-select-screens">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1-10">1 – 10</SelectItem>
+                    <SelectItem value="11-50">11 – 50</SelectItem>
+                    <SelectItem value="51+">51+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
           {/* Hero 01 block */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-ink-50">Hero 01 (Header, Hero, Platform Slider)</h2>
+            <h2 className="text-2xl font-bold text-ink-50">Hero 01 (Hero, Platform Slider)</h2>
             <div className="overflow-hidden rounded-2xl border border-ink-800">
               <HeroOne headingLevel="h2" />
             </div>

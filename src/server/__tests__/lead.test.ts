@@ -19,6 +19,20 @@ describe('Lead Capture Validation', () => {
     expect(result.success).toBe(true)
   })
 
+  it('should accept a lead without products of interest', () => {
+    const result = ContactLeadSchema.safeParse({
+      type: 'demo' as const,
+      name: 'Elena Gomez',
+      email: 'elena@burgercraft.net',
+      company: 'BurgerCraft International',
+      country: 'United States',
+      message: 'We run 40 menu boards.',
+      consent: true,
+    })
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.products).toEqual([])
+  })
+
   it('should reject invalid work email addresses', () => {
     const invalidData = {
       type: 'demo' as const,

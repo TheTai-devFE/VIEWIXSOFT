@@ -1,12 +1,5 @@
-// Company facts for Viewix, the hardware parent of Viewixsoft.
-// Source: viewixfactory.com (home and /why-viewix), accessed 2026-10-16, plus
-// the registration details supplied by the Viewix team.
-
-export const COMPANY_FACTS_SOURCE = {
-  label: 'viewixfactory.com',
-  url: 'https://viewixfactory.com/why-viewix/',
-  accessedAt: '2026-10-16',
-} as const
+// Company facts for Viewix, the hardware parent of Viewixsoft: the
+// registration details shown on viewixfactory.com and supplied by the Viewix team.
 
 export const LEGAL_ENTITY = {
   name: 'Shenzhen Viewix Electronic Technology Co., Limited',
@@ -21,15 +14,6 @@ export const CONTACT_EMAILS = [
   { department: 'Sales', email: 'sales@viewix.hk' },
   { department: 'Technical support', email: 'support@viewix.hk' },
 ] as const
-
-export const VIEWIX_STATS = [
-  { value: '60+', label: 'Countries exported to' },
-  { value: '800,000+', label: 'Units of annual capacity' },
-  { value: '20+', label: 'Engineers in R&D' },
-  { value: '100+', label: 'Quality and compliance standards' },
-] as const
-
-export const CERTIFICATIONS = ['ISO 9001:2015', 'CE', 'FCC', 'RoHS'] as const
 
 // Story copy approved by the Viewix team (2026-10-16). The Gen Z founding team
 // is their statement; no dates until they are confirmed.

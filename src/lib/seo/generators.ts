@@ -8,7 +8,9 @@ import type { Product } from '~/content/products'
 import { USE_CASES } from '~/content/useCases'
 import type { UseCase } from '~/content/useCases'
 import { HOME_FAQ } from '~/data/home-faq'
-import { PRICING_FAQ } from '~/data/pricing-faq'
+import { pricingFaq } from '~/lib/pricing'
+import type { PricingPlans } from '~/lib/pricing'
+import { SECTION_CONTENT } from '~/lib/section-content'
 import { absoluteUrl, SITE_NAME, SITE_URL } from '~/lib/seo/meta'
 import { AI_CRAWLER_POLICY, AI_CRAWLERS, DISALLOWED_PATHS, STATIC_PAGES } from '~/lib/seo/site-pages'
 
@@ -36,12 +38,10 @@ export interface SitemapEntry {
 
 /** Products as published: pass `visibleProducts(config)` so hidden ones drop out. */
 export function sitemapEntries(products: Product[] = PRODUCTS): SitemapEntry[] {
-  const productsLastmod = latest(products.map((p) => p.updatedAt))
   const useCasesLastmod = latest(USE_CASES.map((u) => u.updatedAt))
   const blogLastmod = latest(PUBLISHED_POSTS.map((b) => b.updatedAt))
   // Index pages change whenever an item in their collection does.
   const collectionLastmod: Record<string, string> = {
-    '/products': productsLastmod,
     '/use-cases': useCasesLastmod,
     '/blog': blogLastmod,
   }
@@ -243,7 +243,12 @@ export function blogPostMarkdown(b: BlogPost, body: string) {
   ].join('\n')
 }
 
-export function buildLlmsFullTxt(published: Product[] = PRODUCTS, postBody: (slug: string) => string | null = () => null) {
+export function buildLlmsFullTxt(
+  published: Product[] = PRODUCTS,
+  postBody: (slug: string) => string | null = () => null,
+  homeFaq: { question: string; answer: string }[] = HOME_FAQ,
+  prices: PricingPlans = SECTION_CONTENT['product-cms:pricing-plans'].defaults,
+) {
   return [
     `# ${SITE_NAME}`,
     '',
@@ -251,10 +256,10 @@ export function buildLlmsFullTxt(published: Product[] = PRODUCTS, postBody: (slu
     '',
     '## Frequently asked questions',
     '',
-    ...faqMarkdown(HOME_FAQ),
+    ...faqMarkdown(homeFaq),
     '## Pricing',
     '',
-    ...faqMarkdown(PRICING_FAQ),
+    ...faqMarkdown(pricingFaq(prices)),
     ...published.map((p) => productMarkdown(p).replace(/^# /, '## ').replace(/\n## /g, '\n### ')),
     ...USE_CASES.map((u) => useCaseMarkdown(u).replace(/^# /, '## ').replace(/\n## /g, '\n### ')),
     ...PUBLISHED_POSTS.map((b) => blogPostMarkdown(b, postBody(b.slug) ?? '').replace(/^# /, '## ')),

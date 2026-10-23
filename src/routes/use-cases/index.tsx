@@ -68,7 +68,7 @@ function UseCasesIndexPage() {
   const useCases = active ? USE_CASES.filter((u) => u.industry === active.name) : USE_CASES
 
   return (
-    <div className="mx-auto max-w-7xl space-y-12 px-4 py-16 sm:px-6 md:py-24 lg:px-8">
+    <div className="page-x space-y-12 py-16 md:py-24">
       <header className="max-w-3xl space-y-4">
         {hero.eyebrow && <p className="eyebrow">{hero.eyebrow}</p>}
         <h1 className="text-hero font-bold tracking-tight text-ink-50">

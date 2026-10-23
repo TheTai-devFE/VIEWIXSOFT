@@ -3,7 +3,8 @@ import { PricingSection } from '~/components/blocks/PricingSection'
 import { FaqAccordion } from '~/components/blocks/FaqAccordion'
 import { CtaBand } from '~/components/blocks/CtaBand'
 import { Breadcrumbs } from '~/components/layout/Breadcrumbs'
-import { PRICING_FAQ } from '~/data/pricing-faq'
+import { pricingFaq, pricingFromConfig } from '~/lib/pricing'
+import { usePricing } from '~/lib/use-pricing'
 import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
 import { usePageContent } from '~/lib/use-page-content'
 import { HeroTitle } from '~/components/ui/hero-heading'
@@ -18,8 +19,9 @@ const BREADCRUMBS = [
 
 export const Route = createFileRoute('/pricing')({
   head: ({ matches }) => {
+    const config = siteConfigFromMatches(matches)
     const seo = generateMetaTags({
-      ...pageContent(siteConfigFromMatches(matches), 'pricing').seo,
+      ...pageContent(config, 'pricing').seo,
       canonicalUrl: '/pricing',
     })
     return {
@@ -27,7 +29,7 @@ export const Route = createFileRoute('/pricing')({
       links: seo.links,
       scripts: [
         { type: 'application/ld+json', children: JSON.stringify(getBreadcrumbSchema(BREADCRUMBS)) },
-        { type: 'application/ld+json', children: JSON.stringify(getFaqSchema(PRICING_FAQ)) },
+        { type: 'application/ld+json', children: JSON.stringify(getFaqSchema(pricingFaq(pricingFromConfig(config)))) },
       ],
     }
   },
@@ -36,8 +38,9 @@ export const Route = createFileRoute('/pricing')({
 
 function PricingPage() {
   const { hero } = usePageContent('pricing')
+  const faq = pricingFaq(usePricing())
   return (
-    <div className="mx-auto max-w-7xl space-y-20 px-4 py-12 sm:px-6 md:py-20 lg:px-8">
+    <div className="page-x space-y-20 py-12 md:py-20">
       <div className="space-y-8">
         <Breadcrumbs items={BREADCRUMBS} />
         <header className="mx-auto max-w-3xl text-center">
@@ -58,7 +61,7 @@ function PricingPage() {
             Pricing questions
           </h2>
         </div>
-        <FaqAccordion items={PRICING_FAQ} />
+        <FaqAccordion items={faq} />
       </section>
 
       <CtaBand

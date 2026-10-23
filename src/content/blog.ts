@@ -48,12 +48,14 @@ export interface BlogPost extends Omit<BlogFrontmatter, 'author'> {
   author: Author
 }
 
-const frontmatters = import.meta.glob<unknown>('./blog/*.mdx', { eager: true, import: 'frontmatter' })
+// `?meta` (src/lib/mdx/plugin.ts) yields only the frontmatter, so listing posts
+// never pulls their bodies into the bundle; bodies load per post below.
+const frontmatters = import.meta.glob<unknown>('./blog/*.mdx', { eager: true, import: 'frontmatter', query: '?meta' })
 const bodies = import.meta.glob<ComponentType<{ components?: Record<string, unknown> }>>('./blog/*.mdx', {
   import: 'default',
 })
 
-const slugOf = (path: string) => path.replace(/^.*\/(.+)\.mdx$/, '$1')
+const slugOf = (path: string) => path.replace(/^.*\/(.+)\.mdx(\?meta)?$/, '$1')
 
 /** Parses every post; throws with the file name on the first invalid one. */
 export function parseAllPosts(): BlogPost[] {

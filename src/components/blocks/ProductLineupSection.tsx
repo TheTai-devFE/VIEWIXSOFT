@@ -4,13 +4,15 @@ import { PRODUCT_ONE_LINERS } from '~/content/products'
 import { useProducts } from '~/lib/use-site-config'
 import type { Product } from '~/content/products'
 import { Reveal } from '~/components/ui/reveal'
+import { CMS_APP_URL } from '~/data/app-links'
 
-
+// Confirmed Viewixsoft CMS features (from the product owner).
 const CMS_FEATURES = [
-  'Upload media and build playlists',
-  'Multi-zone layouts',
-  'Schedule by time and location',
-  'Manage every screen remotely',
+  'Manage devices and device groups',
+  'See device locations and take remote screenshots',
+  'Manage media and sort it into groups',
+  'Build playlists and schedule playback',
+  'Track everything in overview reports',
 ]
 
 export function ProductLineupSection() {
@@ -20,18 +22,18 @@ export function ProductLineupSection() {
 
   return (
     <section aria-labelledby="products-title" className="border-t border-ink-800 bg-ink-950">
-      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28 xl:pl-20">
+      <div className="page-x section-y xl:pl-20">
         <Reveal className="max-w-3xl">
-          <p className="eyebrow">Products</p>
+          <p className="eyebrow">Our solutions</p>
           <h2
             id="products-title"
             className="mt-3 font-display text-4xl font-semibold tracking-tight text-balance text-ink-50 sm:text-5xl"
           >
-            Start with CMS today. <span className="text-brand-gradient">More is on the way.</span>
+            Digital Signage Solutions, <span className="text-brand-gradient">Built for Business.</span>
           </h2>
           <p className="mt-5 text-lg text-pretty text-ink-400">
-            Viewixsoft CMS is available now. Viewixsoft POS, Tracking and NFC are coming soon and will connect to the
-            same CMS, so the screens you set up today are ready for them.
+            Explore Viewixsoft&apos;s software solutions for managing digital displays, delivering content, and
+            connecting screen networks. Start with our CMS platform, with more integrated solutions on the way.
           </p>
         </Reveal>
 
@@ -86,20 +88,20 @@ function AvailableCard({ product }: { product: Product }) {
 
       <div className="relative mt-auto flex flex-wrap items-center gap-3 pt-10">
         <Link
-          to="/contact"
+          to="/products/$slug"
+          params={{ slug: 'cms' }}
+          preload="intent"
           className="bg-brand-gradient shine inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-on-gradient hover:opacity-90"
         >
-          Book a demo
+          Get started
           <ArrowRight aria-hidden="true" className="size-4" />
         </Link>
-        <Link
-          to="/products/$slug"
-          params={{ slug: product.slug }}
-          preload="intent"
+        <a
+          href={CMS_APP_URL}
           className="inline-flex items-center gap-2 rounded-lg border border-ink-700 px-5 py-2.5 text-sm font-semibold text-ink-50 hover:border-ink-500"
         >
           Explore {product.name}
-        </Link>
+        </a>
       </div>
     </article>
   )

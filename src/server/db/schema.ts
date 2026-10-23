@@ -1,9 +1,11 @@
 import { sql } from 'drizzle-orm'
+import type { Json } from '~/lib/section-content'
 import {
   boolean,
   date,
   index,
   integer,
+  jsonb,
   pgTable,
   primaryKey,
   text,
@@ -200,14 +202,34 @@ export const testimonials = pgTable('testimonials', {
   ...timestamps,
 })
 
-/** Image override for a named slot (see src/data/media-slots.ts). */
-export const mediaSlots = pgTable('media_slots', {
-  key: text('key').primaryKey(),
+/** An image uploaded to the library in /admin/media. Pages pick from these. */
+export const mediaAssets = pgTable('media_assets', {
+  id: uuid('id').defaultRandom().primaryKey(),
   url: text('url').notNull(),
-  storageKey: text('storage_key').notNull(),
-  alt: text('alt').notNull(),
+  storageKey: text('storage_key').notNull().unique(),
+  fileName: text('file_name').notNull(),
+  contentType: text('content_type').notNull(),
+  /** Null for files moved in from the old per-slot uploads, whose size was not recorded. */
+  bytes: integer('bytes'),
   width: integer('width').notNull(),
   height: integer('height').notNull(),
+  /** Suggested alt text, from the file name; each placement sets its own. */
+  alt: text('alt').notNull(),
+  uploadedBy: text('uploaded_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
+/**
+ * Which library image fills a named slot (see src/data/media-slots.ts), with
+ * the alt text for that place. A slot without a row shows its default.
+ * `restrict` keeps an image that is in use from being deleted.
+ */
+export const mediaSlots = pgTable('media_slots', {
+  key: text('key').primaryKey(),
+  assetId: uuid('asset_id')
+    .notNull()
+    .references(() => mediaAssets.id, { onDelete: 'restrict' }),
+  alt: text('alt').notNull(),
   updatedBy: text('updated_by'),
   updatedAt: timestamp('updated_at', { withTimezone: true })
     .defaultNow()
@@ -216,8 +238,28 @@ export const mediaSlots = pgTable('media_slots', {
 })
 
 /**
- * Admin overrides of a page's hero text and search snippet, keyed like
+ * Edited content of one section (see src/lib/section-content.ts), replacing
+ * its defaults from the code as a whole. `page` is a SECTION_PAGES key.
+ */
+export const sectionContent = pgTable(
+  'section_content',
+  {
+    page: text('page').notNull(),
+    sectionKey: text('section_key').notNull(),
+    content: jsonb('content').$type<Json>().notNull(),
+    updatedBy: text('updated_by'),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [primaryKey({ columns: [t.page, t.sectionKey] })],
+)
+
+/**
+ * Admin overrides of a page's search snippet (/admin/seo), keyed like
  * /admin/pages/<key>. Null or empty fields fall back to src/data/page-content.ts.
+ * The hero_* columns are no longer edited or read.
  */
 export const pageOverrides = pgTable('page_overrides', {
   key: text('key').primaryKey(),
@@ -238,3 +280,4 @@ export type PageOverrideRow = typeof pageOverrides.$inferSelect
 export type Testimonial = typeof testimonials.$inferSelect
 export type SiteMetric = typeof siteMetrics.$inferSelect
 export type MediaSlotRow = typeof mediaSlots.$inferSelect
+export type MediaAssetRow = typeof mediaAssets.$inferSelect

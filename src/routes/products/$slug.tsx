@@ -5,25 +5,46 @@ import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
 import { usePageContent } from '~/lib/use-page-content'
 import { HeroTitle } from '~/components/ui/hero-heading'
 import type { PageHero } from '~/data/page-content'
-import { orderSections, productStatus } from '~/lib/site-config'
+import { isSectionEnabled, orderSections, productStatus } from '~/lib/site-config'
 import { useSiteConfig } from '~/lib/use-site-config'
+import { useSectionContent } from '~/lib/use-section-content'
 import { getSiteConfigFn } from '~/server/functions/site'
 import type { Product } from '~/content/products'
-import { Breadcrumbs } from '~/components/layout/Breadcrumbs'
 import { generateMetaTags } from '~/lib/seo/meta'
-import { getSoftwareApplicationSchema, getFaqSchema, getBreadcrumbSchema } from '~/lib/seo/jsonld'
+import { getSoftwareApplicationSchema, getFaqSchema, getBreadcrumbSchema, getVideoSchema } from '~/lib/seo/jsonld'
+import { resolveSectionContent } from '~/lib/section-content'
 import { FaqAccordion } from '~/components/blocks/FaqAccordion'
 import { CtaBand } from '~/components/blocks/CtaBand'
 import { PricingSection } from '~/components/blocks/PricingSection'
 import { ProductComingSoon } from '~/components/blocks/ProductComingSoon'
-import { TERM_PLANS } from '~/data/pricing'
-import { WhyChooseSection } from '~/components/blocks/WhyChooseSection'
+import { pricingFromConfig, yearlyPlan } from '~/lib/pricing'
+import { CmsHero } from '~/components/blocks/CmsHero'
+import { SectionHeading } from '~/components/blocks/SectionHeading'
 import { ScreenBandSection } from '~/components/blocks/ScreenBandSection'
 import { CmsCapabilitiesSection } from '~/components/blocks/cms-capabilities'
 import { Reveal } from '~/components/ui/reveal'
 import { 
   CheckCircle2, ArrowRight, Layers,   Monitor, Cpu, Activity, Smartphone, Sparkles 
 } from 'lucide-react'
+
+function cmsOffer(config: ReturnType<typeof siteConfigFromMatches>) {
+  const plan = yearlyPlan(pricingFromConfig(config))
+  return plan ? { price: plan.price, currency: 'USD', description: 'Per screen licence, per year' } : undefined
+}
+
+/** VideoObject for the product tour; Google needs the file and a thumbnail, so it waits for both. */
+function productTourLd(config: ReturnType<typeof siteConfigFromMatches>) {
+  const tour = resolveSectionContent('product-cms:intro-video', config.content['product-cms:intro-video'])
+  if (!tour.video || !tour.poster || !isSectionEnabled(config, 'product-cms', 'intro-video')) return []
+  const schema = getVideoSchema({
+    title: tour.title,
+    description: tour.description,
+    src: tour.video.url,
+    poster: tour.poster.url,
+    uploadDate: tour.video.uploadedAt,
+  })
+  return [{ type: 'application/ld+json', children: JSON.stringify(schema) }]
+}
 
 export const Route = createFileRoute('/products/$slug')({
   loader: async ({ params }) => {
@@ -65,19 +86,24 @@ export const Route = createFileRoute('/products/$slug')({
           children: JSON.stringify(
             getSoftwareApplicationSchema({
               ...p,
-              // Only Viewixsoft CMS has published prices so far.
-              offer:
-                p.slug === 'cms' && TERM_PLANS[0]
-                  ? { price: TERM_PLANS[0].price, currency: 'USD', description: 'Per screen licence, per year' }
-                  : undefined,
+              // Only Viewixsoft CMS has published prices so far; the same figure the pricing table shows.
+              offer: p.slug === 'cms' ? cmsOffer(siteConfigFromMatches(matches)) : undefined,
             }),
           ),
         },
         {
           type: 'application/ld+json',
-          children: JSON.stringify(getFaqSchema(p.faq)),
+          // The same questions the FAQ section shows, edited or not.
+          children: JSON.stringify(
+            getFaqSchema(
+              p.slug === 'cms'
+                ? resolveSectionContent('product-cms:faq', siteConfigFromMatches(matches).content['product-cms:faq']).items
+                : p.faq,
+            ),
+          ),
         },
         breadcrumbLd,
+        ...(p.slug === 'cms' ? productTourLd(siteConfigFromMatches(matches)) : []),
       ],
     }
   },
@@ -89,23 +115,33 @@ function ProductDetailPage() {
   const config = useSiteConfig()
   // Hero text is editable in /admin/pages/product-<slug>.
   const { hero } = usePageContent(`product-${product.slug}`)
+  // Viewixsoft CMS section text is edited in /admin/pages; other products keep the generic wording.
+  const why = useSectionContent('product-cms:why')
+  const tour = useSectionContent('product-cms:intro-video')
+  const specsIntro = useSectionContent('product-cms:specs')
+  const useCasesIntro = useSectionContent('product-cms:use-cases')
+  const cmsFaq = useSectionContent('product-cms:faq')
+  const specTable = useSectionContent('product-cms:spec-table')
+  const isCms = product.slug === 'cms'
+  const faqItems = isCms ? cmsFaq.items : product.faq
+  const specGroups = isCms ? specTable.groups : product.specs
   if (product.status === 'coming-soon') return <ProductComingSoon product={product} hero={hero} />
 
   const specs = (
     <section aria-labelledby="specs-title" className="space-y-8">
-      <Reveal className="max-w-3xl space-y-3">
-        <span className="text-xs uppercase tracking-widest text-signal-400 font-bold">Specifications</span>
-        <h2 id="specs-title" className="text-2xl sm:text-3xl font-extrabold text-ink-50">
-          What does {product.name} support?
-        </h2>
-        <p className="text-ink-400">
-          Supported file formats, player devices and operating systems, screen resolutions and, where offered, the
-          server needed to host {product.name} yourself.
-        </p>
-      </Reveal>
+      <SectionHeading
+        id="specs-title"
+        eyebrow={isCms ? specsIntro.eyebrow : 'Specifications'}
+        title={isCms ? specsIntro.title : `What does ${product.name} support?`}
+        description={
+          isCms
+            ? specsIntro.description
+            : `Supported file formats, player devices and operating systems, screen resolutions and, where offered, the server needed to host ${product.name} yourself.`
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {product.specs.map((specCat, idx) => (
+        {specGroups.map((specCat, idx) => (
           <Reveal key={specCat.category} delay={(idx % 2) * 100} className="h-full">
             <div className="h-full rounded-2xl panel border border-ink-800 overflow-hidden">
               <div className="px-6 py-4 bg-ink-900 border-b border-ink-800">
@@ -127,9 +163,12 @@ function ProductDetailPage() {
     </section>
   )
   const useCases = (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-ink-50">Recommended Use Cases for {product.name}</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <section aria-labelledby="product-use-cases-title" className="space-y-8">
+      <SectionHeading
+        id="product-use-cases-title"
+        title={isCms ? useCasesIntro.title : `Recommended use cases for ${product.name}`}
+      />
+      <div className="mx-auto grid max-w-4xl grid-cols-1 sm:grid-cols-2 gap-4">
         {product.relatedUseCases.map((uc, idx) => (
           <Link
             key={idx}
@@ -144,16 +183,17 @@ function ProductDetailPage() {
           </Link>
         ))}
       </div>
-    </div>
+    </section>
   )
   const faq = (
-    <div className="space-y-8 border-t border-ink-900 pt-16">
-      <div className="text-center max-w-2xl mx-auto space-y-2">
-        <span className="text-xs uppercase tracking-widest text-signal-400 font-bold">Product FAQ</span>
-        <h2 className="text-3xl font-extrabold text-ink-50">Frequently Asked Questions</h2>
-      </div>
-      <FaqAccordion items={product.faq} />
-    </div>
+    <section aria-labelledby="product-faq-title" className="space-y-8 border-t border-ink-900 pt-16">
+      <SectionHeading
+        id="product-faq-title"
+        eyebrow={isCms ? cmsFaq.eyebrow : 'Product FAQ'}
+        title={isCms ? cmsFaq.title : 'Frequently asked questions'}
+      />
+      <FaqAccordion items={faqItems} />
+    </section>
   )
 
   // Viewixsoft CMS has its own sections, ordered in /admin/site; other released
@@ -161,7 +201,8 @@ function ProductDetailPage() {
   const sections =
     product.slug === 'cms'
       ? orderSections(config, 'product-cms', {
-          why: <WhyChooseSection embedded headingLevel="h1" hero={hero} />,
+          // The product tour plays inside the hero; its own section entry only switches it on or off.
+          why: <CmsHero content={why} tour={tour} showTour={isSectionEnabled(config, 'product-cms', 'intro-video')} />,
           capabilities: <CmsCapabilitiesSection />,
           screens: <ScreenBandSection />,
           specs,
@@ -204,12 +245,8 @@ function ProductDetailPage() {
         ]
 
   return (
-    <div className="py-12 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
-      <Breadcrumbs items={[
-        { name: 'Home', path: '/' },
-        { name: 'Products', path: '/products' },
-        { name: product.name, path: `/products/${product.slug}` },
-      ]} />
+    // No visible breadcrumb trail here: the page is one level deep and the hero opens it. BreadcrumbList JSON-LD stays in head().
+    <div className="page-x pt-10 pb-12 md:pt-16 md:pb-20 space-y-20">
       {sections.map((s) => (
         <Fragment key={s.key}>{s.node}</Fragment>
       ))}
@@ -252,7 +289,7 @@ function ProductHero({ product, hero }: { product: Product; hero: PageHero }) {
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-on-gradient bg-brand-gradient shine hover:opacity-90 shadow-xl transition-all"
           >
             <Sparkles className="w-4 h-4 text-on-gradient" />
-            {product.status === 'available' ? 'Book a demo' : 'Get notified at launch'}
+            {product.status === 'available' ? 'Get started' : 'Get notified at launch'}
           </Link>
 
         </div>

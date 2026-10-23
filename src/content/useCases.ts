@@ -36,7 +36,7 @@ export interface UseCase {
 export const USE_CASES: UseCase[] = [
   {
     slug: 'retail',
-    title: 'Retail In-Store Digital Experience',
+    title: 'Retail & Shopping Centers',
     seoTitle: 'Digital Signage for Retail Stores',
     industry: 'Retail',
     challengeHeading: 'Why does paper signage hold retail promotions back?',
@@ -66,7 +66,7 @@ export const USE_CASES: UseCase[] = [
   },
   {
     slug: 'qsr-menu-boards',
-    title: 'QSR & Restaurant Digital Menu Boards',
+    title: 'Restaurants & Digital Menu Boards',
     seoTitle: 'Digital Menu Boards for Restaurants and QSR',
     industry: 'Food & Beverage',
     challengeHeading: 'Why do menu board prices drift from the register?',
@@ -96,9 +96,9 @@ export const USE_CASES: UseCase[] = [
   },
   {
     slug: 'corporate-comms',
-    title: 'Corporate Campus & Workplace Screens',
+    title: 'Offices & Corporate Campuses',
     seoTitle: 'Digital Signage for Corporate Communications',
-    industry: 'Enterprise',
+    industry: 'Corporate',
     challengeHeading: 'Why do company updates miss hybrid teams?',
     solutionHeading: 'How does Viewixsoft reach every office screen?',
     publishedAt: '2026-10-15',
@@ -125,38 +125,8 @@ export const USE_CASES: UseCase[] = [
     }
   },
   {
-    slug: 'transportation',
-    title: 'Transportation Hubs & Passenger Terminals',
-    seoTitle: 'Digital Signage for Airports and Transit Hubs',
-    industry: 'Transportation',
-    challengeHeading: 'Why can transit screens never go blank?',
-    solutionHeading: 'How does Viewixsoft keep passenger screens running?',
-    publishedAt: '2026-10-15',
-    updatedAt: '2026-10-22',
-    evidence: 'sample',
-    cover: { src: '/devices/stock/transit-display.webp', alt: 'Digital arrival board under a transit shelter' },
-    tagline: 'Deliver mission-critical flight & transit departure schedules alongside high-yield programmatic advertising.',
-    challenge: 'Airport and metro authorities required 100% fail-safe display architectures that could split screens between live GTFS/FIDS transit schedules and commercial advertising.',
-    solution: 'Viewixsoft CMS with hardware-level failover and Viewixsoft Tracking were installed across concourses, passenger gates, and platform edge screens.',
-    results: [
-      { metric: 'Zero', label: 'Blackout minutes over 24 continuous months of transit operation' },
-      { metric: '+42%', label: 'Terminal DOOH advertising revenue growth' },
-      { metric: '100%', label: 'Certified proof-of-play reports delivered to brands' }
-    ],
-    featuredProducts: [
-      { name: 'Viewixsoft CMS', slug: 'cms' },
-      { name: 'Viewixsoft Tracking', slug: 'tracking' }
-    ],
-    quote: {
-      text: 'Viewixsoft provides the exact rock-solid reliability required in an airport environment where display failure simply is not an option.',
-      author: 'Sophie Laurent',
-      title: 'Director of Passenger Information Systems',
-      company: 'EuroMetro Transit Authority'
-    }
-  },
-  {
     slug: 'hospitality',
-    title: 'Hospitality & Luxury Resort Signage',
+    title: 'Hotels & Resorts',
     seoTitle: 'Digital Signage for Hotels and Resorts',
     industry: 'Hospitality',
     challengeHeading: 'Why do guests miss what a hotel offers?',
@@ -185,33 +155,32 @@ export const USE_CASES: UseCase[] = [
     }
   },
   {
-    slug: 'dooh-advertising',
-    title: 'DOOH Digital Billboard Networks',
-    seoTitle: 'DOOH Advertising Network Software',
-    industry: 'Out of Home',
-    challengeHeading: 'Why do advertisers ask DOOH networks for proof?',
-    solutionHeading: 'How does Viewixsoft prove every ad played?',
-    publishedAt: '2026-10-15',
+    slug: 'healthcare',
+    title: 'Hospitals & Clinics',
+    seoTitle: 'Digital Signage for Hospitals and Clinics',
+    industry: 'Healthcare',
+    challengeHeading: 'Why do patients miss updates in busy clinics?',
+    solutionHeading: 'How does Viewixsoft keep clinic screens current?',
+    publishedAt: '2026-10-22',
     updatedAt: '2026-10-22',
     evidence: 'sample',
-    cover: { src: '/devices/stock/interactive-display.webp', alt: 'Two people using a tall interactive display in a store' },
-    tagline: 'Maximize programmatic advertising yields with cryptographic proof-of-play and high-throughput content scheduling.',
-    challenge: 'Outdoor billboard operators struggled with media buyer skepticism regarding whether purchased ad slots actually played at peak rush hours.',
-    solution: 'Viewixsoft CMS and Tracking provided real-time programmatic ad insertion with immutable cryptographic proof-of-play certificates generated per broadcast.',
-    results: [
-      { metric: '100%', label: 'Auditable proof-of-play accuracy accepted by top media agencies' },
-      { metric: '+27%', label: 'Ad slot yield increase via automated programmatic fill' },
-      { metric: '15,000+', label: 'Billboard and roadside LED screens under management' }
-    ],
-    featuredProducts: [
-      { name: 'Viewixsoft CMS', slug: 'cms' },
-      { name: 'Viewixsoft Tracking', slug: 'tracking' }
-    ],
+    // TODO(content): replace with a real photo of screens in a hospital or clinic (upload it in /admin/media).
+    cover: { src: '/devices/stock/tablet-kiosk.webp', alt: 'Tablet kiosk on a counter with a customer paying by phone' },
+    tagline: 'Keep waiting rooms, reception desks and corridors up to date with schedules, directions and health notices.',
+    // TODO(content): general description only; confirm it against a real healthcare deployment before launch.
+    challenge:
+      'Hospitals and clinics change opening hours, doctor schedules and health notices often, and printed posters in waiting areas and corridors go out of date quickly.',
+    solution:
+      'Viewixsoft CMS groups the screens in each building and area, so staff can schedule playlists for waiting rooms, reception and corridors, check what every screen shows with remote screenshots, and follow the network in overview reports.',
+    // TODO(content): no results yet. Add real, approved figures and set `evidence: 'verified'`.
+    results: [],
+    featuredProducts: [{ name: 'Viewixsoft CMS', slug: 'cms' }],
+    // TODO(content): sample placeholder, shown in the dev server only.
     quote: {
-      text: 'The cryptographic proof-of-play alone won us multi-million dollar contracts with Fortune 500 brands who require absolute transparency.',
-      author: 'Craig Henderson',
-      title: 'Managing Director',
-      company: 'Apex Media Out-of-Home'
-    }
+      text: 'Sample quote. Replace it with an approved quote from a healthcare customer.',
+      author: 'Sample name',
+      title: 'Sample role',
+      company: 'Sample clinic',
+    },
   }
 ]

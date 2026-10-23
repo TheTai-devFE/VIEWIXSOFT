@@ -9,6 +9,7 @@ import {
 import * as React from 'react'
 import { SiteHeader } from '~/components/blocks/SiteHeader'
 import { Footer } from '~/components/blocks/Footer'
+import { CookieConsent } from '~/components/blocks/CookieConsent'
 import { DefaultCatchBoundary } from '~/components/DefaultCatchBoundary'
 import { NotFound } from '~/components/NotFound'
 import { getOrganizationSchema, getWebSiteSchema } from '~/lib/seo/jsonld'
@@ -74,10 +75,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         ) : (
           <>
             <SiteHeader />
-            <main id="main-content" className="flex-1 pt-16">
+            {/* Decorative glows and illustrations may reach past the edge; clip (not hidden) keeps sticky elements working. */}
+            <main id="main-content" className="flex-1 overflow-x-clip pt-16">
               {children}
             </main>
             <Footer />
+            <CookieConsent />
           </>
         )}
         <Scripts />

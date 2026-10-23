@@ -11,11 +11,10 @@ export interface StaticPage {
 
 export const STATIC_PAGES: StaticPage[] = [
   { path: '/', title: 'Home', updatedAt: '2026-10-22' },
-  { path: '/products', title: 'Products', updatedAt: '2026-10-22' },
   { path: '/use-cases', title: 'Use cases', updatedAt: '2026-10-22' },
   { path: '/pricing', title: 'Pricing', updatedAt: '2026-10-22' },
   { path: '/blog', title: 'Blog', updatedAt: '2026-10-22' },
-  { path: '/about', title: 'About', updatedAt: '2026-10-16' },
+  { path: '/about', title: 'About', updatedAt: '2026-10-22' },
   { path: '/contact', title: 'Contact', updatedAt: '2026-10-22' },
   { path: '/legal/privacy', title: 'Privacy Policy', updatedAt: '2026-10-15' },
   { path: '/legal/terms', title: 'Terms of Service', updatedAt: '2026-10-15' },

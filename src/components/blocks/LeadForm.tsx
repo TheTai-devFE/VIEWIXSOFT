@@ -11,6 +11,7 @@ import { cn } from '~/lib/cn'
 import { ContactLeadSchema } from '~/server/schema/validation'
 import { submitLeadFn } from '~/server/functions/leads'
 import { Turnstile } from '~/components/ui/turnstile'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 
 // One schema for both variants: the extra /contact fields are optional, so the
 // quick form simply leaves them empty.
@@ -23,9 +24,7 @@ const LeadFormSchema = ContactLeadSchema.pick({
   phone: true,
   companySize: true,
   screenCount: true,
-  products: true,
   message: true,
-  consent: true,
   honeypot: true,
 })
 
@@ -40,19 +39,15 @@ const EMPTY_LEAD: LeadFormValues = {
   phone: '',
   companySize: '',
   screenCount: '',
-  products: [],
   message: '',
-  consent: false,
   honeypot: '',
 }
 
-const PRODUCT_OPTIONS = ['Viewixsoft CMS', 'Viewixsoft POS', 'Viewixsoft Tracking', 'Viewixsoft NFC']
-
 const COMPANY_SIZES = ['1 – 50 employees', '51 – 200 employees', '201 – 1,000 employees', '1,000+ employees']
 
-const fieldClass = 'h-11 bg-ink-900 text-ink-50'
-const selectClass =
-  'mt-2 w-full rounded-md border border-input px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive'
+const fieldClass = 'h-10 bg-ink-900 text-ink-50'
+// Long lists (countries) scroll inside the panel instead of running off the page.
+const selectPanelClass = 'max-h-64 overflow-y-auto'
 
 /**
  * First error message for a field, shown once the visitor has left the field or
@@ -121,7 +116,8 @@ export function LeadForm({ variant, idPrefix, initialValues }: LeadFormProps) {
       setStatus('idle')
       try {
         const res = await submitLeadFn({
-          data: { ...value, type: isFull ? 'contact' : 'demo', turnstileToken, ...utmFromLocation() },
+          // Submitting is the consent: the notice above the button says so.
+          data: { ...value, consent: true, type: isFull ? 'contact' : 'demo', turnstileToken, ...utmFromLocation() },
         })
         if (res.ok) {
           setSentTo(value.email)
@@ -203,20 +199,18 @@ export function LeadForm({ variant, idPrefix, initialValues }: LeadFormProps) {
           <Label htmlFor={id(name)}>
             {label} <Optional />
           </Label>
-          <select
-            id={id(name)}
-            name={name}
-            value={field.state.value ?? ''}
-            onChange={(e) => field.handleChange(e.target.value)}
-            className={cn(selectClass, fieldClass)}
-          >
-            <option value="">{placeholder}</option>
-            {options.map((o) => (
-              <option key={o} value={o}>
-                {o}
-              </option>
-            ))}
-          </select>
+          <Select id={id(name)} value={field.state.value ?? ''} onValueChange={field.handleChange} className="mt-2">
+            <SelectTrigger className={fieldClass}>
+              <SelectValue placeholder={placeholder} />
+            </SelectTrigger>
+            <SelectContent className={selectPanelClass}>
+              {options.map((o) => (
+                <SelectItem key={o} value={o}>
+                  {o}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
     </form.Field>
@@ -229,7 +223,7 @@ export function LeadForm({ variant, idPrefix, initialValues }: LeadFormProps) {
         e.preventDefault()
         void form.handleSubmit()
       }}
-      className="rounded-3xl border border-ink-800 bg-ink-900 p-6 sm:p-10"
+      className="rounded-3xl border border-ink-800 bg-ink-900 p-5 sm:p-8"
     >
       {/* Honeypot: hidden from people, filled by bots, rejected on the server. */}
       <form.Field name="honeypot">
@@ -253,7 +247,7 @@ export function LeadForm({ variant, idPrefix, initialValues }: LeadFormProps) {
         </p>
       )}
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         {textField('name', 'Full name', { autoComplete: 'name' })}
         {textField('email', 'Work email', { type: 'email', autoComplete: 'email' })}
         {textField('company', 'Company', { autoComplete: 'organization' })}
@@ -265,25 +259,23 @@ export function LeadForm({ variant, idPrefix, initialValues }: LeadFormProps) {
             return (
               <div>
                 <Label htmlFor={id('country')}>Country</Label>
-                <select
-                  id={id('country')}
-                  name="country"
-                  autoComplete="country-name"
-                  required
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? id('country-error') : undefined}
-                  className={cn(selectClass, fieldClass)}
-                >
-                  <option value="">Select a country</option>
-                  {COUNTRIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                <Select id={id('country')} value={field.state.value} onValueChange={field.handleChange} className="mt-2">
+                  <SelectTrigger
+                    onBlur={field.handleBlur}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? id('country-error') : undefined}
+                    className={fieldClass}
+                  >
+                    <SelectValue placeholder="Select a country" />
+                  </SelectTrigger>
+                  <SelectContent className={selectPanelClass}>
+                    {COUNTRIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FieldError id={id('country-error')} message={error} />
               </div>
             )
@@ -298,62 +290,18 @@ export function LeadForm({ variant, idPrefix, initialValues }: LeadFormProps) {
         </div>
       </div>
 
-      <form.Field name="products">
-        {(field) => {
-          const error = shownError(field.state.meta, form.state.submissionAttempts)
-          return (
-            <fieldset
-              className="mt-5"
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? id('products-error') : undefined}
-            >
-              <legend className="text-sm font-medium text-ink-50">Products of interest</legend>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {PRODUCT_OPTIONS.map((p) => {
-                  const checked = field.state.value.includes(p)
-                  return (
-                    <label
-                      key={p}
-                      className={cn(
-                        'flex cursor-pointer items-center gap-2.5 rounded-md border px-3 py-2.5 text-sm transition-colors has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50',
-                        checked ? 'border-signal-400 text-ink-50' : 'border-input text-ink-300 hover:border-ink-600',
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        name="products"
-                        value={p}
-                        checked={checked}
-                        onChange={(e) =>
-                          field.handleChange(
-                            e.target.checked ? [...field.state.value, p] : field.state.value.filter((v) => v !== p),
-                          )
-                        }
-                        className="size-4 accent-signal-500"
-                      />
-                      {p}
-                    </label>
-                  )
-                })}
-              </div>
-              <FieldError id={id('products-error')} message={error} />
-            </fieldset>
-          )
-        }}
-      </form.Field>
-
       <form.Field name="message">
         {(field) => {
           const error = shownError(field.state.meta, form.state.submissionAttempts)
           return (
-            <div className="mt-5">
+            <div className="mt-4">
               <Label htmlFor={id('message')}>
                 {isFull ? 'Tell us about your screens and what you need' : 'What do you want to run on your screens?'}
               </Label>
               <textarea
                 id={id('message')}
                 name="message"
-                rows={isFull ? 5 : 4}
+                rows={isFull ? 4 : 3}
                 required
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -368,36 +316,13 @@ export function LeadForm({ variant, idPrefix, initialValues }: LeadFormProps) {
         }}
       </form.Field>
 
-      <form.Field name="consent">
-        {(field) => {
-          const error = shownError(field.state.meta, form.state.submissionAttempts)
-          return (
-            <div className="mt-5">
-              <div className="flex items-start gap-3">
-                <input
-                  id={id('consent')}
-                  type="checkbox"
-                  name="consent"
-                  required
-                  checked={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.checked)}
-                  aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? id('consent-error') : undefined}
-                  className="mt-0.5 size-4 shrink-0 accent-signal-500"
-                />
-                <label htmlFor={id('consent')} className="text-sm text-ink-400">
-                  I agree to the{' '}
-                  <Link to="/legal/privacy" className="text-signal-400 underline hover:text-signal-300">
-                    Privacy Policy
-                  </Link>{' '}
-                  and to Viewixsoft contacting me about this request.
-                </label>
-              </div>
-              <FieldError id={id('consent-error')} message={error} />
-            </div>
-          )
-        }}
-      </form.Field>
+      <p className="mt-4 text-sm text-ink-400">
+        By submitting, you agree to the{' '}
+        <Link to="/legal/privacy" className="text-signal-400 underline hover:text-signal-300">
+          Privacy Policy
+        </Link>{' '}
+        and to Viewixsoft contacting you about this request.
+      </p>
 
       <Turnstile onToken={setTurnstileToken} resetKey={turnstileReset} />
 
@@ -406,9 +331,9 @@ export function LeadForm({ variant, idPrefix, initialValues }: LeadFormProps) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="bg-brand-gradient mt-8 inline-flex w-full items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold text-on-gradient hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            className="bg-brand-gradient mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-on-gradient hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
-            {isSubmitting ? 'Sending…' : isFull ? 'Contact sales' : 'Book a demo'}
+            {isSubmitting ? 'Sending…' : isFull ? 'Contact sales' : 'Get started'}
             {!isSubmitting && <ArrowRight aria-hidden="true" className="size-4" />}
           </button>
         )}

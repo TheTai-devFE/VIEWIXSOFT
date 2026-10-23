@@ -1,8 +1,9 @@
-import { useRouter } from '@tanstack/react-router'
 import { revalidateLogic, useForm, useStore } from '@tanstack/react-form'
-import { useState } from 'react'
-import { buttonPrimary, buttonSecondary, firstError, Panel, SaveStatus } from '~/components/admin/admin-ui'
-import type { SaveState } from '~/components/admin/admin-ui'
+import { useId, useImperativeHandle, useRef, useState } from 'react'
+import type { Ref } from 'react'
+import { buttonSecondary, firstError } from '~/components/admin/admin-ui'
+import type { EditorHandle, SaveResult } from '~/components/admin/admin-ui'
+import { useReportDirty } from '~/hooks/use-save-all'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import type { AdminPage } from '~/data/admin-pages'
@@ -11,7 +12,7 @@ import { PageOverrideSchema } from '~/lib/admin-schemas'
 import type { PageOverrideInput } from '~/lib/admin-schemas'
 import { cn } from '~/lib/cn'
 import { buildTitle, DESCRIPTION_MAX, SITE_URL, TITLE_MAX } from '~/lib/seo/meta'
-import { resetPageOverrideFn, savePageOverrideFn } from '~/server/functions/site-admin'
+import { savePageOverrideFn } from '~/server/functions/site-admin'
 
 type FieldName = Exclude<keyof PageOverrideInput, 'key'>
 
@@ -25,27 +26,30 @@ interface FieldDef {
   hint?: string
 }
 
-/** Edits one page's hero text and search snippet. Empty fields keep the default from the code. */
-export function PageContentEditor({
+/**
+ * One page's row in /admin/seo: its Google result preview, and the title and
+ * description fields behind Edit. Empty fields keep the default from the code.
+ * Saving is driven by the module header through `ref`.
+ */
+export function SeoSnippetEditor({
   page,
   defaults,
   saved,
+  ref,
+  onDirtyChange,
 }: {
   page: AdminPage
   defaults: PageContent
   saved: PageOverride | undefined
+  ref?: Ref<EditorHandle>
+  onDirtyChange?: (dirty: boolean) => void
 }) {
-  const router = useRouter()
-  const [state, setState] = useState<SaveState>({ kind: 'idle' })
-  const showEyebrow = page.hero?.eyebrow !== false
-  const highlightLabel = page.hero?.highlight === false ? null : (page.hero?.highlight ?? 'Highlighted part (gradient)')
+  const result = useRef<SaveResult | null>(null)
+  const [open, setOpen] = useState(false)
+  const formId = useId()
 
   const initial: PageOverrideInput = {
     key: page.key,
-    heroEyebrow: saved?.heroEyebrow ?? '',
-    heroTitle: saved?.heroTitle ?? '',
-    heroHighlight: saved?.heroHighlight ?? '',
-    heroDescription: saved?.heroDescription ?? '',
     seoTitle: saved?.seoTitle ?? '',
     seoDescription: saved?.seoDescription ?? '',
   }
@@ -55,14 +59,11 @@ export function PageContentEditor({
     validationLogic: revalidateLogic({ mode: 'submit', modeAfterSubmission: 'change' }),
     validators: { onDynamic: PageOverrideSchema },
     onSubmit: async ({ value }) => {
-      setState({ kind: 'saving' })
       try {
         const res = await savePageOverrideFn({ data: value })
-        if (!res.ok) return setState({ kind: 'error', message: res.error })
-        setState({ kind: 'saved' })
-        await router.invalidate()
+        result.current = res.ok ? { ok: true } : { ok: false, error: res.error }
       } catch {
-        setState({ kind: 'error', message: 'Saving failed. Check the highlighted fields and try again.' })
+        result.current = { ok: false, error: 'The search snippet could not be saved. Try again.' }
       }
     },
   })
@@ -74,14 +75,28 @@ export function PageContentEditor({
   }
   const previewTitle = buildTitle(effective('seoTitle', defaults.seo.title))
   const previewDescription = effective('seoDescription', defaults.seo.description)
-  const customized = Object.entries(initial).some(([k, v]) => k !== 'key' && v !== '')
+  // Compared trimmed, as the server stores it, so trailing spaces are not a change.
+  const dirty =
+    (values.seoTitle ?? '').trim() !== initial.seoTitle || (values.seoDescription ?? '').trim() !== initial.seoDescription
+  const hasCustom = Boolean(values.seoTitle?.trim() || values.seoDescription?.trim())
 
-  const heroFields: FieldDef[] = [
-    ...(showEyebrow ? [{ name: 'heroEyebrow' as const, label: 'Eyebrow (small label above the heading)', fallback: defaults.hero.eyebrow, max: 40 }] : []),
-    { name: 'heroTitle', label: 'Heading', fallback: defaults.hero.title, max: 120 },
-    ...(highlightLabel ? [{ name: 'heroHighlight' as const, label: highlightLabel, fallback: defaults.hero.highlight, max: 80 }] : []),
-    { name: 'heroDescription', label: 'Intro text', fallback: defaults.hero.description, multiline: true, max: 400 },
-  ]
+  useReportDirty(dirty, onDirtyChange)
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      save: async () => {
+        if (!dirty) return null
+        result.current = null
+        await form.handleSubmit()
+        // onSubmit does not run when validation fails, so no result means invalid fields.
+        if (!result.current) setOpen(true)
+        return result.current ?? { ok: false, error: 'Fix the highlighted fields.' }
+      },
+    }),
+    [dirty, form],
+  )
+
   const seoFields: FieldDef[] = [
     {
       name: 'seoTitle',
@@ -152,59 +167,57 @@ export function PageContentEditor({
     </form.Field>
   )
 
+  const isCustom = Boolean(initial.seoTitle || initial.seoDescription)
   return (
-    <form
-      noValidate
-      onSubmit={(e) => {
-        e.preventDefault()
-        void form.handleSubmit()
-      }}
-      className="space-y-6"
-    >
-      <Panel title="Hero" description="The heading area at the top of the page. Leave a field empty to keep the default shown in grey.">
-        <div className="space-y-5">{heroFields.map(renderField)}</div>
-      </Panel>
-
-      <Panel title="Search appearance" description="How the page shows up in Google and when it is shared.">
-        <div className="space-y-5">{seoFields.map(renderField)}</div>
-        <div className="mt-6 rounded-xl border border-border bg-background p-4" aria-label="Google result preview">
-          <p className="text-xs text-muted-foreground">Preview</p>
-          <p className="mt-2 truncate text-xs text-muted-foreground">
-            {SITE_URL.replace('https://', '')}
-            {page.path === '/' ? '' : page.path.replace(/\//g, ' › ')}
-          </p>
-          <p className="mt-0.5 truncate text-lg text-signal-500">{previewTitle}</p>
-          <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{previewDescription}</p>
+    <li className="px-5 py-4">
+      <div className="flex items-start gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+            <span className="font-medium text-foreground">{page.label}</span>
+            <span className="font-mono text-xs text-muted-foreground">{page.path}</span>
+            {dirty ? (
+              <span className="rounded-full bg-warning/15 px-1.5 py-0.5 font-mono text-[10px] text-warning">Unsaved</span>
+            ) : (
+              isCustom && <span className="rounded-full bg-signal-950 px-1.5 py-0.5 font-mono text-[10px] text-signal-400">Custom</span>
+            )}
+          </div>
+          <div aria-label={`Google result preview for ${page.label}`}>
+            <p className="mt-1.5 truncate text-xs text-muted-foreground">
+              {SITE_URL.replace('https://', '')}
+              {page.path === '/' ? '' : page.path.replace(/\//g, ' › ')}
+            </p>
+            <p className="truncate text-base text-signal-500">{previewTitle}</p>
+            <p className="line-clamp-2 text-sm text-muted-foreground">{previewDescription}</p>
+          </div>
         </div>
-      </Panel>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={formId}
+          onClick={() => setOpen((o) => !o)}
+          className={cn(buttonSecondary, 'shrink-0')}
+        >
+          {open ? 'Close' : 'Edit'}
+          <span className="sr-only"> {page.label}</span>
+        </button>
+      </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <form.Subscribe selector={(s) => s.isSubmitting}>
-          {(isSubmitting) => (
-            <button type="submit" disabled={isSubmitting} className={buttonPrimary}>
-              Save changes
-            </button>
-          )}
-        </form.Subscribe>
-        {customized && (
+      {/* Kept mounted while closed so edits survive closing the row until Save. */}
+      <form id={formId} hidden={!open} noValidate onSubmit={(e) => e.preventDefault()} className="mt-4 space-y-4">
+        {seoFields.map(renderField)}
+        {hasCustom && (
           <button
             type="button"
-            className={buttonSecondary}
-            onClick={async () => {
-              if (!window.confirm('Remove every custom text on this page and go back to the defaults?')) return
-              setState({ kind: 'saving' })
-              const res = await resetPageOverrideFn({ data: { key: page.key } })
-              if (!res.ok) return setState({ kind: 'error', message: res.error })
-              form.reset({ ...initial, heroEyebrow: '', heroTitle: '', heroHighlight: '', heroDescription: '', seoTitle: '', seoDescription: '' })
-              setState({ kind: 'saved' })
-              await router.invalidate()
+            onClick={() => {
+              form.setFieldValue('seoTitle', '')
+              form.setFieldValue('seoDescription', '')
             }}
+            className="text-sm font-medium text-signal-400 underline-offset-2 hover:underline"
           >
-            Reset to defaults
+            Use the default title and description
           </button>
         )}
-        <SaveStatus state={state} />
-      </div>
-    </form>
+      </form>
+    </li>
   )
 }

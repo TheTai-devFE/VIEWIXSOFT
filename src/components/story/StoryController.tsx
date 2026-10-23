@@ -95,7 +95,7 @@ export function StoryScene({
         <div className={cn('h-full', !reduced && 'lg:sticky lg:top-16 lg:h-[calc(100svh-4rem)] lg:overflow-hidden')}>
           <div
             className={cn(
-              'mx-auto flex h-full max-w-7xl flex-col gap-6 px-4 sm:px-6 lg:grid lg:grid-cols-12 lg:items-center lg:gap-12 lg:px-8 xl:pl-20',
+              'page-x flex h-full flex-col gap-6 lg:grid lg:grid-cols-12 lg:items-center lg:gap-12 xl:pl-20',
               reduced ? 'py-16 lg:py-24' : 'pt-10 lg:py-0',
             )}
           >

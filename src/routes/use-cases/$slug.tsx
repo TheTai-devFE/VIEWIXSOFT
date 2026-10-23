@@ -1,5 +1,6 @@
 import { Fragment } from 'react'
-import { createFileRoute, notFound, Link } from '@tanstack/react-router'
+import { createFileRoute, notFound, Link, redirect } from '@tanstack/react-router'
+import { redirectFor } from '~/data/redirects'
 import { orderSections, SHOW_SAMPLE_CONTENT } from '~/lib/site-config'
 import { USE_CASES } from '~/content/useCases'
 import { useProducts, useSiteConfig } from '~/lib/use-site-config'
@@ -17,6 +18,8 @@ import {
 
 export const Route = createFileRoute('/use-cases/$slug')({
   loader: ({ params }) => {
+    const moved = redirectFor(`/use-cases/${params.slug}`)
+    if (moved) throw redirect({ href: moved, statusCode: 301 })
     const useCase = USE_CASES.find((u) => u.slug === params.slug)
     if (!useCase) {
       throw notFound()
@@ -176,7 +179,7 @@ function UseCaseDetailPage() {
   })
 
   return (
-    <div className="py-12 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+    <div className="page-x py-12 md:py-20 space-y-16">
       <Breadcrumbs items={[
         { name: 'Home', path: '/' },
         { name: 'Use Cases', path: '/use-cases' },

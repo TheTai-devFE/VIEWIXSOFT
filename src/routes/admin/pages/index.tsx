@@ -3,14 +3,12 @@ import { ArrowUpRight } from 'lucide-react'
 import { AdminPageHeader } from '~/components/admin/admin-ui'
 import { ADMIN_PAGE_GROUPS } from '~/data/admin-pages'
 import { SECTION_PAGES } from '~/data/site-sections'
-import { useSiteConfig } from '~/lib/use-site-config'
 
 export const Route = createFileRoute('/admin/pages/')({
   component: PagesOverview,
 })
 
 function PagesOverview() {
-  const { pages } = useSiteConfig()
   return (
     <>
       <AdminPageHeader title="Pages" description="Every public page of the website. Open one to manage it." />
@@ -27,7 +25,6 @@ function PagesOverview() {
                     <th scope="col" className="px-4 py-3 font-medium">Page</th>
                     <th scope="col" className="px-4 py-3 font-medium">URL</th>
                     <th scope="col" className="px-4 py-3 font-medium">Sections</th>
-                    <th scope="col" className="px-4 py-3 font-medium">Hero / SEO</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -56,13 +53,6 @@ function PagesOverview() {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {page.sections ? SECTION_PAGES[page.sections].label : '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        {pages[page.key] ? (
-                          <span className="rounded-full bg-signal-950 px-2 py-0.5 font-mono text-[11px] text-signal-400">Customized</span>
-                        ) : (
-                          <span className="text-muted-foreground">Default</span>
-                        )}
                       </td>
                     </tr>
                   ))}

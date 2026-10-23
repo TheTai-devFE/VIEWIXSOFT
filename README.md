@@ -32,7 +32,7 @@ Every product name strictly follows the full brand standard: **Viewixsoft** + pr
 | **Database** | Neon Postgres + Drizzle ORM (HTTP driver) | Leads, newsletter, admin auth, site settings |
 | **Auth** | Better Auth (email + password) | Protects `/admin/**` and every admin server function |
 | **Email** | Resend HTTP API | Sales notification, visitor confirmation, newsletter double opt-in |
-| **Images** | Cloudflare R2 (S3 API) | Admin-uploaded images for named slots |
+| **Images & videos** | Cloudflare R2 (S3 API) | Admin-uploaded media library; videos upload straight from the browser |
 | **Anti-spam** | Turnstile + honeypot + rate limit | Rate limit counted in Postgres; only hashed IPs are stored |
 | **Blog** | MDX compiled at build time | `src/content/blog/*.mdx`, frontmatter validated by Zod |
 | **Testing** | Vitest | Schemas, lead pipeline, SEO builders, content |
@@ -86,7 +86,22 @@ A sidebar app with a light/dark theme (stored per browser; the public site stays
 - **Products**: set each product to available, coming soon or hidden.
 - **Home stats**: real figures, each with a source and a date.
 - **Customer quotes**: shown only when approved with a written-consent date.
-- **Images**: replace hardware photos, use case covers and screen photos without touching code.
+- **Images & videos**: upload to the media library, then pick them per page (hardware photos, use case covers, screen photos, the Viewixsoft CMS product tour video).
+
+Videos (MP4 or WebM, up to 200 MB) go from the browser straight to the R2 bucket on a signed URL, so the bucket needs a CORS rule. In Cloudflare: **R2 → your bucket → Settings → CORS policy**, add:
+
+```json
+[
+  {
+    "AllowedOrigins": ["http://localhost:3000", "https://viewixsoft.com"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["content-type", "cache-control"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+Add each preview or staging domain you upload from to `AllowedOrigins`.
 
 Sections that depend on real data (stats, quotes, use case results) stay hidden on the live site until that data exists. Sample content renders only in the dev server.
 

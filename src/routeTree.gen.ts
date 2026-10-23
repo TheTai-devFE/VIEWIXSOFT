@@ -25,6 +25,7 @@ import { Route as AdminLeadsRouteImport } from './routes/admin/leads'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminMediaRouteImport } from './routes/admin/media'
 import { Route as AdminProductsRouteImport } from './routes/admin/products'
+import { Route as AdminSeoRouteImport } from './routes/admin/seo'
 import { Route as AdminSiteRouteImport } from './routes/admin/site'
 import { Route as AdminStatsRouteImport } from './routes/admin/stats'
 import { Route as AdminSubscribersRouteImport } from './routes/admin/subscribers'
@@ -45,6 +46,7 @@ import { Route as UseCasesSlugRouteImport } from './routes/use-cases/$slug'
 import { Route as UseCasesChar123slugChar125DotmdRouteImport } from './routes/use-cases/{$slug}[.]md'
 import { Route as AdminPagesIndexRouteImport } from './routes/admin/pages/index'
 import { Route as AdminPagesPageRouteImport } from './routes/admin/pages/$page'
+import { Route as ApiAdminMediaUploadRouteImport } from './routes/api/admin/media-upload'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as BlogCategorySlugRouteImport } from './routes/blog/category/$slug'
 
@@ -126,6 +128,11 @@ const AdminMediaRoute = AdminMediaRouteImport.update({
 const AdminProductsRoute = AdminProductsRouteImport.update({
   id: '/products',
   path: '/products',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSeoRoute = AdminSeoRouteImport.update({
+  id: '/seo',
+  path: '/seo',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminSiteRoute = AdminSiteRouteImport.update({
@@ -231,6 +238,11 @@ const AdminPagesPageRoute = AdminPagesPageRouteImport.update({
   path: '/pages/$page',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const ApiAdminMediaUploadRoute = ApiAdminMediaUploadRouteImport.update({
+  id: '/api/admin/media-upload',
+  path: '/api/admin/media-upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -258,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/seo': typeof AdminSeoRoute
   '/admin/site': typeof AdminSiteRoute
   '/admin/stats': typeof AdminStatsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
@@ -278,6 +291,7 @@ export interface FileRoutesByFullPath {
   '/products/': typeof ProductsIndexRoute
   '/use-cases/': typeof UseCasesIndexRoute
   '/admin/pages/$page': typeof AdminPagesPageRoute
+  '/api/admin/media-upload': typeof ApiAdminMediaUploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
   '/admin/pages/': typeof AdminPagesIndexRoute
@@ -297,6 +311,7 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/seo': typeof AdminSeoRoute
   '/admin/site': typeof AdminSiteRoute
   '/admin/stats': typeof AdminStatsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
@@ -317,6 +332,7 @@ export interface FileRoutesByTo {
   '/products': typeof ProductsIndexRoute
   '/use-cases': typeof UseCasesIndexRoute
   '/admin/pages/$page': typeof AdminPagesPageRoute
+  '/api/admin/media-upload': typeof ApiAdminMediaUploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
   '/admin/pages': typeof AdminPagesIndexRoute
@@ -338,6 +354,7 @@ export interface FileRoutesById {
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/seo': typeof AdminSeoRoute
   '/admin/site': typeof AdminSiteRoute
   '/admin/stats': typeof AdminStatsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
@@ -358,6 +375,7 @@ export interface FileRoutesById {
   '/products/': typeof ProductsIndexRoute
   '/use-cases/': typeof UseCasesIndexRoute
   '/admin/pages/$page': typeof AdminPagesPageRoute
+  '/api/admin/media-upload': typeof ApiAdminMediaUploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
   '/admin/pages/': typeof AdminPagesIndexRoute
@@ -380,6 +398,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/media'
     | '/admin/products'
+    | '/admin/seo'
     | '/admin/site'
     | '/admin/stats'
     | '/admin/subscribers'
@@ -400,6 +419,7 @@ export interface FileRouteTypes {
     | '/products/'
     | '/use-cases/'
     | '/admin/pages/$page'
+    | '/api/admin/media-upload'
     | '/api/auth/$'
     | '/blog/category/$slug'
     | '/admin/pages/'
@@ -419,6 +439,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/media'
     | '/admin/products'
+    | '/admin/seo'
     | '/admin/site'
     | '/admin/stats'
     | '/admin/subscribers'
@@ -439,6 +460,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/use-cases'
     | '/admin/pages/$page'
+    | '/api/admin/media-upload'
     | '/api/auth/$'
     | '/blog/category/$slug'
     | '/admin/pages'
@@ -459,6 +481,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/media'
     | '/admin/products'
+    | '/admin/seo'
     | '/admin/site'
     | '/admin/stats'
     | '/admin/subscribers'
@@ -479,6 +502,7 @@ export interface FileRouteTypes {
     | '/products/'
     | '/use-cases/'
     | '/admin/pages/$page'
+    | '/api/admin/media-upload'
     | '/api/auth/$'
     | '/blog/category/$slug'
     | '/admin/pages/'
@@ -510,6 +534,7 @@ export interface RootRouteChildren {
   BlogIndexRoute: typeof BlogIndexRoute
   ProductsIndexRoute: typeof ProductsIndexRoute
   UseCasesIndexRoute: typeof UseCasesIndexRoute
+  ApiAdminMediaUploadRoute: typeof ApiAdminMediaUploadRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   BlogCategorySlugRoute: typeof BlogCategorySlugRoute
 }
@@ -626,6 +651,13 @@ declare module '@tanstack/react-router' {
       path: '/products'
       fullPath: '/admin/products'
       preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/seo': {
+      id: '/admin/seo'
+      path: '/seo'
+      fullPath: '/admin/seo'
+      preLoaderRoute: typeof AdminSeoRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/site': {
@@ -768,6 +800,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPagesPageRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/api/admin/media-upload': {
+      id: '/api/admin/media-upload'
+      path: '/api/admin/media-upload'
+      fullPath: '/api/admin/media-upload'
+      preLoaderRoute: typeof ApiAdminMediaUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -790,6 +829,7 @@ interface AdminRouteRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMediaRoute: typeof AdminMediaRoute
   AdminProductsRoute: typeof AdminProductsRoute
+  AdminSeoRoute: typeof AdminSeoRoute
   AdminSiteRoute: typeof AdminSiteRoute
   AdminStatsRoute: typeof AdminStatsRoute
   AdminSubscribersRoute: typeof AdminSubscribersRoute
@@ -804,6 +844,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   AdminMediaRoute: AdminMediaRoute,
   AdminProductsRoute: AdminProductsRoute,
+  AdminSeoRoute: AdminSeoRoute,
   AdminSiteRoute: AdminSiteRoute,
   AdminStatsRoute: AdminStatsRoute,
   AdminSubscribersRoute: AdminSubscribersRoute,
@@ -843,6 +884,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogIndexRoute: BlogIndexRoute,
   ProductsIndexRoute: ProductsIndexRoute,
   UseCasesIndexRoute: UseCasesIndexRoute,
+  ApiAdminMediaUploadRoute: ApiAdminMediaUploadRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   BlogCategorySlugRoute: BlogCategorySlugRoute,
 }

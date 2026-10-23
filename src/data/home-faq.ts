@@ -1,7 +1,8 @@
 import type { FaqItem } from '~/components/blocks/FaqAccordion'
 
 /**
- * Home page FAQ, also emitted as FAQPage JSON-LD by the home route.
+ * Default home page FAQ; admins can replace it in /admin/pages (`home:faq`).
+ * Whatever is live is also emitted as FAQPage JSON-LD and in llms-full.txt.
  * Answers only use facts already stated on the site.
  * TODO(content): confirm the pricing answer once the pricing model is set.
  */
@@ -14,12 +15,12 @@ export const HOME_FAQ: FaqItem[] = [
   {
     question: 'Which Viewixsoft products can I use today?',
     answer:
-      'Viewixsoft CMS is available now. Viewixsoft POS, Viewixsoft Tracking and Viewixsoft NFC are coming soon and will connect to the same CMS, so screens you set up today are ready for them.',
+      'Viewixsoft CMS is available now. Viewixsoft POS, Viewixsoft Tracking and Viewixsoft NFC are coming soon, so screens you set up today are ready for them.',
   },
   {
     question: 'Which screens does Viewixsoft CMS run on?',
     answer:
-      'Viewixsoft CMS runs on Viewix hardware, including floor-standing displays, touch screen kiosks, LED screens, video walls and tablet stands. The Viewixsoft CMS page lists the supported operating systems.',
+      'Viewixsoft CMS runs on Viewix hardware, including floor-standing displays, touch screen kiosk. The Viewixsoft CMS page lists the supported operating systems.',
   },
   {
     question: 'How much does Viewixsoft cost?',

@@ -68,7 +68,7 @@ function ContactPage() {
 
   return (
     <div className="bg-ink-950">
-      <section aria-labelledby="contact-title" className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-12 lg:px-8 lg:py-24">
+      <section aria-labelledby="contact-title" className="page-x grid gap-12 py-16 lg:grid-cols-12 lg:py-24">
         <div className="lg:col-span-5">
           {hero.eyebrow && <p className="eyebrow">{hero.eyebrow}</p>}
           <h1
@@ -118,7 +118,7 @@ function ContactPage() {
       </section>
 
       <section aria-labelledby="contact-faq-title" className="border-t border-ink-800">
-        <div className="mx-auto max-w-7xl space-y-8 px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+        <div className="page-x space-y-8 py-16 lg:py-24">
           <div className="mx-auto max-w-2xl text-center">
             <p className="eyebrow">FAQ</p>
             <h2 id="contact-faq-title" className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink-50">

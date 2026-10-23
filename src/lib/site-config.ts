@@ -5,6 +5,8 @@ import { SECTION_PAGES } from '~/data/site-sections'
 import type { SectionKey, SectionPage } from '~/data/site-sections'
 import type { ProductStatus } from '~/lib/enums'
 import type { PageOverride } from '~/data/page-content'
+import { resolveSectionContent } from '~/lib/section-content'
+import type { Json } from '~/lib/section-content'
 
 /**
  * Admin-editable site settings, loaded once per request in the root route.
@@ -48,8 +50,10 @@ export interface SiteConfig {
   metrics: PublicMetric[]
   testimonials: PublicTestimonial[]
   media: Record<string, MediaOverride>
-  /** Hero and SEO overrides per /admin/pages key. */
+  /** Search snippet overrides from /admin/seo, by page key. */
   pages: Record<string, PageOverride>
+  /** Edited section content by `page:section` key; read through useSectionContent, which validates it. */
+  content: Record<string, Json>
 }
 
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
@@ -59,6 +63,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   testimonials: [],
   media: {},
   pages: {},
+  content: {},
 }
 
 /**
@@ -101,10 +106,28 @@ export function productStatus(config: SiteConfig, product: Product): ProductStat
   return config.products[product.slug] ?? product.status
 }
 
-/** Products with the admin's status applied; hidden products are left out. */
+/**
+ * Products as published: the admin's status applied, hidden ones left out,
+ * and the Viewixsoft CMS specification table and FAQ as edited in
+ * /admin/pages, so Markdown twins and llms-full.txt match the page.
+ */
 export function visibleProducts(config: SiteConfig): (Product & { status: 'available' | 'coming-soon' })[] {
   return PRODUCTS.flatMap((p) => {
     const status = productStatus(config, p)
-    return status === 'hidden' ? [] : [{ ...p, status }]
+    if (status === 'hidden') return []
+    return [{ ...p, ...(p.slug === 'cms' ? cmsProductContent(config) : {}), status }]
   })
+}
+
+function cmsProductContent(config: SiteConfig): Pick<Product, 'specs' | 'faq'> {
+  const table = resolveSectionContent('product-cms:spec-table', config.content['product-cms:spec-table'])
+  const faq = resolveSectionContent('product-cms:faq', config.content['product-cms:faq'])
+  return {
+    specs: table.groups.map((g) => ({
+      category: g.category,
+      ...(g.note ? { note: g.note } : {}),
+      items: g.items.map((i) => ({ label: i.label, value: i.value })),
+    })),
+    faq: faq.items.map((i) => ({ question: i.question, answer: i.answer })),
+  }
 }

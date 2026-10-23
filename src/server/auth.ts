@@ -6,6 +6,7 @@ import { getRequest } from '@tanstack/react-start/server'
 import { getDb } from '~/server/db/client'
 import { account, session, user, verification } from '~/server/db/schema'
 import { getEnv, requireSecret } from '~/server/env'
+import { logAuth } from '~/server/logger'
 
 function createAuth() {
   const env = getEnv()
@@ -19,6 +20,7 @@ function createAuth() {
     rateLimit: { enabled: true, window: 60, max: 20 },
     advanced: { useSecureCookies: env.NODE_ENV === 'production' },
     plugins: [tanstackStartCookies()],
+    logger: { level: 'warn', log: logAuth },
   })
 }
 

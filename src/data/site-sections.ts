@@ -1,5 +1,6 @@
 /**
  * Every section an admin can show, hide or reorder in /admin/site, per page.
+ * Home labels match each section's eyebrow on the site, so editors can find them.
  * Order here is the default order. `locked` sections hold the page's H1 or its
  * main conversion point and can't be hidden. A section whose data is missing
  * (no video, no approved quote…) hides itself whatever its setting.
@@ -17,15 +18,13 @@ export const SECTION_PAGES = {
     label: 'Home',
     sections: [
       { key: 'hero', label: 'Hero', locked: true },
-      { key: 'intro-video', label: 'Product video', note: 'Appears once a video is set in src/data/intro-video.ts.' },
-      { key: 'products', label: 'Products' },
+      { key: 'products', label: 'Our solutions' },
       { key: 'how-it-works', label: 'How it works' },
-      { key: 'devices', label: 'Compatible devices' },
-      { key: 'use-cases', label: 'Use cases' },
-      { key: 'vision', label: 'Vision and stats', note: 'Stats appear once all three have a value, source and date.' },
-      { key: 'pricing', label: 'Pricing summary' },
+      { key: 'devices', label: 'Compatible hardware' },
+      { key: 'use-cases', label: 'Industries we serve' },
+      { key: 'pricing', label: 'Pricing' },
       { key: 'faq', label: 'FAQ' },
-      { key: 'demo-form', label: 'Demo form', locked: true },
+      { key: 'demo-form', label: 'Contact', locked: true },
     ],
   },
   about: {
@@ -33,9 +32,9 @@ export const SECTION_PAGES = {
     sections: [
       { key: 'hero', label: 'Hero', locked: true },
       { key: 'story', label: 'Our story' },
-      { key: 'foundation', label: 'Hardware foundation' },
+      { key: 'vision', label: 'Vision' },
+      { key: 'results', label: 'Customer results', note: 'Shows use cases with verified results; sample ones never show in production.' },
       { key: 'customers', label: 'First customers', note: 'Appears once a testimonial is approved.' },
-      { key: 'company', label: 'Company details' },
     ],
   },
   'use-case': {
@@ -51,7 +50,8 @@ export const SECTION_PAGES = {
   'product-cms': {
     label: 'Viewixsoft CMS page',
     sections: [
-      { key: 'why', label: 'Why choose', locked: true },
+      { key: 'why', label: 'Hero', locked: true },
+      { key: 'intro-video', label: 'Product tour', note: 'The video in the hero, under the buttons. Untick to hide it; its place in this list has no effect.' },
       { key: 'capabilities', label: 'Capabilities' },
       { key: 'screens', label: 'Screen band' },
       { key: 'specs', label: 'Specifications' },
@@ -67,7 +67,7 @@ export type SectionKey<P extends SectionPage> = (typeof SECTION_PAGES)[P]['secti
 
 export const SECTION_PAGE_KEYS = Object.keys(SECTION_PAGES) as SectionPage[]
 
-/** Public business figures shown in the home stats strip (values live in the database). */
+/** Public business figures shown with the vision on the About page (values live in the database). */
 export const METRIC_DEFS = [
   { key: 'customers', label: 'Customers', suffix: '+' },
   { key: 'devices', label: 'Connected devices', suffix: '+' },

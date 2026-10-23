@@ -1,9 +1,10 @@
 import { CONTACT_EMAILS } from '~/data/company'
+import { SOCIAL_LINKS } from '~/data/social'
 import { DEFAULT_OG_IMAGE, LOGO_URL, SITE_NAME, SITE_URL } from './meta'
 
-// Official profiles only. TODO(content): add LinkedIn, Crunchbase, G2 etc. once the
-// accounts exist; a sameAs link to a missing profile weakens the brand entity.
-export const SAME_AS: string[] = []
+// Official profiles only: the social links in src/data/social.ts that have a URL.
+// TODO(content): add Crunchbase, G2 etc. once those listings exist.
+export const SAME_AS: string[] = SOCIAL_LINKS.flatMap((s) => (s.url ? [s.url] : []))
 
 export function getOrganizationSchema() {
   const sales = CONTACT_EMAILS.find((c) => c.department === 'Sales')
@@ -143,6 +144,9 @@ export function getArticleSchema(article: {
   }
 }
 
+/** Uploaded files may live on another host (R2), so only site paths get the site URL. */
+const absolute = (url: string) => (/^https?:\/\//.test(url) ? url : `${SITE_URL}${url}`)
+
 export function getVideoSchema(video: {
   title: string
   description: string
@@ -156,8 +160,8 @@ export function getVideoSchema(video: {
     '@type': 'VideoObject',
     name: video.title,
     description: video.description,
-    contentUrl: `${SITE_URL}${video.src}`,
-    thumbnailUrl: `${SITE_URL}${video.poster}`,
+    contentUrl: absolute(video.src),
+    thumbnailUrl: absolute(video.poster),
     uploadDate: video.uploadDate,
     ...(video.duration ? { duration: video.duration } : {}),
   }

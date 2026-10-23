@@ -1,9 +1,18 @@
 import '@tanstack/react-start/server-only'
-import { asc, eq } from 'drizzle-orm'
+import { and, asc, eq, like, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDb } from '~/server/db/client'
-import { pageOverrides, productSettings, sectionSettings, siteMetrics, testimonials } from '~/server/db/schema'
+import {
+  mediaSlots,
+  pageOverrides,
+  productSettings,
+  sectionContent,
+  sectionSettings,
+  siteMetrics,
+  testimonials,
+} from '~/server/db/schema'
 import { SECTION_PAGES } from '~/data/site-sections'
+import type { Json } from '~/lib/section-content'
 import type {
   MetricSchema,
   PageOverrideSchema,
@@ -14,14 +23,15 @@ import type {
 
 export async function readAdminSiteData() {
   const db = getDb()
-  const [sections, products, metrics, quotes, pages] = await Promise.all([
+  const [sections, products, metrics, quotes, pages, content] = await Promise.all([
     db.select().from(sectionSettings),
     db.select().from(productSettings),
     db.select().from(siteMetrics),
     db.select().from(testimonials).orderBy(asc(testimonials.sortOrder), asc(testimonials.createdAt)),
     db.select().from(pageOverrides),
+    db.select().from(sectionContent),
   ])
-  return { sections, products, metrics, testimonials: quotes, pages }
+  return { sections, products, metrics, testimonials: quotes, pages, content }
 }
 
 export async function saveSections(input: z.output<typeof SaveSectionsSchema>, by: string) {
@@ -99,6 +109,42 @@ export async function savePageOverride(input: z.output<typeof PageOverrideSchema
   await db.insert(pageOverrides).values({ key, ...values }).onConflictDoUpdate({ target: pageOverrides.key, set: values })
 }
 
-export async function deletePageOverride(key: string) {
-  await getDb().delete(pageOverrides).where(eq(pageOverrides.key, key))
+/**
+ * Saves a section's content, replacing its defaults. `clearSlotPrefix` drops
+ * the image slots the content now holds itself (the hardware photos picked
+ * before devices became editable), in the same transaction.
+ */
+export async function saveSectionContent(
+  page: string,
+  sectionKey: string,
+  content: Json,
+  by: string,
+  clearSlotPrefix?: string,
+) {
+  const db = getDb()
+  const upsert = db
+    .insert(sectionContent)
+    .values({ page, sectionKey, content, updatedBy: by })
+    .onConflictDoUpdate({ target: [sectionContent.page, sectionContent.sectionKey], set: { content, updatedBy: by } })
+  if (clearSlotPrefix) await db.batch([upsert, db.delete(mediaSlots).where(like(mediaSlots.key, `${clearSlotPrefix}%`))])
+  else await upsert
+}
+
+export async function deleteSectionContent(page: string, sectionKey: string, clearSlotPrefix?: string) {
+  const db = getDb()
+  const remove = db.delete(sectionContent).where(and(eq(sectionContent.page, page), eq(sectionContent.sectionKey, sectionKey)))
+  if (clearSlotPrefix) await db.batch([remove, db.delete(mediaSlots).where(like(mediaSlots.key, `${clearSlotPrefix}%`))])
+  else await remove
+}
+
+/** Sections whose content uses a library image. A uuid only matches itself, so a text search is exact enough. */
+export async function sectionsUsingAsset(assetId: string) {
+  return getDb()
+    .select({ page: sectionContent.page, sectionKey: sectionContent.sectionKey })
+    .from(sectionContent)
+    .where(sql`${sectionContent.content}::text like ${`%${assetId}%`}`)
+}
+
+export async function listSectionContent() {
+  return getDb().select().from(sectionContent)
 }

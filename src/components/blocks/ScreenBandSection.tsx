@@ -1,6 +1,8 @@
 import { TiltedGridHero } from '~/components/ui/tilted-grid-hero'
 import type { TiltedGridImage } from '~/components/ui/tilted-grid-hero'
 import { COMPATIBLE_DEVICES, STOCK_SCREEN_IMAGES } from '~/data/compatible-devices'
+import { useSectionContent } from '~/lib/use-section-content'
+import { SectionHeading } from '~/components/blocks/SectionHeading'
 
 /** Partner device photos once there are any; generic screen photos until then. */
 function bandImages(): TiltedGridImage[] {
@@ -9,28 +11,18 @@ function bandImages(): TiltedGridImage[] {
   return STOCK_SCREEN_IMAGES
 }
 
-/** Curved band of real-world screens, shown on the Viewixsoft CMS page. */
+/** Curved band of real-world screens, shown on the Viewixsoft CMS page. Photos picked in /admin/pages win. */
 export function ScreenBandSection() {
+  const { eyebrow, title, description, images } = useSectionContent('product-cms:screens')
+  const picked = images.map(({ image }) => ({ src: image.url, alt: image.alt }))
   return (
     <section aria-labelledby="screen-band-title">
-      <div className="mx-auto max-w-3xl text-center">
-        <p className="eyebrow">Where it runs</p>
-        <h2
-          id="screen-band-title"
-          className="mt-3 font-display text-3xl font-semibold tracking-tight text-balance text-ink-50 sm:text-4xl"
-        >
-          What screens can run Viewixsoft CMS?
-        </h2>
-        <p className="mt-4 text-pretty text-ink-400">
-          Viewixsoft CMS runs on menu boards, retail displays, interactive kiosks, tablets and transit screens, so
-          one dashboard can control every screen type in your network.
-        </p>
-      </div>
+      <SectionHeading id="screen-band-title" eyebrow={eyebrow} title={title} description={description} />
 
       {/* The band gets its own frame below the copy: its curled ends swell
           vertically and would otherwise run into the title. */}
       <TiltedGridHero
-        images={bandImages()}
+        images={picked.length > 0 ? picked : bandImages()}
         tileHeight={44}
         axis={52}
         curve={72}

@@ -1,13 +1,14 @@
 import { PRODUCTS, PRODUCT_ONE_LINERS } from '~/content/products'
 import { USE_CASES } from '~/content/useCases'
-import { TERM_PLANS, formatUsd } from '~/data/pricing'
-import { productSeo, useCaseSeo } from '~/lib/seo/page-seo'
+import { CUSTOMER_SERVER, TERM_PLANS, formatUsd } from '~/data/pricing'
 import type { ProductStatus } from '~/lib/enums'
+import { productSeo, useCaseSeo } from '~/lib/seo/page-seo'
 
 /**
- * Default hero text and search snippet for every page in /admin/pages. The
- * admin can override any field (stored in `page_overrides`); an empty override
- * falls back to these. Keep the wording here, not in the route files.
+ * Default hero text and search snippet for every page listed in /admin/seo. The
+ * admin can override the search snippet (stored in `page_overrides`); an empty
+ * override falls back to these. Hero text is edited here only. Keep the
+ * wording here, not in the route files.
  */
 export interface PageHero {
   eyebrow?: string
@@ -26,14 +27,36 @@ export interface PageContent {
 export interface PageOverride {
   seoTitle?: string | null
   seoDescription?: string | null
-  heroEyebrow?: string | null
-  heroTitle?: string | null
-  heroHighlight?: string | null
-  heroDescription?: string | null
 }
 
-const yearly = formatUsd(TERM_PLANS[0]?.price ?? 0)
-const bestSave = Math.max(0, ...TERM_PLANS.map((p) => p.save ?? 0))
+/** The figures the /pricing page quotes; the published prices come from /admin/pages. */
+export interface PricingFigures {
+  yearly: number
+  bestSave: number
+  minLicences: number
+}
+
+const DEFAULT_FIGURES: PricingFigures = {
+  yearly: TERM_PLANS[0]?.price ?? 0,
+  bestSave: Math.max(0, ...TERM_PLANS.map((p) => p.save ?? 0)),
+  minLicences: CUSTOMER_SERVER.minLicences,
+}
+
+function pricingPage({ yearly: price, bestSave, minLicences }: PricingFigures): PageContent {
+  const yearly = formatUsd(price)
+  return {
+    seo: {
+      title: `Viewixsoft CMS Pricing: ${yearly} per Screen per Year`,
+      description: `Viewixsoft CMS costs ${yearly} per screen licence per year, with up to ${bestSave}% off on longer plans. Self-host from ${minLicences} screens or ask for a quote.`,
+    },
+    hero: {
+      eyebrow: 'Pricing',
+      title: 'Simple per-screen pricing for',
+      highlight: 'Viewixsoft CMS',
+      description: `You pay ${yearly} per screen licence per year. Longer plans save up to ${bestSave}%, and networks of ${minLicences} or more screens can host Viewixsoft CMS on their own server.`,
+    },
+  }
+}
 
 const STATIC: Record<string, PageContent> = {
   home: {
@@ -43,48 +66,22 @@ const STATIC: Record<string, PageContent> = {
         'Viewixsoft CMS lets you upload, schedule and publish content to every advertising screen from one cloud dashboard. POS, Tracking and NFC are coming soon.',
     },
     hero: {
-      eyebrow: 'Digital signage software',
-      title: 'Run every advertising screen',
-      highlight: 'from one cloud platform',
+      title: 'Control every advertising screen',
+      highlight: 'from one platform',
       description:
-        'Viewixsoft is digital signage software that schedules content, syncs POS menus, tracks proof-of-play and adds NFC tap-to-interact on any screen.',
-    },
-  },
-  products: {
-    seo: {
-      title: 'Digital Signage Software Products',
-      description:
-        'Viewixsoft CMS is available now for managing content on advertising screens. Viewixsoft POS, Tracking and NFC are coming soon and connect to the same CMS.',
-    },
-    hero: {
-      eyebrow: 'Products',
-      title: 'Which Viewixsoft products can you use?',
-      description:
-        'Viewixsoft CMS is available today: it puts content on your advertising screens and lets you manage them from one cloud dashboard. Viewixsoft POS, Tracking and NFC are coming soon and will plug into the same CMS.',
+        'Viewixsoft provides scalable digital signage software solutions for businesses to manage and operate digital screen networks with ease.',
     },
   },
   'use-cases': {
     seo: {
       title: 'Digital Signage Use Cases by Industry',
       description:
-        'Discover how Viewixsoft powers retail stores, QSR menu boards, corporate campuses, airports, and DOOH billboard networks.',
+        'See how Viewixsoft runs screens in retail stores, restaurants, offices, hotels, hospitals and clinics: the challenge, the setup and the results.',
     },
     hero: {
       title: 'Digital signage use cases by industry',
       description:
-        'See how Viewixsoft software runs screens in stores, restaurants, offices, transit hubs, hotels and out-of-home networks: the challenge, the setup and the results.',
-    },
-  },
-  pricing: {
-    seo: {
-      title: `Viewixsoft CMS Pricing: ${yearly} per Screen per Year`,
-      description: `Viewixsoft CMS costs ${yearly} per screen licence per year, with up to ${bestSave}% off on longer plans. Self-host from 20 screens or ask for a quote.`,
-    },
-    hero: {
-      eyebrow: 'Pricing',
-      title: 'Simple per-screen pricing for',
-      highlight: 'Viewixsoft CMS',
-      description: `You pay ${yearly} per screen licence per year. Longer plans save up to ${bestSave}%, and networks of 20 or more screens can host Viewixsoft CMS on their own server.`,
+        'See how Viewixsoft software runs screens in stores, restaurants, offices, hotels, hospitals and clinics: the challenge, the setup and the results.',
     },
   },
   blog: {
@@ -102,7 +99,7 @@ const STATIC: Record<string, PageContent> = {
     seo: {
       title: 'About Viewixsoft — The Software Arm of Viewix',
       description:
-        'Viewixsoft builds the software for Viewix, a Hong Kong commercial display manufacturer exporting to 60+ countries with ISO 9001:2015 quality control.',
+        'Viewixsoft builds the software for Viewix, a Hong Kong commercial display maker. Our cloud tools help businesses run and measure their screens.',
     },
     hero: {
       title: 'Software built on',
@@ -153,7 +150,12 @@ const STATIC: Record<string, PageContent> = {
 }
 
 /** Defaults for a page; product pages depend on their current release status. */
-export function pageDefaults(key: string, productStatuses: Record<string, ProductStatus> = {}): PageContent | null {
+export function pageDefaults(
+  key: string,
+  productStatuses: Record<string, ProductStatus> = {},
+  pricing: PricingFigures = DEFAULT_FIGURES,
+): PageContent | null {
+  if (key === 'pricing') return pricingPage(pricing)
   const fixed = STATIC[key]
   if (fixed) return fixed
 
@@ -198,7 +200,7 @@ export function pageDefaults(key: string, productStatuses: Record<string, Produc
 const pick = (override: string | null | undefined, fallback: string | undefined) =>
   override && override.trim() !== '' ? override.trim() : fallback
 
-/** Defaults with the admin's overrides applied field by field. */
+/** Defaults with the admin's search snippet overrides applied field by field. */
 export function resolvePageContent(defaults: PageContent, override: PageOverride | undefined): PageContent {
   if (!override) return defaults
   return {
@@ -206,11 +208,6 @@ export function resolvePageContent(defaults: PageContent, override: PageOverride
       title: pick(override.seoTitle, defaults.seo.title) ?? defaults.seo.title,
       description: pick(override.seoDescription, defaults.seo.description) ?? defaults.seo.description,
     },
-    hero: {
-      eyebrow: pick(override.heroEyebrow, defaults.hero.eyebrow),
-      title: pick(override.heroTitle, defaults.hero.title) ?? defaults.hero.title,
-      highlight: pick(override.heroHighlight, defaults.hero.highlight),
-      description: pick(override.heroDescription, defaults.hero.description),
-    },
+    hero: defaults.hero,
   }
 }

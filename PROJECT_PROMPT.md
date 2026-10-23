@@ -50,7 +50,7 @@ Use the **`motionsites` MCP server** to browse the available templates. Pick the
 - **Color:** neutral scale (50–950), one brand primary (an electric blue/cyan fits "screens and light"), one accent, semantic success/warning/danger/info. All text pairs must meet WCAG AA contrast.
 - **Typography:** a display font for headings (e.g. Geist, Inter Display or Satoshi) and a readable sans for body text, using a fluid type scale with `clamp()`. Self-host the fonts and set `font-display: swap`.
 - **Spacing:** 4px base scale. **Radius:** sm/md/lg/xl/full. **Shadow/elevation:** 4 levels. **Motion:** duration and easing tokens.
-- **Layout:** 12-column grid, max content width of about 1280px, breakpoints sm/md/lg/xl/2xl, mobile-first.
+- **Layout:** 12-column grid, full-width content with a fluid side gutter (`page-x`, `--spacing-page-gutter`: 16px on phones up to 96px on wide screens), breakpoints sm/md/lg/xl/2xl, mobile-first. Running text keeps its own max width (about 65–75 characters per line).
 
 ### Components (build these as documented, reusable components)
 Button (variants and sizes), Link, Badge, Card, ProductCard, UseCaseCard, BlogCard, Navbar with mega-menu for Products, mobile drawer, Footer, Section header, Hero, Feature grid/bento, Logo cloud, Stats strip, Testimonial, Pricing teaser, FAQ accordion, CTA band, Breadcrumbs, Tabs, Form fields (Input, Textarea, Select, Checkbox) with error states, Toast, Table of contents, Author box, Pagination, Skeletons and an Empty state.

@@ -143,6 +143,22 @@
   }
 }
 
+/*
+ * Vertical rhythm for page sections: the same space above and below every
+ * section, so the gap between two sections is always twice this (128 px on
+ * mobile, 160 px from lg up).
+ */
+/* Full-width page container with the fluid gutter. Text keeps its own
+   max-width (e.g. max-w-3xl) so lines stay readable on wide screens. */
+@utility page-x {
+  width: 100%;
+  padding-inline: var(--spacing-page-gutter);
+}
+
+@utility section-y {
+  @apply py-16 lg:py-20;
+}
+
 /* Small monospace "broadcast label", e.g. CH 02 · CMS */
 @utility eyebrow {
   font-family: var(--font-mono);
@@ -170,6 +186,16 @@
 
 @utility animate-marquee {
   animation: marquee-x 40s linear infinite;
+}
+
+/* Marquee (components/ui): each copy of the row moves by its own width plus the gap. */
+@keyframes marquee-copy {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-100% - var(--gap))); }
+}
+
+@utility animate-marquee-copy {
+  animation: marquee-copy var(--duration) linear infinite;
 }
 
 /* Diagonal hatch band used as a section divider */
@@ -224,6 +250,16 @@
 @utility animate-float {
   animation: float-y 5s var(--ease-broadcast) infinite;
   transform-box: fill-box;
+}
+
+/* Floor shadow under a floating product: shrinks and fades as the product rises (matches float-y). */
+@keyframes float-shadow {
+  0%, 100% { transform: scaleX(1); opacity: 1; }
+  50% { transform: scaleX(0.82); opacity: 0.6; }
+}
+
+@utility animate-float-shadow {
+  animation: float-shadow 5s var(--ease-broadcast) infinite;
 }
 
 /* Upload particles: drift up and fade, looping. */
@@ -290,7 +326,7 @@
   animation: glitch 0.6s steps(2) infinite;
 }
 
-/* Full-screen channel guide (SiteHeader). Native <dialog> + @starting-style. */
+/* Full-screen mobile menu (MobileMenu). Native <dialog> + @starting-style. */
 dialog.site-menu {
   opacity: 0;
   transition:
@@ -329,6 +365,24 @@ html:has(dialog.site-menu[open]) {
   overflow: hidden;
 }
 
+/* Mobile only: from lg the header shows its inline links instead. */
+@media (min-width: 64rem) {
+  dialog.site-menu {
+    display: none;
+  }
+  html:has(dialog.site-menu[open]) {
+    overflow: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog.site-menu,
+  dialog.site-menu .menu-item {
+    transition: none;
+    transform: none;
+  }
+}
+
 /* Admin route-change progress: a gradient segment sweeping across the top edge. */
 @keyframes admin-progress {
   0% {
@@ -347,4 +401,90 @@ html:has(dialog.site-menu[open]) {
     transform: none;
     width: 100%;
   }
+}
+
+/*
+ * About vision entrance, played once when a card is revealed (each icon has its
+ * own move). Transform and opacity only; callers add `motion-safe:` and the
+ * `group-data-[reveal=shown]` trigger, so reduced motion gets no entrance.
+ */
+@keyframes vision-pop {
+  from { transform: scale(0.72); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@utility animate-vision-pop {
+  animation: vision-pop 0.9s var(--ease-broadcast) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes vision-grow {
+  from { transform: scaleY(0); opacity: 0; }
+  to { transform: scaleY(1); opacity: 1; }
+}
+
+/* Chart bars grow from their base. */
+@utility animate-vision-grow {
+  animation: vision-grow 0.8s var(--ease-broadcast) both;
+  transform-box: fill-box;
+  transform-origin: bottom;
+}
+
+@keyframes vision-slide {
+  from { transform: translateX(-18px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Report sheets slide in from the left. */
+@utility animate-vision-slide {
+  animation: vision-slide 0.8s var(--ease-broadcast) both;
+  transform-box: fill-box;
+}
+
+/*
+ * About results cards, lit by the brand hue. The cards sit in
+ * `.screen-dark`, so the signal and ink scales keep their dark-room values in
+ * both themes and white text passes AA on every stop.
+ */
+.result-card-1,
+.result-card-2,
+.result-card-3 {
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink-50) 8%, transparent);
+}
+/* Near-black cards, each lit by a soft glow of the brand hue from a different corner. */
+.result-card-1 {
+  background:
+    radial-gradient(90% 70% at 0% 0%, color-mix(in oklab, var(--color-signal-600) 45%, transparent), transparent),
+    var(--color-ink-900);
+}
+/* The middle card carries the most colour, so the row has one focal point. */
+.result-card-2 {
+  background:
+    radial-gradient(110% 80% at 50% 0%, color-mix(in oklab, var(--color-gradient-from) 70%, transparent), transparent),
+    linear-gradient(180deg, var(--color-signal-950), var(--color-ink-900));
+}
+.result-card-3 {
+  background:
+    radial-gradient(90% 70% at 100% 0%, color-mix(in oklab, var(--color-gradient-to) 35%, transparent), transparent),
+    var(--color-ink-900);
+}
+
+/* Headline words and rule play once when the section is revealed (callers add `motion-safe:`). */
+@keyframes word-rise {
+  from { transform: translateY(0.4em); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@utility animate-word-rise {
+  animation: word-rise 0.7s var(--ease-broadcast) both;
+}
+
+@keyframes rule-draw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@utility animate-rule-draw {
+  animation: rule-draw 0.8s var(--ease-broadcast) both;
 }

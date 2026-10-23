@@ -4,6 +4,7 @@ import { METRIC_DEFS, SECTION_PAGES, SECTION_PAGE_KEYS } from '~/data/site-secti
 import type { SectionPage } from '~/data/site-sections'
 import { PRODUCT_STATUSES } from '~/lib/enums'
 import { ADMIN_PAGES } from '~/data/admin-pages'
+import { MEDIA_SLOT_KEYS } from '~/data/media-slots'
 import { buildTitle, DESCRIPTION_MAX, TITLE_MAX } from '~/lib/seo/meta'
 
 /** Shared by the /admin/site forms and the server functions that save them. */
@@ -111,13 +112,9 @@ function overrideText(max: number, min = 1) {
 
 const pageKeys = ADMIN_PAGES.map((p) => p.key) as [string, ...string[]]
 
-/** Hero and search snippet overrides for one page (see src/data/page-content.ts). */
+/** Search snippet overrides for one page (see src/data/page-content.ts). */
 export const PageOverrideSchema = z.object({
   key: z.enum(pageKeys),
-  heroEyebrow: overrideText(40),
-  heroTitle: overrideText(120, 3),
-  heroHighlight: overrideText(80),
-  heroDescription: overrideText(400, 10),
   seoTitle: overrideText(120, 10).refine(
     (v) => v === null || buildTitle(v).length <= TITLE_MAX,
     `With " — Viewixsoft" added the title must fit in ${TITLE_MAX} characters`,
@@ -126,3 +123,28 @@ export const PageOverrideSchema = z.object({
 })
 
 export type PageOverrideInput = z.input<typeof PageOverrideSchema>
+
+export const MediaAltSchema = z.string().trim().min(3, 'Describe the image in a few words').max(200)
+
+/** A page's image picks from /admin/pages; a null image puts the slot back to its default. */
+export const SaveMediaSlotsSchema = z.object({
+  changes: z
+    .array(
+      z.object({
+        key: z.enum(MEDIA_SLOT_KEYS as [string, ...string[]]),
+        assetId: z.string().uuid().nullable(),
+        alt: z.string().trim().max(200),
+      }),
+    )
+    .min(1)
+    .max(50)
+    .superRefine((changes, ctx) => {
+      changes.forEach((c, i) => {
+        if (c.assetId && MediaAltSchema.safeParse(c.alt).error) {
+          ctx.addIssue({ code: 'custom', path: [i, 'alt'], message: 'Describe the image in a few words' })
+        }
+      })
+    }),
+})
+
+export type SaveMediaSlotsInput = z.input<typeof SaveMediaSlotsSchema>

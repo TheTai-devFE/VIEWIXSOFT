@@ -57,6 +57,16 @@
   --color-light-nfc: #b49cff;
   --color-light-tracking: #4ade80;
   --color-alert: #ff5a4f;
+  /*
+   * Product photo stage: stays light in both themes, like a catalogue shot, so
+   * hardware photos on white blend in (they use mix-blend-multiply on it).
+   * stage-ink passes 4.5:1 on stage.
+   */
+  --color-stage: #f1f1f6;
+  --color-stage-glow: #ffffff;
+  --color-stage-shadow: rgb(20 20 40 / 0.2);
+  --color-stage-ink: #55556a;
+  --color-stage-line: #d4d4e0;
   /* Status icons and badges (3:1+ against both room surfaces). */
   --color-success: #15803d;
   --color-warning: #b45309;
@@ -74,6 +84,9 @@
   --duration-fast: 150ms;
   --duration-base: 250ms;
   --duration-slow: 600ms;
+
+  /* Page gutter: content runs full width; the side space grows with the screen. */
+  --spacing-page-gutter: clamp(1rem, 4vw, 6rem);
 
   /* Fluid type scale */
   --text-hero: clamp(2.25rem, 3.4vw + 0.9rem, 4.25rem);

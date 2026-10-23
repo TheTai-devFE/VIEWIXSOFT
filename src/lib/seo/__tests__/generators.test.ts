@@ -3,6 +3,7 @@ import { BLOG_POSTS } from '~/content/blog'
 import { PRODUCTS } from '~/content/products'
 import { USE_CASES } from '~/content/useCases'
 import {
+  buildLlmsFullTxt,
   buildLlmsTxt,
   buildRobotsTxt,
   buildRssXml,
@@ -87,6 +88,13 @@ describe('rss', () => {
 })
 
 describe('llms.txt and Markdown twins', () => {
+  it('lists the home FAQ it is given, so admin edits reach llms-full.txt', () => {
+    const faq = [{ question: 'Can I edit this FAQ?', answer: 'Yes, from the admin.' }]
+    const txt = buildLlmsFullTxt(PRODUCTS, () => null, faq)
+    expect(txt).toContain('Can I edit this FAQ?')
+    expect(txt).toContain('Yes, from the admin.')
+  })
+
   it('labels unreleased products as coming soon', () => {
     const txt = buildLlmsTxt()
     for (const p of PRODUCTS) {

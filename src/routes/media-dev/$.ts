@@ -2,7 +2,15 @@ import { createFileRoute } from '@tanstack/react-router'
 import { getEnv } from '~/server/env'
 import { readLocalUpload } from '~/server/media/storage'
 
-const TYPES: Record<string, string> = { webp: 'image/webp', avif: 'image/avif', jpg: 'image/jpeg', png: 'image/png' }
+const TYPES: Record<string, string> = {
+  webp: 'image/webp',
+  avif: 'image/avif',
+  jpg: 'image/jpeg',
+  png: 'image/png',
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  vtt: 'text/vtt',
+}
 
 // Serves uploads saved to .data/uploads when R2 isn't configured (local dev only).
 export const Route = createFileRoute('/media-dev/$')({

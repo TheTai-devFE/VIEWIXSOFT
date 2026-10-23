@@ -8,7 +8,7 @@ export function StatsStrip() {
 
   return (
     <section className="py-20 border-y border-ink-900 bg-ink-950/80 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="page-x">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {stats.map((stat, idx) => (
             <div key={idx} className="p-6 rounded-2xl panel border border-ink-800 text-center space-y-2">

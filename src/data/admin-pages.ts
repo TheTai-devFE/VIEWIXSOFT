@@ -6,10 +6,9 @@ import type { SectionPage } from '~/data/site-sections'
 const USE_CASE_LABELS: Record<string, string> = {
   retail: 'Retail',
   'qsr-menu-boards': 'QSR menu boards',
-  'corporate-comms': 'Corporate comms',
-  transportation: 'Transportation',
+  'corporate-comms': 'Corporate',
   hospitality: 'Hospitality',
-  'dooh-advertising': 'DOOH advertising',
+  healthcare: 'Healthcare',
 }
 
 /**
@@ -23,11 +22,7 @@ export interface AdminPage {
   /** Public URL of the page. */
   path: string
   sections?: SectionPage
-  /** Which optional hero fields the page shows. Defaults: eyebrow and a gradient highlight. */
-  hero?: { eyebrow?: boolean; highlight?: string | false }
 }
-
-const LEGAL_HERO = { eyebrow: false, highlight: false } as const
 
 export interface AdminPageGroup {
   id: 'main' | 'products' | 'use-cases' | 'legal'
@@ -41,11 +36,10 @@ export const ADMIN_PAGE_GROUPS: AdminPageGroup[] = [
     label: 'Main pages',
     pages: [
       { key: 'home', label: 'Home', path: '/', sections: 'home' },
-      { key: 'products', label: 'Products', path: '/products' },
       { key: 'use-cases', label: 'Use cases', path: '/use-cases' },
       { key: 'pricing', label: 'Pricing', path: '/pricing' },
-      { key: 'blog', label: 'Blog', path: '/blog', hero: { highlight: 'Second part of the heading' } },
-      { key: 'about', label: 'About', path: '/about', sections: 'about', hero: { highlight: 'Second line (muted)' } },
+      { key: 'blog', label: 'Blog', path: '/blog' },
+      { key: 'about', label: 'About', path: '/about', sections: 'about' },
       { key: 'contact', label: 'Contact', path: '/contact' },
     ],
   },
@@ -73,9 +67,9 @@ export const ADMIN_PAGE_GROUPS: AdminPageGroup[] = [
     id: 'legal',
     label: 'Legal',
     pages: [
-      { key: 'legal-privacy', label: 'Privacy Policy', path: '/legal/privacy', hero: LEGAL_HERO },
-      { key: 'legal-terms', label: 'Terms of Service', path: '/legal/terms', hero: LEGAL_HERO },
-      { key: 'legal-cookies', label: 'Cookie Policy', path: '/legal/cookies', hero: LEGAL_HERO },
+      { key: 'legal-privacy', label: 'Privacy Policy', path: '/legal/privacy' },
+      { key: 'legal-terms', label: 'Terms of Service', path: '/legal/terms' },
+      { key: 'legal-cookies', label: 'Cookie Policy', path: '/legal/cookies' },
     ],
   },
 ]

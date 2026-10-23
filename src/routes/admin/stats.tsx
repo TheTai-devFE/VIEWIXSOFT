@@ -12,7 +12,10 @@ function StatsModule() {
   const data = Route.useLoaderData()
   return (
     <>
-      <AdminPageHeader title="Home stats" description="Real figures for the home page, each with a source and the date it was taken." />
+      <AdminPageHeader
+        title="Company stats"
+        description="Real figures shown under the vision on the About page, each with a source and the date it was taken."
+      />
       {data.ok ? (
         <MetricsEditor saved={data.metrics} />
       ) : (

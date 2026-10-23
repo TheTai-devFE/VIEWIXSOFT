@@ -6,23 +6,23 @@ import { Reveal } from '~/components/ui/reveal'
 import { useScreenWall } from '~/lib/use-media'
 
 export function UseCasesSection() {
-  // Screen photos are replaceable in /admin/media (Screen photos group).
+  // Screen photos are picked from the library in /admin/pages → Home → Use cases.
   const wallImages = useScreenWall()
   return (
     <section aria-labelledby="use-cases-title" className="overflow-hidden border-t border-ink-800 bg-ink-950">
-      <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-28">
+      <div className="page-x section-y grid items-center gap-12 lg:grid-cols-2">
         <div>
           <Reveal>
-            <p className="eyebrow">Use cases</p>
+            <p className="eyebrow">Industries we serve</p>
             <h2
               id="use-cases-title"
               className="mt-3 font-display text-4xl font-semibold tracking-tight text-balance text-ink-50 sm:text-5xl"
             >
-              Where do businesses use <span className="text-brand-gradient">Viewixsoft?</span>
+              Digital Signage for <span className="text-brand-gradient">Every Industry.</span>
             </h2>
             <p className="mt-5 max-w-xl text-lg text-pretty text-ink-400">
-              Viewixsoft runs screens in stores, restaurants, offices, transit hubs, hotels and outdoor ad networks. Pick
-              your industry to see the setup and the products it uses.
+              From retail and restaurants to corporate environments and hospitality, Viewixsoft provides digital signage
+              software solutions that help businesses manage displays and deliver the right content in the right place.
             </p>
           </Reveal>
 

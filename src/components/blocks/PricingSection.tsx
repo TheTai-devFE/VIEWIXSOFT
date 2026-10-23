@@ -2,16 +2,15 @@ import { useId, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, Check, Mail, Minus, Phone, Plus } from 'lucide-react'
+import { SectionHeading } from '~/components/blocks/SectionHeading'
 import { Reveal } from '~/components/ui/reveal'
-import {
-  CUSTOMER_SERVER,
-  MAX_ONLINE_LICENCES,
-  SALES_CONTACT,
-  TERM_FEATURES,
-  TERM_PLANS,
-  formatUsd,
-} from '~/data/pricing'
+import { formatUsd } from '~/data/pricing'
+import { pricingIntroText } from '~/lib/pricing'
+import type { PricingPlans } from '~/lib/pricing'
+import { useSiteConfig } from '~/lib/use-site-config'
+import { usePricing } from '~/lib/use-pricing'
 import { cn } from '~/lib/cn'
+import { useSectionContent } from '~/lib/use-section-content'
 
 const TABS = ['Yearly', 'Customer Server', 'Enterprise'] as const
 
@@ -20,6 +19,11 @@ const ctaPrimary =
 
 /** `showIntro={false}` drops the H2 intro when the page header already says it (e.g. /pricing). */
 export function PricingSection({ showIntro = true }: { showIntro?: boolean }) {
+  const prices = usePricing()
+  const edited = useSiteConfig().content['product-cms:pricing'] !== undefined
+  const saved = useSectionContent('product-cms:pricing')
+  // Until the intro is edited, it quotes the prices as they are now.
+  const intro = edited ? saved : { ...saved, description: pricingIntroText(prices) }
   const [tab, setTab] = useState(0)
   const baseId = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -41,20 +45,7 @@ export function PricingSection({ showIntro = true }: { showIntro?: boolean }) {
       id="pricing"
     >
       {showIntro && (
-      <Reveal className="mx-auto max-w-2xl text-center">
-        <p className="eyebrow">Pricing</p>
-        <h2
-          id="pricing-title"
-          className="mt-3 font-display text-3xl font-semibold tracking-tight text-balance text-ink-50 sm:text-4xl"
-        >
-          How much does Viewixsoft CMS cost?
-        </h2>
-        <p className="mt-4 text-pretty text-ink-400">
-          Viewixsoft CMS costs {formatUsd(TERM_PLANS[0]?.price ?? 0)} per screen licence per year, and less per year on
-          2, 3 and 5 year plans. Networks of {CUSTOMER_SERVER.minLicences} or more screens can run it on their own
-          server, and enterprises can ask for a custom quote.
-        </p>
-      </Reveal>
+        <SectionHeading id="pricing-title" eyebrow={intro.eyebrow} title={intro.title} description={intro.description} />
       )}
 
       <Reveal delay={100} className="mt-10 flex justify-center">
@@ -87,13 +78,13 @@ export function PricingSection({ showIntro = true }: { showIntro?: boolean }) {
       {/* Every panel ships in the SSR HTML so all prices stay crawlable. */}
       <div className="mt-8">
         <TabPanel baseId={baseId} index={0} active={tab}>
-          <YearlyPanel onNeedServer={() => setTab(1)} />
+          <YearlyPanel prices={prices} onNeedServer={() => setTab(1)} />
         </TabPanel>
         <TabPanel baseId={baseId} index={1} active={tab}>
-          <CustomerServerPanel />
+          <CustomerServerPanel prices={prices} />
         </TabPanel>
         <TabPanel baseId={baseId} index={2} active={tab}>
-          <EnterprisePanel />
+          <EnterprisePanel prices={prices} />
         </TabPanel>
       </div>
     </section>
@@ -115,10 +106,11 @@ function TabPanel({ baseId, index, active, children }: { baseId: string; index: 
   )
 }
 
-function YearlyPanel({ onNeedServer }: { onNeedServer: () => void }) {
+function YearlyPanel({ prices, onNeedServer }: { prices: PricingPlans; onNeedServer: () => void }) {
+  const { termPlans, termFeatures, maxOnlineLicences: maxOnline, customerServer } = prices
   const [years, setYears] = useState<number>(1)
   const [count, setCount] = useState(1)
-  const plan = TERM_PLANS.find((p) => p.years === years) ?? TERM_PLANS[0]
+  const plan = termPlans.find((p) => p.years === years) ?? termPlans[0]
   if (!plan) return null
   const total = plan.price * count
   const termLabel = plan.years === 1 ? '1 year' : `${plan.years} years`
@@ -128,7 +120,7 @@ function YearlyPanel({ onNeedServer }: { onNeedServer: () => void }) {
       <fieldset>
         <legend className="sr-only">Choose a licence term</legend>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {TERM_PLANS.map((p) => {
+          {termPlans.map((p) => {
             const selected = p.years === years
             const label = p.years === 1 ? '1 year' : `${p.years} years`
             return (
@@ -162,7 +154,7 @@ function YearlyPanel({ onNeedServer }: { onNeedServer: () => void }) {
                 <span className="mt-4 border-t border-ink-800 pt-3 text-sm text-ink-300">
                   ≈ {formatUsd(p.price / p.years)} / year
                 </span>
-                {p.save && (
+                {p.save > 0 && (
                   <span className="mt-2 w-fit rounded-full bg-signal-950 px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-signal-300 uppercase">
                     Save {p.save}%
                   </span>
@@ -174,10 +166,10 @@ function YearlyPanel({ onNeedServer }: { onNeedServer: () => void }) {
       </fieldset>
 
       <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {TERM_FEATURES.map((f) => (
-          <li key={f} className="flex items-center gap-2 text-sm text-ink-300">
+        {termFeatures.map((f) => (
+          <li key={f.id} className="flex items-center gap-2 text-sm text-ink-300">
             <Check aria-hidden="true" className="size-4 shrink-0 text-signal-400" />
-            {f}
+            {f.text}
           </li>
         ))}
       </ul>
@@ -202,11 +194,11 @@ function YearlyPanel({ onNeedServer }: { onNeedServer: () => void }) {
               type="number"
               inputMode="numeric"
               min={1}
-              max={MAX_ONLINE_LICENCES}
+              max={maxOnline}
               value={count}
               onChange={(e) => {
                 const n = Number.parseInt(e.target.value, 10)
-                setCount(Number.isNaN(n) ? 1 : Math.min(MAX_ONLINE_LICENCES, Math.max(1, n)))
+                setCount(Number.isNaN(n) ? 1 : Math.min(maxOnline, Math.max(1, n)))
               }}
               aria-describedby="licence-count-hint"
               className="h-9 w-16 rounded-md border border-ink-700 bg-ink-950 text-center text-sm text-ink-50"
@@ -214,17 +206,17 @@ function YearlyPanel({ onNeedServer }: { onNeedServer: () => void }) {
             <button
               type="button"
               aria-label="Add a licence"
-              onClick={() => setCount((c) => Math.min(MAX_ONLINE_LICENCES, c + 1))}
-              disabled={count >= MAX_ONLINE_LICENCES}
+              onClick={() => setCount((c) => Math.min(maxOnline, c + 1))}
+              disabled={count >= maxOnline}
               className="flex size-9 items-center justify-center rounded-md border border-ink-700 text-ink-200 hover:border-ink-500 disabled:opacity-40"
             >
               <Plus aria-hidden="true" className="size-4" />
             </button>
           </div>
           <p id="licence-count-hint" className="text-xs text-ink-400">
-            Up to {MAX_ONLINE_LICENCES} online.{' '}
+            Up to {maxOnline} online.{' '}
             <button type="button" onClick={onNeedServer} className="font-semibold text-signal-400 hover:text-signal-300">
-              {CUSTOMER_SERVER.minLicences}+ licences: Customer Server
+              {customerServer.minLicences}+ licences: Customer Server
             </button>
           </p>
         </div>
@@ -248,8 +240,9 @@ function YearlyPanel({ onNeedServer }: { onNeedServer: () => void }) {
   )
 }
 
-function CustomerServerPanel() {
-  const { minLicences, endUser, reseller, volumeDiscounts } = CUSTOMER_SERVER
+function CustomerServerPanel({ prices }: { prices: PricingPlans }) {
+  const { minLicences, endUserPrice, resellerPriceFrom, resellerPriceTo, resellerDiscount, volumeDiscounts } =
+    prices.customerServer
   return (
     <div>
       <div className="grid gap-4 md:grid-cols-2">
@@ -257,39 +250,41 @@ function CustomerServerPanel() {
           <h3 className="font-display text-lg font-semibold text-ink-50">End user (enterprise)</h3>
           <p className="mt-1 text-sm text-ink-400">Minimum {minLicences} licences</p>
           <p className="mt-5 font-display text-3xl font-semibold tracking-tight text-ink-50">
-            {formatUsd(endUser.price)}
+            {formatUsd(endUserPrice)}
             <span className="ml-1 text-sm font-normal text-ink-400">/ licence</span>
           </p>
           <p className="mt-2 text-sm text-ink-300">
-            ≈ {formatUsd(endUser.price * minLicences)} for {minLicences} licences
+            ≈ {formatUsd(endUserPrice * minLicences)} for {minLicences} licences
           </p>
         </div>
         <div className="rounded-2xl border border-ink-800 bg-ink-950 p-6">
           <h3 className="font-display text-lg font-semibold text-ink-50">SI / reseller</h3>
           <p className="mt-1 text-sm text-ink-400">
-            Minimum {minLicences} licences · {reseller.discount}
+            Minimum {minLicences} licences · {resellerDiscount}
           </p>
           <p className="mt-5 font-display text-3xl font-semibold tracking-tight text-ink-50">
-            {formatUsd(reseller.priceFrom)} – {formatUsd(reseller.priceTo)}
+            {formatUsd(resellerPriceFrom)} – {formatUsd(resellerPriceTo)}
             <span className="ml-1 text-sm font-normal text-ink-400">/ licence</span>
           </p>
           <p className="mt-2 text-sm text-ink-300">
-            ≈ {formatUsd(reseller.priceFrom * minLicences)} for {minLicences} licences
+            ≈ {formatUsd(resellerPriceFrom * minLicences)} for {minLicences} licences
           </p>
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-ink-800 bg-ink-950 p-6">
-        <h3 className="text-sm font-semibold text-ink-50">Volume discounts</h3>
-        <ul className="mt-3 space-y-2">
-          {volumeDiscounts.map((d) => (
-            <li key={d.licences} className="flex items-center gap-2 text-sm text-ink-300">
-              <Check aria-hidden="true" className="size-4 shrink-0 text-signal-400" />
-              {d.licences} licences: {d.percentOff}% off (end user ≈ {formatUsd(d.endUserPrice)} / licence)
-            </li>
-          ))}
-        </ul>
-      </div>
+      {volumeDiscounts.length > 0 && (
+        <div className="mt-4 rounded-2xl border border-ink-800 bg-ink-950 p-6">
+          <h3 className="text-sm font-semibold text-ink-50">Volume discounts</h3>
+          <ul className="mt-3 space-y-2">
+            {volumeDiscounts.map((d) => (
+              <li key={d.id} className="flex items-center gap-2 text-sm text-ink-300">
+                <Check aria-hidden="true" className="size-4 shrink-0 text-signal-400" />
+                {d.licences} licences: {d.percentOff}% off (end user ≈ {formatUsd(d.endUserPrice)} / licence)
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-6 flex justify-center">
         <Link to="/contact" className={ctaPrimary}>
@@ -301,7 +296,8 @@ function CustomerServerPanel() {
   )
 }
 
-function EnterprisePanel() {
+function EnterprisePanel({ prices }: { prices: PricingPlans }) {
+  const { sales } = prices
   return (
     <div className="grid gap-4 md:grid-cols-5">
       <div className="rounded-2xl border border-ink-800 bg-ink-950 p-6 md:col-span-3 sm:p-8">
@@ -320,29 +316,29 @@ function EnterprisePanel() {
       <div className="rounded-2xl border border-ink-800 bg-ink-900 p-6 md:col-span-2 sm:p-8">
         <h3 className="text-sm font-semibold text-ink-50">Talk to sales</h3>
         <ul className="mt-5 space-y-4 text-sm">
-          {SALES_CONTACT.email && (
+          {sales.email && (
             <li className="flex items-start gap-3">
               <Mail aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-signal-400" />
               <span>
                 <span className="block text-xs text-ink-400">Email</span>
-                <a href={`mailto:${SALES_CONTACT.email}`} className="font-semibold text-ink-50 hover:text-signal-400">
-                  {SALES_CONTACT.email}
+                <a href={`mailto:${sales.email}`} className="font-semibold text-ink-50 hover:text-signal-400">
+                  {sales.email}
                 </a>
               </span>
             </li>
           )}
-          {SALES_CONTACT.phone && (
+          {sales.phone && (
             <li className="flex items-start gap-3">
               <Phone aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-signal-400" />
               <span>
                 <span className="block text-xs text-ink-400">Phone</span>
-                <a href={`tel:${SALES_CONTACT.phone.replace(/\s/g, '')}`} className="font-semibold text-ink-50 hover:text-signal-400">
-                  {SALES_CONTACT.phone}
+                <a href={`tel:${sales.phone.replace(/\s/g, '')}`} className="font-semibold text-ink-50 hover:text-signal-400">
+                  {sales.phone}
                 </a>
               </span>
             </li>
           )}
-          {SALES_CONTACT.hours && <li className="text-xs text-ink-400">{SALES_CONTACT.hours}</li>}
+          {sales.hours && <li className="text-xs text-ink-400">{sales.hours}</li>}
         </ul>
       </div>
     </div>

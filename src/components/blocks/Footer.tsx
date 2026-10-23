@@ -1,10 +1,11 @@
 import { Link } from '@tanstack/react-router'
 import type { LinkProps } from '@tanstack/react-router'
-import { ArrowRight } from 'lucide-react'
 import { ViewixLogo } from '~/components/blocks/ViewixLogo'
 import { useProducts } from '~/lib/use-site-config'
 import { USE_CASES } from '~/content/useCases'
 import { CONTACT_EMAILS, LEGAL_ENTITY } from '~/data/company'
+import { SOCIAL_LINKS } from '~/data/social'
+import { SocialIcon } from '~/components/ui/social-icon'
 
 type FooterLink = { label: string; to: LinkProps['to'] }
 
@@ -31,27 +32,49 @@ function ColumnHeading({ id, children }: { id: string; children: string }) {
   )
 }
 
+const socialClass = 'flex size-9 items-center justify-center rounded-full border border-ink-800 text-ink-400'
+
+/** Official profiles; one without a URL shows as a faded stand-in in the dev server only. */
+function SocialLinks() {
+  const shown = SOCIAL_LINKS.filter((s) => s.url || import.meta.env.DEV)
+  if (!shown.length) return null
+  return (
+    <ul aria-label="Viewixsoft on social media" className="mt-6 flex gap-2.5">
+      {shown.map((s) => (
+        <li key={s.network}>
+          {s.url ? (
+            <a
+              href={s.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Viewixsoft on ${s.label} (opens in a new tab)`}
+              className={`${socialClass} transition-colors hover:border-ink-600 hover:text-ink-50`}
+            >
+              <SocialIcon network={s.network} className="size-4" />
+            </a>
+          ) : (
+            <span title={`${s.label}: add the URL in src/data/social.ts`} className={`${socialClass} border-dashed opacity-50`}>
+              <SocialIcon network={s.network} className="size-4" />
+              <span className="sr-only">{s.label} profile not set yet</span>
+            </span>
+          )}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 export function Footer() {
   const products = useProducts()
   return (
     <footer className="border-t border-ink-800 bg-ink-950 text-sm">
-      <div className="mx-auto max-w-7xl px-4 pt-16 pb-8 sm:px-6 lg:px-8">
+      <div className="page-x pt-16 pb-8">
         <div className="grid grid-cols-2 gap-x-6 gap-y-12 md:grid-cols-4 lg:grid-cols-6">
           <div className="col-span-2 md:col-span-4 lg:col-span-2">
             <Link to="/" aria-label="Viewixsoft home" className="inline-block text-ink-50">
               <ViewixLogo className="h-6" withSoft />
             </Link>
-            <p className="mt-5 max-w-sm text-pretty text-ink-400">
-              Viewixsoft builds digital signage software for Viewix screens, so you can manage content on advertising
-              screens, kiosks and menu boards from one cloud dashboard.
-            </p>
-            <Link
-              to="/contact"
-              className="mt-6 inline-flex items-center gap-2 rounded-lg border border-ink-700 px-4 py-2 font-semibold text-ink-50 transition-colors hover:border-ink-500"
-            >
-              Book a demo
-              <ArrowRight aria-hidden="true" className="size-4" />
-            </Link>
+            <SocialLinks />
           </div>
 
           <nav aria-labelledby="footer-products">
