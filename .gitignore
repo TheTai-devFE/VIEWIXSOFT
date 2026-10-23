@@ -12,3 +12,6 @@ dist
 .dev.vars
 .dev.vars.*
 .data
+
+# Vercel build output
+.vercel

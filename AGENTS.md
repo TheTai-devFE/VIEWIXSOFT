@@ -44,7 +44,7 @@ Keep this table up to date once the project is scaffolded.
 | Type check | `pnpm typecheck` |
 | Unit tests | `pnpm test` |
 | Blog content check | `pnpm content:check` |
-| Build (Cloudflare Workers) | `pnpm build` |
+| Build (Cloudflare Workers; Vercel when `VERCEL=1`) | `pnpm build` |
 | Preview / deploy Worker | `pnpm cf:preview` / `pnpm cf:deploy` |
 | DB: generate migration | `pnpm db:generate` |
 | DB: apply migrations | `pnpm db:migrate` |

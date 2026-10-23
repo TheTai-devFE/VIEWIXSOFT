@@ -63,15 +63,16 @@ Without `DATABASE_URL` the marketing site still runs with default settings; form
 | Type check | `pnpm typecheck` |
 | Unit tests | `pnpm test` |
 | Check blog content | `pnpm content:check` |
-| Build (Cloudflare Workers) | `pnpm build` |
+| Build (Cloudflare Workers; Vercel when `VERCEL=1`) | `pnpm build` |
 | Preview the Worker locally | `pnpm cf:preview` (reads `.dev.vars`) |
-| Deploy | `pnpm cf:deploy` |
+| Deploy to Cloudflare | `pnpm cf:deploy` |
+| Deploy to Vercel | push to GitHub (see below) |
 | DB: new migration after editing the schema | `pnpm db:generate` |
 | DB: apply migrations | `pnpm db:migrate` |
 | DB: browse data | `pnpm db:studio` |
 | Create or reset an admin | `pnpm admin:create <email>` |
 
-Deployment steps: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md).
+Deployment steps: [docs/deploy-vercel.md](docs/deploy-vercel.md) (current) or [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md).
 
 ---
 

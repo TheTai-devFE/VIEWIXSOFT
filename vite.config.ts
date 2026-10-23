@@ -10,6 +10,12 @@ import path from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+function buildTarget() {
+  if (process.env.VERCEL !== '1') return { preset: 'cloudflare_module' }
+  // sin1 sits next to the Neon database (aws ap-southeast-1).
+  return { preset: 'vercel', vercel: { functions: { regions: ['sin1'] } } }
+}
+
 export default defineConfig(({ command, mode }) => {
   // A NODE_ENV=development left in .env makes Vite emit dev-only JSX, which
   // crashes the production Worker. Refuse to build like that.
@@ -34,8 +40,9 @@ export default defineConfig(({ command, mode }) => {
       srcDirectory: 'src',
     }),
     viteReact({ include: /\.(mdx|js|jsx|ts|tsx)$/ }),
-    // Production builds target Cloudflare Workers; `pnpm dev` stays on Node.
-    nitro(command === 'build' ? { preset: 'cloudflare_module' } : {}),
+    // Production builds target Cloudflare Workers, or Vercel when built there
+    // (Vercel sets VERCEL=1). `pnpm dev` stays on Node.
+    nitro(command === 'build' ? buildTarget() : {}),
   ],
 }
 })
