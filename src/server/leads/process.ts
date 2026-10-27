@@ -1,5 +1,5 @@
 import { ContactLeadSchema, NewsletterSchema } from '~/server/schema/validation'
-import type { LeadInput, NewsletterInput } from '~/server/schema/validation'
+import type { LeadInput, NewsletterInput, NewsletterTopic } from '~/server/schema/validation'
 import { isRateLimited, LEAD_LIMITS } from '~/server/security/rate-limit'
 
 /*
@@ -26,6 +26,8 @@ export interface LeadDeps {
   insertLead: (lead: LeadInput & { ipHash?: string; userAgent?: string; consentAt: Date }) => Promise<{ id: string }>
   notify: (lead: LeadInput, id: string) => Promise<void>
   onEmailError: (error: unknown) => void
+  /** Storage failed; the visitor only sees a generic message, so this is where it gets logged. */
+  onSaveError: (error: unknown) => void
 }
 
 const MESSAGES = {
@@ -78,17 +80,20 @@ export async function processLead(raw: unknown, ctx: RequestContext, deps: LeadD
       deps.onEmailError(error)
     }
     return { ok: true, message: MESSAGES.lead }
-  } catch {
+  } catch (error) {
+    deps.onSaveError(error)
     return { ok: false, error: 'server', message: MESSAGES.server }
   }
 }
 
 export interface NewsletterDeps {
   verifyCaptcha: (token: string | undefined, ip: string | undefined) => Promise<boolean>
-  /** Adds the topic and returns whether the address still needs confirming. */
-  upsertSubscriber: (q: { email: string; topic?: string; consentAt: Date }) => Promise<{ needsConfirmation: boolean }>
-  sendConfirmation: (email: string, topic?: string) => Promise<void>
+  /** Adds the topics and returns whether the address still needs confirming. */
+  upsertSubscriber: (q: { email: string; topics: NewsletterTopic[]; consentAt: Date }) => Promise<{ needsConfirmation: boolean }>
+  sendConfirmation: (email: string, topics: NewsletterTopic[]) => Promise<void>
   onEmailError: (error: unknown) => void
+  /** Storage failed; the visitor only sees a generic message, so this is where it gets logged. */
+  onSaveError: (error: unknown) => void
 }
 
 export async function processNewsletter(raw: unknown, ctx: RequestContext, deps: NewsletterDeps): Promise<SubmitResult> {
@@ -97,7 +102,8 @@ export async function processNewsletter(raw: unknown, ctx: RequestContext, deps:
     return { ok: false, error: 'validation', message: MESSAGES.validation, fieldErrors: fieldErrors(parsed.error) }
   }
   const input: NewsletterInput = parsed.data
-  const done = input.product
+  const launchOnly = !input.topics.includes('newsletter')
+  const done = launchOnly
     ? 'Thanks. Check your inbox to confirm, and we will email you when it launches.'
     : 'Thanks. Check your inbox to confirm your subscription.'
 
@@ -107,16 +113,17 @@ export async function processNewsletter(raw: unknown, ctx: RequestContext, deps:
   if (input.honeypot && input.honeypot.trim() !== '') return { ok: true, message: done }
 
   try {
-    const { needsConfirmation } = await deps.upsertSubscriber({ email: input.email, topic: input.product, consentAt: ctx.now })
+    const { needsConfirmation } = await deps.upsertSubscriber({ email: input.email, topics: input.topics, consentAt: ctx.now })
     if (needsConfirmation) {
       try {
-        await deps.sendConfirmation(input.email, input.product)
+        await deps.sendConfirmation(input.email, input.topics)
       } catch (error) {
         deps.onEmailError(error)
       }
     }
-    return { ok: true, message: needsConfirmation ? done : 'Thanks. You are already subscribed, and we added this topic.' }
-  } catch {
+    return { ok: true, message: needsConfirmation ? done : 'Thanks. You are already subscribed, and we added these topics.' }
+  } catch (error) {
+    deps.onSaveError(error)
     return { ok: false, error: 'server', message: MESSAGES.server }
   }
 }

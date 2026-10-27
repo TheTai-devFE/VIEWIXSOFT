@@ -35,12 +35,20 @@ export type LeadInput = ContactLeadInput
 /** Product slugs a visitor can ask to be notified about. */
 export const PRODUCT_SLUGS = ['cms', 'pos', 'tracking', 'nfc'] as const
 
+/** `newsletter` is the general list ("All updates"); a product slug is that product's launch news. */
+export const NEWSLETTER_TOPICS = ['newsletter', ...PRODUCT_SLUGS] as const
+export type NewsletterTopic = (typeof NEWSLETTER_TOPICS)[number]
+
 export const NewsletterSchema = z.object({
   email: z.string().trim().toLowerCase().email('Please enter a valid email address').max(254),
   honeypot: z.string().max(500).optional(),
   turnstileToken: z.string().max(4096).optional(),
-  /** Set when the sign-up asks for a product's launch news rather than the newsletter. */
-  product: z.enum(PRODUCT_SLUGS).optional(),
+  // No topic picked means the newsletter, so every subscriber is on at least one list.
+  topics: z
+    .array(z.enum(NEWSLETTER_TOPICS))
+    .max(10)
+    .default([])
+    .transform((t): NewsletterTopic[] => (t.length === 0 ? ['newsletter'] : [...new Set(t)])),
   consent: z.boolean().refine((val) => val === true, {
     message: 'Consent is required',
   }),

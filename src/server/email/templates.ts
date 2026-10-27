@@ -50,8 +50,10 @@ export function leadConfirmationEmail(lead: LeadInput) {
   return { subject, html, text }
 }
 
-export function newsletterConfirmEmail(confirmUrl: string, productName?: string) {
-  const what = productName ? `launch news for ${productName}` : 'the Viewixsoft newsletter'
+/** `productNames` are the launches asked for; `newsletter` is whether the general list was picked too. */
+export function newsletterConfirmEmail(confirmUrl: string, { newsletter, productNames }: { newsletter: boolean; productNames: string[] }) {
+  const launches = productNames.length > 0 ? `launch news for ${productNames.join(', ')}` : ''
+  const what = [newsletter ? 'the Viewixsoft newsletter' : '', launches].filter(Boolean).join(' and ') || 'the Viewixsoft newsletter'
   const subject = `Confirm your sign-up for ${what}`
   const html = layout(
     'Please confirm your email',

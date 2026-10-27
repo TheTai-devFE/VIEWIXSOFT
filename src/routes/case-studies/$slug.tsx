@@ -1,6 +1,5 @@
 import { createFileRoute, notFound, Link } from '@tanstack/react-router'
 import { USE_CASES } from '~/content/useCases'
-import { Breadcrumbs } from '~/components/layout/Breadcrumbs'
 import { assetUrl, generateMetaTags } from '~/lib/seo/meta'
 import { useCaseSeo } from '~/lib/seo/page-seo'
 import { getArticleSchema, getBreadcrumbSchema, getFaqSchema } from '~/lib/seo/jsonld'
@@ -91,14 +90,8 @@ function CaseStudyDetailPage() {
 
   return (
     <div className="page-x space-y-24 py-12 md:space-y-32 md:py-20">
+      {/* No visible breadcrumb trail; BreadcrumbList JSON-LD stays in head(). */}
       <div className="space-y-10">
-        <Breadcrumbs
-          items={[
-            { name: 'Home', path: '/' },
-            { name: 'Case studies', path: '/case-studies' },
-            { name: uc.title, path: `/case-studies/${uc.slug}` },
-          ]}
-        />
         <CaseStudyHero
           title={uc.title}
           summary={uc.tagline}

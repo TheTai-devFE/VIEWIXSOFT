@@ -1,6 +1,6 @@
-import { Link } from '@tanstack/react-router'
-import { ArrowRight, Plus } from 'lucide-react'
 import { Reveal } from '~/components/ui/reveal'
+import { FramedBand } from '~/components/blocks/FramedBand'
+import { LazySubscribeForm } from '~/components/blocks/LazySubscribeForm'
 import { useSectionContent } from '~/lib/use-section-content'
 
 /** Numbered "what happens next" list on /contact. */
@@ -31,70 +31,33 @@ export function LeadNextSteps({ animate = false }: { animate?: boolean }) {
   )
 }
 
-/** Corner crosshair of the framed band; centred on the frame's corner. */
-function CornerMark({ className }: { className: string }) {
-  return <Plus aria-hidden="true" strokeWidth={1.25} className={`absolute size-6 text-ink-500 ${className}`} />
-}
-
 /**
- * Home page contact band: the partner pitch with links to /contact and the Viewixsoft CMS page.
- * The demo form itself lives on /contact.
+ * Home page newsletter band: topic chips and email sign-up (double opt-in).
+ * The "Partner with us" pitch moved to PartnerBand (blog posts, product pages);
+ * the demo form itself lives on /contact.
  */
-export function ContactCtaSection() {
-  const { partner } = useSectionContent('home:demo-form')
-  if (!partner.show) return null
+export function HomeNewsletterSection() {
   return (
-    <section id="contact" aria-labelledby="contact-cta-title" className="bg-ink-950">
+    <section aria-labelledby="home-newsletter-title" className="bg-ink-950">
       <div className="section-y page-x">
-        <Reveal className="relative">
-          {/* Guide lines run past the frame, like a drafting sheet. */}
-          <span aria-hidden="true" className="absolute inset-x-0 -top-px h-px bg-ink-800 sm:-inset-x-6" />
-          <span aria-hidden="true" className="absolute inset-x-0 -bottom-px h-px bg-ink-800 sm:-inset-x-6" />
-          <span aria-hidden="true" className="absolute inset-y-0 -left-px w-px bg-ink-800 sm:-inset-y-6" />
-          <span aria-hidden="true" className="absolute inset-y-0 -right-px w-px bg-ink-800 sm:-inset-y-6" />
-          <CornerMark className="-top-3 -left-3" />
-          <CornerMark className="-top-3 -right-3" />
-          <CornerMark className="-bottom-3 -left-3" />
-          <CornerMark className="-right-3 -bottom-3" />
-
-          <div className="relative overflow-hidden px-6 py-12 text-center sm:px-12 sm:py-16">
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -top-1/2 -left-1/4 h-full w-3/4 rounded-full bg-[radial-gradient(closest-side,var(--color-ink-800),transparent)] opacity-80 blur-2xl"
-            />
-            <span aria-hidden="true" className="absolute inset-y-0 left-1/2 border-l border-dashed border-ink-800" />
-
-            <div className="relative mx-auto max-w-2xl">
-              {partner.eyebrow && <p className="eyebrow">{partner.eyebrow}</p>}
-              <h2
-                id="contact-cta-title"
-                className="mt-3 font-display text-3xl font-semibold tracking-tight text-balance text-ink-50 sm:text-4xl"
-              >
-                {partner.title}
-              </h2>
-              {partner.description && <p className="mt-4 text-lg text-pretty text-ink-400">{partner.description}</p>}
-
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link
-                  to="/contact"
-                  preload="intent"
-                  className="inline-flex w-full items-center justify-center rounded-lg border border-ink-700 bg-ink-950 px-5 py-2.5 text-sm font-semibold text-ink-50 transition-colors hover:border-ink-500 sm:w-auto"
-                >
-                  {partner.cta}
-                </Link>
-                <Link
-                  to="/products/$slug"
-                  params={{ slug: 'cms' }}
-                  preload="intent"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ink-50 px-5 py-2.5 text-sm font-semibold text-ink-950 transition-opacity hover:opacity-90 sm:w-auto"
-                >
-                  Get started
-                  <ArrowRight aria-hidden="true" className="size-4" />
-                </Link>
-              </div>
-            </div>
+        <FramedBand>
+          <div className="relative mx-auto max-w-2xl">
+            <p className="eyebrow">Stay in the loop</p>
+            <h2
+              id="home-newsletter-title"
+              className="mt-3 font-display text-3xl font-semibold tracking-tight text-balance text-ink-50 sm:text-4xl"
+            >
+              Get Viewixsoft updates by email
+            </h2>
+            <p className="mt-4 text-lg text-pretty text-ink-400">
+              Product news, launch dates and practical guides for running digital signage. Pick the products you care
+              about.
+            </p>
           </div>
-        </Reveal>
+
+          {/* Wider than the pitch so the five topic chips fit on one row. */}
+          <LazySubscribeForm className="relative mx-auto mt-10 max-w-3xl" />
+        </FramedBand>
       </div>
     </section>
   )

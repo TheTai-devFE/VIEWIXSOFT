@@ -15,14 +15,14 @@ import { generateMetaTags } from '~/lib/seo/meta'
 import { getSoftwareApplicationSchema, getFaqSchema, getBreadcrumbSchema, getVideoSchema } from '~/lib/seo/jsonld'
 import { resolveSectionContent } from '~/lib/section-content'
 import { FaqAccordion } from '~/components/blocks/FaqAccordion'
-import { CtaBand } from '~/components/blocks/CtaBand'
+import { PartnerBand } from '~/components/blocks/PartnerBand'
 import { PricingSection } from '~/components/blocks/PricingSection'
 import { pricingFromConfig, yearlyPlan } from '~/lib/pricing'
 import { CmsHero } from '~/components/blocks/CmsHero'
 import { SectionHeading } from '~/components/blocks/SectionHeading'
 import { ScreenBandSection } from '~/components/blocks/ScreenBandSection'
 import { CmsCapabilitiesSection } from '~/components/blocks/cms-capabilities'
-import { LazyLeadForm } from '~/components/blocks/LazyLeadForm'
+import { Button } from '~/components/ui/button'
 import { Reveal } from '~/components/ui/reveal'
 import { 
   CheckCircle2, ArrowRight, Layers,   Monitor, Cpu, Activity, Smartphone, Sparkles 
@@ -246,21 +246,22 @@ function ProductDetailPage() {
           <FaqAccordion items={faqItems} className="w-full max-w-none" />
         </div>
 
-        {/* Right column: Contact sales form */}
-        <div className="lg:col-span-6 space-y-6">
-          <div>
+        {/* Right column: the demo request itself is the form on /contact. */}
+        <div className="lg:col-span-6">
+          <div className="rounded-3xl border border-ink-800 bg-ink-900 p-6 sm:p-8">
             <h3 className="font-display text-xl font-semibold text-ink-50">
               Contact sales & request a demo
             </h3>
             <p className="mt-1 text-sm text-ink-400">
               Speak with a Viewixsoft specialist about screen compatibility, volume licensing, or hardware procurement.
             </p>
+            <Button asChild size="lg" className="mt-6 rounded-full px-6">
+              <Link to="/contact" preload="intent">
+                Book a demo
+                <ArrowRight aria-hidden="true" />
+              </Link>
+            </Button>
           </div>
-          <LazyLeadForm
-            variant="quick"
-            idPrefix="product-faq-contact"
-            submitLabel="Contact sales"
-          />
         </div>
       </div>
     </section>
@@ -279,6 +280,7 @@ function ProductDetailPage() {
           pricing: <PricingSection />,
           'use-cases': useCases,
           faq,
+          partner: <PartnerBand />,
         })
       : [
           { key: 'hero', node: <ProductHero product={product} hero={hero} /> },
@@ -311,7 +313,7 @@ function ProductDetailPage() {
           { key: 'specs', node: specs },
           { key: 'use-cases', node: useCases },
           { key: 'faq', node: faq },
-          { key: 'cta', node: <CtaBand /> },
+          { key: 'partner', node: <PartnerBand /> },
         ]
 
   return (

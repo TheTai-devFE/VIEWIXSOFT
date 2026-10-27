@@ -81,7 +81,7 @@ export function SiteHeader() {
             <Link
               to="/products/$slug"
               params={{ slug: 'cms' }}
-              className="hidden items-center rounded-full bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110 active:scale-95 sm:inline-flex"
+              className="bg-brand-gradient shine hidden items-center rounded-full px-4 py-2 text-sm font-semibold text-on-gradient shadow-sm transition-all hover:opacity-90 active:scale-95 sm:inline-flex"
             >
               Get started
             </Link>

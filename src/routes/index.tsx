@@ -9,7 +9,7 @@ import { UseCasesSection } from '~/components/blocks/UseCasesSection'
 import { HowItWorks } from '~/components/blocks/HowItWorks'
 import { PricingTeaser } from '~/components/blocks/PricingTeaser'
 import { HomeFaqSection } from '~/components/blocks/HomeFaqSection'
-import { ContactCtaSection } from '~/components/blocks/LeadFormSection'
+import { HomeNewsletterSection } from '~/components/blocks/LeadFormSection'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
 import { getFaqSchema } from '~/lib/seo/jsonld'
@@ -45,7 +45,7 @@ function HomePage() {
     'use-cases': <UseCasesSection />,
     pricing: <PricingTeaser />,
     faq: <HomeFaqSection />,
-    'demo-form': <ContactCtaSection />,
+    'demo-form': <HomeNewsletterSection />,
   })
   return (
     <>

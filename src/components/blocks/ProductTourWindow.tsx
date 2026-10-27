@@ -1,7 +1,8 @@
-import { useImperativeHandle, useRef, useState } from 'react'
+import { useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type { Ref } from 'react'
 import { Play } from 'lucide-react'
 import type { IntroVideoContent, SectionVideo } from '~/lib/section-content'
+import { cn } from '~/lib/cn'
 
 export interface ProductTourHandle {
   /** Starts the video, e.g. from the hero's "Watch preview" button. */
@@ -27,25 +28,81 @@ export function ProductTourWindow({ tour, ref }: { tour: IntroVideoContent; ref?
   )
 }
 
+// Share of the player that must be on screen for it to play.
+const AUTOPLAY_VISIBLE_RATIO = 0.5
+
 function VideoPlayer({ tour, video, ref }: { tour: IntroVideoContent; video: SectionVideo; ref?: Ref<ProductTourHandle> }) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [started, setStarted] = useState(false)
+  // idle: poster and play button. auto: playing muted on its own, no browser
+  // controls. manual: the visitor pressed play, so sound and controls are on.
+  const [mode, setMode] = useState<'idle' | 'auto' | 'manual'>('idle')
+  // Set while this code pauses the video, so only the visitor's own pause counts.
+  const autoPausing = useRef(false)
+  // Once the visitor pauses, scrolling back must not restart the video.
+  const userPaused = useRef(false)
+
   const start = () => {
-    setStarted(true)
-    void videoRef.current?.play()
+    const el = videoRef.current
+    if (!el) return
+    // An explicit play is a user gesture, so the tour can play with sound.
+    el.muted = false
+    userPaused.current = false
+    setMode('manual')
+    void el.play()
   }
   useImperativeHandle(ref, () => ({ play: start }), [])
 
+  // Plays (muted, as browsers require for autoplay) while the player is on
+  // screen and pauses once it scrolls away. Off under reduced motion.
+  useEffect(() => {
+    const el = videoRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const onPause = () => {
+      if (!autoPausing.current) userPaused.current = true
+      autoPausing.current = false
+    }
+    el.addEventListener('pause', onPause)
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry) return
+        if (entry.intersectionRatio >= AUTOPLAY_VISIBLE_RATIO) {
+          if (userPaused.current || !el.paused) return
+          if (mode !== 'manual') el.muted = true
+          const resumed = () => setMode((m) => (m === 'manual' ? m : 'auto'))
+          el.play().then(resumed, () => {
+            if (el.muted) return // Autoplay refused (e.g. battery saver); the play button stays.
+            // Sound needs a fresh gesture in some browsers; carry on muted instead.
+            el.muted = true
+            el.play().then(resumed, () => undefined)
+          })
+        } else if (!el.paused) {
+          autoPausing.current = true
+          el.pause()
+        }
+      },
+      { threshold: [0, AUTOPLAY_VISIBLE_RATIO] },
+    )
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      el.removeEventListener('pause', onPause)
+    }
+  }, [mode])
+
   return (
     <div className="relative aspect-video bg-ink-900">
-      {/* preload="none": no video bytes load until the visitor presses play. */}
+      {/* preload="none": no video bytes load until the player plays (on screen, or on press). */}
       <video
         ref={videoRef}
         src={video.url}
         poster={tour.poster?.url}
         preload="none"
+        muted
         playsInline
-        controls={started}
+        controls={mode === 'manual'}
         width={video.width}
         height={video.height}
         className="size-full object-cover"
@@ -53,16 +110,20 @@ function VideoPlayer({ tour, video, ref }: { tour: IntroVideoContent; video: Sec
         {tour.captions && <track kind="captions" src={tour.captions.url} srcLang="en" label="English" default />}
       </video>
 
-      {!started && (
+      {/* While it plays on its own the whole frame is the button: a press turns
+          on sound and brings up the controls (pause, seek, volume). */}
+      {mode !== 'manual' && (
         <button
           type="button"
           onClick={start}
-          aria-label={`Play video: ${tour.title}`}
-          className="group absolute inset-0 flex items-center justify-center bg-ink-950/10"
+          aria-label={mode === 'auto' ? `Play video with sound: ${tour.title}` : `Play video: ${tour.title}`}
+          className={cn('group absolute inset-0 flex items-center justify-center', mode === 'idle' && 'bg-ink-950/10')}
         >
-          <span className="flex size-20 items-center justify-center rounded-full bg-ink-50 text-ink-950 shadow-xl transition-transform group-hover:scale-105 motion-reduce:transition-none sm:size-28">
-            <Play aria-hidden="true" className="ml-1 size-8 fill-current sm:size-10" />
-          </span>
+          {mode === 'idle' && (
+            <span className="flex size-20 items-center justify-center rounded-full bg-ink-50 text-ink-950 shadow-xl transition-transform group-hover:scale-105 motion-reduce:transition-none sm:size-28">
+              <Play aria-hidden="true" className="ml-1 size-8 fill-current sm:size-10" />
+            </span>
+          )}
         </button>
       )}
     </div>

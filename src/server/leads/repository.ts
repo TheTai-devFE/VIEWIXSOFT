@@ -1,6 +1,7 @@
 import '@tanstack/react-start/server-only'
 import { and, count, desc, eq, gte, sql } from 'drizzle-orm'
 import { getDb } from '~/server/db/client'
+import type { Database } from '~/server/db/client'
 import { leads, newsletterSubscribers } from '~/server/db/schema'
 import type { Lead } from '~/server/db/schema'
 import type { LeadDeps, NewsletterDeps } from '~/server/leads/process'
@@ -49,22 +50,29 @@ export const insertLead: LeadDeps['insertLead'] = async (lead) => {
   return row
 }
 
-export const upsertSubscriber: NewsletterDeps['upsertSubscriber'] = async ({ email, topic, consentAt }) => {
-  const db = getDb()
-  const topics = topic ? [topic] : []
-  const [row] = await db
+/**
+ * Insert, or merge topics into an existing address. The merge reads the new
+ * topics from `excluded` (the row being inserted): a JS array inside sql``
+ * expands to ($1, $2), which Postgres cannot cast to text[].
+ */
+export function subscriberUpsert(db: Database, { email, topics, consentAt }: Parameters<NewsletterDeps['upsertSubscriber']>[0]) {
+  return db
     .insert(newsletterSubscribers)
     .values({ email, topics, consentAt })
     .onConflictDoUpdate({
       target: newsletterSubscribers.email,
       set: {
         // Merge topics without duplicates; an unsubscribed address starts over as pending.
-        topics: sql`array(select distinct unnest(${newsletterSubscribers.topics} || ${topics}::text[]))`,
+        topics: sql`array(select distinct unnest(${newsletterSubscribers.topics} || excluded.topics))`,
         status: sql`case when ${newsletterSubscribers.status} = 'unsubscribed' then 'pending' else ${newsletterSubscribers.status} end`,
         consentAt,
       },
     })
     .returning({ status: newsletterSubscribers.status })
+}
+
+export const upsertSubscriber: NewsletterDeps['upsertSubscriber'] = async (input) => {
+  const [row] = await subscriberUpsert(getDb(), input)
   return { needsConfirmation: row?.status !== 'active' }
 }
 

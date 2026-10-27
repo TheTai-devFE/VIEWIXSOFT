@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { createFileRoute, notFound, Link } from '@tanstack/react-router'
 import { ArrowLeft, ArrowRight, Check, ChevronDown, Share2 } from 'lucide-react'
-import { CtaBand } from '~/components/blocks/CtaBand'
 import { FaqAccordion } from '~/components/blocks/FaqAccordion'
-import { NewsletterSignup } from '~/components/blocks/NewsletterSignup'
+import { PartnerBand } from '~/components/blocks/PartnerBand'
 import { MarkdownRenderer, parseInline } from '~/components/blog/MarkdownRenderer'
 import { PostBody, postBodyPromise } from '~/components/blog/post-body'
 import { BLOG_POSTS } from '~/content/blog'
@@ -332,11 +331,10 @@ function BlogPostPage() {
         </section>
       )}
 
-      {/* 5. Newsletter Signup (Centered max-w-4xl) */}
-      <div className="mx-auto max-w-4xl">
-        <NewsletterSignup />
+      {/* 5. Partner with us (the newsletter sign-up lives on /blog and the home page) */}
+      <div className="pt-6">
+        <PartnerBand />
       </div>
-      <CtaBand />
     </div>
   )
 }

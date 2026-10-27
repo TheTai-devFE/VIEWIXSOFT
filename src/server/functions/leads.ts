@@ -39,6 +39,7 @@ export const submitLeadFn = createServerFn({ method: 'POST' })
         ])
       },
       onEmailError: (error) => logger.error('lead.email_failed', errorFields(error)),
+      onSaveError: (error) => logger.error('lead.save_failed', errorFields(error)),
     })
     logger.info('lead.submitted', { ok: result.ok, error: result.ok ? undefined : result.error })
     return result
@@ -51,13 +52,15 @@ export const subscribeNewsletterFn = createServerFn({ method: 'POST' })
     const result = await processNewsletter(data, context(), {
       verifyCaptcha: (token, ip) => verifyTurnstile(token, ip, env.TURNSTILE_SECRET_KEY, env.NODE_ENV === 'production'),
       upsertSubscriber,
-      sendConfirmation: async (email, topic) => {
+      sendConfirmation: async (email, topics) => {
         const token = await signToken(requireSecret('BETTER_AUTH_SECRET'), NEWSLETTER_PURPOSE, email)
         const url = `${env.SITE_URL}/newsletter/confirm?email=${encodeURIComponent(email)}&token=${token}`
-        const productName = PRODUCTS.find((p) => p.slug === topic)?.name
-        await sendEmail({ to: email, tag: 'newsletter.confirm', ...newsletterConfirmEmail(url, productName) })
+        const productNames = PRODUCTS.filter((p) => topics.some((t) => t === p.slug)).map((p) => p.name)
+        const content = newsletterConfirmEmail(url, { newsletter: topics.includes('newsletter'), productNames })
+        await sendEmail({ to: email, tag: 'newsletter.confirm', ...content })
       },
       onEmailError: (error) => logger.error('newsletter.email_failed', errorFields(error)),
+      onSaveError: (error) => logger.error('newsletter.save_failed', errorFields(error)),
     })
     logger.info('newsletter.submitted', { ok: result.ok, error: result.ok ? undefined : result.error })
     return result

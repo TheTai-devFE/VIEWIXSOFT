@@ -76,21 +76,31 @@ describe('Lead Capture Validation', () => {
     expect(result.success).toBe(true)
   })
 
-  it('should accept a launch notification for a coming-soon product', () => {
+  it('should accept product launch topics alongside the newsletter', () => {
     const result = NewsletterSchema.safeParse({
       email: 'ops@retailer.com',
       consent: true,
-      product: 'pos',
+      topics: ['newsletter', 'pos'],
     })
     expect(result.success).toBe(true)
   })
 
-  it('should reject a launch notification for an unknown product', () => {
+  it('should reject an unknown topic', () => {
     const result = NewsletterSchema.safeParse({
       email: 'ops@retailer.com',
       consent: true,
-      product: 'printer',
+      topics: ['printer'],
     })
     expect(result.success).toBe(false)
+  })
+
+  it('should treat a sign-up without topics as the newsletter', () => {
+    const result = NewsletterSchema.parse({ email: 'ops@retailer.com', consent: true })
+    expect(result.topics).toEqual(['newsletter'])
+  })
+
+  it('should drop repeated topics', () => {
+    const result = NewsletterSchema.parse({ email: 'ops@retailer.com', consent: true, topics: ['pos', 'pos', 'nfc'] })
+    expect(result.topics).toEqual(['pos', 'nfc'])
   })
 })

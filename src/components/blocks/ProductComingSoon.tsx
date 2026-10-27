@@ -1,30 +1,13 @@
-import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { revalidateLogic, useForm } from '@tanstack/react-form'
-import { ArrowRight, CheckCircle2, ChevronRight } from 'lucide-react'
-import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
+import { PartnerBand } from '~/components/blocks/PartnerBand'
+import { SubscribeForm } from '~/components/blocks/SubscribeForm'
 import { Reveal } from '~/components/ui/reveal'
 import { PRODUCT_ONE_LINERS } from '~/content/products'
 import { useProducts } from '~/lib/use-site-config'
 import type { Product } from '~/content/products'
-import { NewsletterSchema } from '~/server/schema/validation'
-import { subscribeNewsletterFn } from '~/server/functions/leads'
-import { Turnstile } from '~/components/ui/turnstile'
+import { NEWSLETTER_TOPICS } from '~/server/schema/validation'
 import { HeroTitle } from '~/components/ui/hero-heading'
 import type { PageHero } from '~/data/page-content'
-
-// The product slug is added on submit, so the form only collects these two.
-const NotifySchema = NewsletterSchema.pick({ email: true, consent: true })
-
-function firstError(meta: { errors: unknown[]; isBlurred: boolean }, attempts: number) {
-  if (!meta.isBlurred && attempts === 0) return undefined
-  for (const e of meta.errors) {
-    if (typeof e === 'string') return e
-    if (e && typeof e === 'object' && 'message' in e && typeof e.message === 'string') return e.message
-  }
-  return undefined
-}
 
 /** Shown on /products/$slug while a product's status is coming-soon. */
 export function ProductComingSoon({ product, hero }: { product: Product; hero: PageHero }) {
@@ -32,21 +15,8 @@ export function ProductComingSoon({ product, hero }: { product: Product; hero: P
 
   return (
     <div className="page-x py-12 md:py-20">
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-ink-400">
-        <Link to="/" className="hover:text-ink-200">
-          Home
-        </Link>
-        <ChevronRight aria-hidden="true" className="size-3.5 text-ink-600" />
-        <Link to="/products" className="hover:text-ink-200">
-          Products
-        </Link>
-        <ChevronRight aria-hidden="true" className="size-3.5 text-ink-600" />
-        <span aria-current="page" className="font-semibold text-signal-400">
-          {product.name}
-        </span>
-      </nav>
-
-      <div className="mt-12 grid items-center gap-14 lg:grid-cols-2">
+      {/* No visible breadcrumb trail; BreadcrumbList JSON-LD stays in head(). */}
+      <div className="grid items-center gap-14 lg:grid-cols-2">
         <Reveal>
           <span className="inline-flex items-center gap-2 rounded-full border border-signal-800 bg-signal-950 px-3 py-1 text-xs font-semibold text-signal-300">
             <span aria-hidden="true" className="size-1.5 rounded-full bg-signal-400 motion-safe:animate-led" />
@@ -61,7 +31,13 @@ export function ProductComingSoon({ product, hero }: { product: Product; hero: P
             be ready for it on launch day.
           </p>
 
-          <NotifyForm product={product} />
+          {/* Launch news for this product is picked already; visitors can add others. */}
+          <SubscribeForm
+            defaultTopics={NEWSLETTER_TOPICS.filter((t) => t === product.slug)}
+            submitLabel="Notify me"
+            align="start"
+            className="mt-8"
+          />
 
           <p className="mt-8 text-sm text-ink-400">
             Need your screens running now?{' '}
@@ -106,145 +82,11 @@ export function ProductComingSoon({ product, hero }: { product: Product; hero: P
           ))}
         </ul>
       </section>
-    </div>
-  )
-}
 
-function NotifyForm({ product }: { product: Product }) {
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
-  const [errorMessage, setErrorMessage] = useState('')
-  const [sentTo, setSentTo] = useState('')
-  const [turnstileToken, setTurnstileToken] = useState<string | undefined>()
-  const [turnstileReset, setTurnstileReset] = useState(0)
-
-  const form = useForm({
-    defaultValues: { email: '', consent: false },
-    validationLogic: revalidateLogic({ mode: 'blur', modeAfterSubmission: 'change' }),
-    validators: { onDynamic: NotifySchema },
-    onSubmit: async ({ value }) => {
-      setStatus('idle')
-      try {
-        const slug = NewsletterSchema.shape.product.unwrap().parse(product.slug)
-        const res = await subscribeNewsletterFn({ data: { ...value, product: slug, turnstileToken } })
-        if (res.ok) {
-          setSentTo(value.email)
-          setStatus('success')
-          return
-        }
-        setErrorMessage(res.message)
-      } catch {
-        setErrorMessage("We couldn't save your email. Please try again.")
-      }
-      setTurnstileReset((n) => n + 1)
-      setStatus('error')
-    },
-  })
-
-  if (status === 'success') {
-    return (
-      <div role="status" className="mt-8 flex max-w-xl items-start gap-3 rounded-2xl border border-ink-800 bg-ink-900 p-5">
-        <CheckCircle2 aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-signal-400" />
-        <p className="text-sm text-ink-300">
-          Almost done. Check <strong className="text-ink-50">{sentTo}</strong> and confirm your email, and we will
-          tell you when {product.name} launches.
-        </p>
+      <div className="mt-24">
+        <PartnerBand />
       </div>
-    )
-  }
-
-  return (
-    <form
-      noValidate
-      onSubmit={(e) => {
-        e.preventDefault()
-        void form.handleSubmit()
-      }}
-      className="mt-8 max-w-xl"
-    >
-      {status === 'error' && (
-        <p role="alert" className="mb-4 text-sm text-destructive">
-          {errorMessage}
-        </p>
-      )}
-      <form.Field name="email">
-        {(field) => {
-          const error = firstError(field.state.meta, form.state.submissionAttempts)
-          return (
-            <div>
-              <Label htmlFor="notify-email">Work email</Label>
-              <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-                <Input
-                  id="notify-email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? 'notify-email-error' : undefined}
-                  className="h-11 bg-ink-900 text-ink-50"
-                />
-                <form.Subscribe selector={(s) => s.isSubmitting}>
-                  {(isSubmitting) => (
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="bg-brand-gradient inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg px-5 text-sm font-semibold text-on-gradient hover:opacity-90 disabled:opacity-60"
-                    >
-                      {isSubmitting ? 'Sending…' : 'Notify me'}
-                      {!isSubmitting && <ArrowRight aria-hidden="true" className="size-4" />}
-                    </button>
-                  )}
-                </form.Subscribe>
-              </div>
-              {error && (
-                <p id="notify-email-error" className="mt-1.5 text-xs text-destructive">
-                  {error}
-                </p>
-              )}
-            </div>
-          )
-        }}
-      </form.Field>
-
-      <form.Field name="consent">
-        {(field) => {
-          const error = firstError(field.state.meta, form.state.submissionAttempts)
-          return (
-            <div className="mt-4">
-              <div className="flex items-start gap-3">
-                <input
-                  id="notify-consent"
-                  type="checkbox"
-                  name="consent"
-                  required
-                  checked={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.checked)}
-                  aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? 'notify-consent-error' : undefined}
-                  className="mt-0.5 size-4 shrink-0 accent-signal-500"
-                />
-                <label htmlFor="notify-consent" className="text-sm text-ink-400">
-                  Email me when {product.name} launches. I agree to the{' '}
-                  <Link to="/legal/privacy" className="text-signal-400 underline hover:text-signal-300">
-                    Privacy Policy
-                  </Link>
-                  .
-                </label>
-              </div>
-              {error && (
-                <p id="notify-consent-error" className="mt-1.5 text-xs text-destructive">
-                  {error}
-                </p>
-              )}
-            </div>
-          )
-        }}
-      </form.Field>
-      <Turnstile onToken={setTurnstileToken} resetKey={turnstileReset} />
-    </form>
+    </div>
   )
 }
 

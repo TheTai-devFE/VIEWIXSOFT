@@ -19,7 +19,13 @@ const STATUS_LABEL = { pending: 'Pending', active: 'Confirmed', unsubscribed: 'U
 const STATUS_FILTERS = ['all', 'pending', 'active', 'unsubscribed'] as const
 
 function topicLabel(topic: string) {
+  if (topic === 'newsletter') return 'Newsletter'
   return PRODUCTS.find((p) => p.slug === topic)?.name ?? topic
+}
+
+/** Sign-ups from before topics existed have none and count as the newsletter. */
+function onNewsletter(topics: string[]) {
+  return topics.length === 0 || topics.includes('newsletter')
 }
 
 /** Quotes a CSV cell and defuses spreadsheet formulas in visitor-supplied text. */
@@ -40,13 +46,13 @@ function SubscribersModule() {
   const [topic, setTopic] = useState('all')
   const [error, setError] = useState('')
 
-  const topics = useMemo(() => [...new Set(res.subscribers.flatMap((s) => s.topics))].sort(), [res.subscribers])
+  const topics = useMemo(() => [...new Set(res.subscribers.flatMap((s) => s.topics))].filter((t) => t !== 'newsletter').sort(), [res.subscribers])
   const rows = useMemo(
     () =>
       res.subscribers.filter(
         (s) =>
           (status === 'all' || s.status === status) &&
-          (topic === 'all' || (topic === 'newsletter' ? s.topics.length === 0 : s.topics.includes(topic))) &&
+          (topic === 'all' || (topic === 'newsletter' ? onNewsletter(s.topics) : s.topics.includes(topic))) &&
           s.email.includes(query.trim().toLowerCase()),
       ),
     [res.subscribers, status, topic, query],

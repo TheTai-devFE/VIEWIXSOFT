@@ -2,7 +2,6 @@ import { createFileRoute, notFound } from '@tanstack/react-router'
 import { PricingSection } from '~/components/blocks/PricingSection'
 import { FaqAccordion } from '~/components/blocks/FaqAccordion'
 import { CtaBand } from '~/components/blocks/CtaBand'
-import { Breadcrumbs } from '~/components/layout/Breadcrumbs'
 import { pricingFaq, pricingFromConfig } from '~/lib/pricing'
 import { usePricing } from '~/lib/use-pricing'
 import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
@@ -47,8 +46,8 @@ function PricingPage() {
   const faq = pricingFaq(usePricing())
   return (
     <div className="page-x space-y-20 py-12 md:py-20">
+      {/* No visible breadcrumb trail; BreadcrumbList JSON-LD stays in head(). */}
       <div className="space-y-8">
-        <Breadcrumbs items={BREADCRUMBS} />
         <header className="mx-auto max-w-3xl text-center">
           {hero.eyebrow && <p className="eyebrow">{hero.eyebrow}</p>}
           <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight text-balance text-ink-50 sm:text-5xl">

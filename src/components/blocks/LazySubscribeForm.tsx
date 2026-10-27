@@ -1,20 +1,20 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import type { ComponentProps } from 'react'
-import type { LeadForm as LeadFormComponent } from '~/components/blocks/LeadForm'
+import type { SubscribeForm as SubscribeFormComponent } from '~/components/blocks/SubscribeForm'
 
-const LeadForm = lazy(() => import('~/components/blocks/LeadForm').then((m) => ({ default: m.LeadForm })))
+const SubscribeForm = lazy(() => import('~/components/blocks/SubscribeForm').then((m) => ({ default: m.SubscribeForm })))
 
 // Start loading well before the form scrolls into view, so it is swapped in
 // off screen and the swap never counts as a layout shift.
 const LOAD_MARGIN = '800px 0px'
 
 /**
- * LeadForm for pages where it sits far below the fold (e.g. /products/cms).
- * The form brings TanStack Form, the lead schema and the animated Select, so
- * it loads only as the visitor scrolls toward it. Forms are not indexable
- * content, so the SSR HTML only carries a box of the same footprint.
+ * SubscribeForm for the bottom of a page (home, blog). The form brings TanStack
+ * Form, the schema and Turnstile, so it loads only as the visitor scrolls
+ * toward it. Forms are not indexable content, so the SSR HTML only carries an
+ * empty box of about the same height.
  */
-export function LazyLeadForm(props: ComponentProps<typeof LeadFormComponent>) {
+export function LazySubscribeForm({ className, ...props }: ComponentProps<typeof SubscribeFormComponent>) {
   const ref = useRef<HTMLDivElement>(null)
   const [near, setNear] = useState(false)
 
@@ -37,13 +37,14 @@ export function LazyLeadForm(props: ComponentProps<typeof LeadFormComponent>) {
     return () => observer.disconnect()
   }, [])
 
-  const placeholder = <div aria-hidden="true" className="min-h-144 rounded-3xl border border-ink-800 bg-ink-900" />
+  const placeholder = <div aria-hidden="true" className="min-h-48" />
 
   return (
-    <div ref={ref}>
+    // The spacing sits on the wrapper so the placeholder takes the same room as the form.
+    <div ref={ref} className={className}>
       {near ? (
         <Suspense fallback={placeholder}>
-          <LeadForm {...props} />
+          <SubscribeForm {...props} />
         </Suspense>
       ) : (
         placeholder

@@ -25,6 +25,7 @@ function leadDeps(overrides: Partial<LeadDeps> = {}): LeadDeps {
     insertLead: vi.fn(async () => ({ id: 'lead-1' })),
     notify: vi.fn(async () => undefined),
     onEmailError: vi.fn(),
+    onSaveError: vi.fn(),
     ...overrides,
   }
 }
@@ -101,6 +102,8 @@ describe('processLead', () => {
     const result = await processLead(validLead, ctx, deps)
     expect(result).toMatchObject({ ok: false, error: 'server' })
     expect(JSON.stringify(result)).not.toContain('relation')
+    // Hidden from the visitor, but reported so the server can log it.
+    expect(deps.onSaveError).toHaveBeenCalledWith(expect.any(Error))
   })
 })
 
@@ -110,19 +113,26 @@ function newsletterDeps(overrides: Partial<NewsletterDeps> = {}): NewsletterDeps
     upsertSubscriber: vi.fn(async () => ({ needsConfirmation: true })),
     sendConfirmation: vi.fn(async () => undefined),
     onEmailError: vi.fn(),
+    onSaveError: vi.fn(),
     ...overrides,
   }
 }
 
 describe('processNewsletter', () => {
-  const valid = { email: 'ops@example.com', consent: true, product: 'pos' }
+  const valid = { email: 'ops@example.com', consent: true, topics: ['pos'] }
 
   it('stores a pending subscriber and sends a confirmation email', async () => {
     const deps = newsletterDeps()
     const result = await processNewsletter(valid, ctx, deps)
     expect(result.ok).toBe(true)
-    expect(deps.upsertSubscriber).toHaveBeenCalledWith({ email: 'ops@example.com', topic: 'pos', consentAt: NOW })
-    expect(deps.sendConfirmation).toHaveBeenCalledWith('ops@example.com', 'pos')
+    expect(deps.upsertSubscriber).toHaveBeenCalledWith({ email: 'ops@example.com', topics: ['pos'], consentAt: NOW })
+    expect(deps.sendConfirmation).toHaveBeenCalledWith('ops@example.com', ['pos'])
+  })
+
+  it('signs up for the newsletter when no topic is picked', async () => {
+    const deps = newsletterDeps()
+    await processNewsletter({ email: 'ops@example.com', consent: true }, ctx, deps)
+    expect(deps.upsertSubscriber).toHaveBeenCalledWith({ email: 'ops@example.com', topics: ['newsletter'], consentAt: NOW })
   })
 
   it('does not resend confirmation to an active subscriber', async () => {
@@ -141,6 +151,14 @@ describe('processNewsletter', () => {
   it('rejects a failed Turnstile check', async () => {
     const deps = newsletterDeps({ verifyCaptcha: vi.fn(async () => false) })
     expect(await processNewsletter(valid, ctx, deps)).toMatchObject({ ok: false, error: 'captcha' })
+  })
+
+  it('reports a database failure and returns a generic error', async () => {
+    const deps = newsletterDeps({ upsertSubscriber: vi.fn(async () => Promise.reject(new Error('malformed array literal'))) })
+    const result = await processNewsletter(valid, ctx, deps)
+    expect(result).toMatchObject({ ok: false, error: 'server' })
+    expect(JSON.stringify(result)).not.toContain('malformed')
+    expect(deps.onSaveError).toHaveBeenCalledWith(expect.any(Error))
   })
 
   it('drops honeypot submissions silently', async () => {

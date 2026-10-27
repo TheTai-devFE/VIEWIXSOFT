@@ -17,7 +17,7 @@ const MAX_STEPS = 5
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
-/** The text around the demo form on /contact, and the home page contact band. The form fields are fixed. */
+/** The text around the demo form on /contact, and the Partner with us band (blog posts, product pages). The form fields are fixed. */
 export function ContactSectionEditor({
   initial,
   ref,
@@ -154,7 +154,7 @@ export function ContactSectionEditor({
       </form.Field>
 
       <fieldset className="rounded-xl border border-ink-800 p-4">
-        <legend className="px-1 text-sm font-semibold text-ink-200">Home contact band</legend>
+        <legend className="px-1 text-sm font-semibold text-ink-200">Partner with us band</legend>
 
         <form.Field name="partner.show">
           {(field) => (
@@ -165,7 +165,7 @@ export function ContactSectionEditor({
                 onChange={(e) => field.handleChange(e.target.checked)}
                 className="size-4 accent-signal-500"
               />
-              Show the contact band on the home page
+              Show the Partner with us band at the end of blog posts and product pages
             </label>
           )}
         </form.Field>

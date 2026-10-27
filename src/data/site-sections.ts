@@ -24,7 +24,7 @@ export const SECTION_PAGES = {
       { key: 'use-cases', label: 'Industries we serve' },
       { key: 'pricing', label: 'Pricing' },
       { key: 'faq', label: 'FAQ' },
-      { key: 'demo-form', label: 'Contact', locked: true },
+      { key: 'demo-form', label: 'Newsletter & partner band', locked: true },
     ],
   },
   about: {
@@ -59,6 +59,7 @@ export const SECTION_PAGES = {
       { key: 'pricing', label: 'Pricing' },
       { key: 'use-cases', label: 'Related use cases' },
       { key: 'faq', label: 'FAQ' },
+      { key: 'partner', label: 'Partner with us', note: 'Text and on/off switch: /admin/pages → Home → Newsletter & partner band.' },
     ],
   },
 } as const satisfies Record<string, { label: string; sections: readonly SectionDef[] }>
