@@ -18,6 +18,13 @@ function createAuth() {
   return betterAuth({
     secret: requireSecret('BETTER_AUTH_SECRET'),
     baseURL: env.BETTER_AUTH_URL ?? env.SITE_URL,
+    trustedOrigins: [
+      'https://viewixsoft.com',
+      'https://www.viewixsoft.com',
+      'https://viewixsoft.vercel.app',
+      ...(env.BETTER_AUTH_URL ? [env.BETTER_AUTH_URL.replace(/\/$/, '')] : []),
+      ...(env.SITE_URL ? [env.SITE_URL.replace(/\/$/, '')] : []),
+    ],
     database: drizzleAdapter(getDb(), { provider: 'pg', schema: { user, session, account, verification } }),
     // Accounts are created by an admin in /admin/users or with `pnpm admin:create`; nobody can sign up from the site.
     emailAndPassword: { enabled: true, disableSignUp: true, minPasswordLength: 12 },
