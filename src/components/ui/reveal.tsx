@@ -40,13 +40,26 @@ export function Reveal({
     const el = ref.current
     if (!el || typeof IntersectionObserver === 'undefined') return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const rect = el.getBoundingClientRect()
-    if (rect.top < window.innerHeight && rect.bottom > 0) return
 
-    setState('hidden')
+    // The observer's first callback reports where the element sits, so there is
+    // no getBoundingClientRect() here: reading layout during hydration forced a
+    // reflow for every Reveal on the page.
+    let first = true
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (!entry?.isIntersecting) return
+        if (!entry) return
+        if (first) {
+          first = false
+          const rect = entry.boundingClientRect
+          // Already on screen: leave it as rendered so nothing flashes.
+          if (rect.top < window.innerHeight && rect.bottom > 0) {
+            observer.disconnect()
+            return
+          }
+          setState('hidden')
+          return
+        }
+        if (!entry.isIntersecting) return
         setState('shown')
         observer.disconnect()
       },

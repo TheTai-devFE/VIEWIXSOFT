@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, Suspense, lazy } from 'react'
 import { createFileRoute, notFound, Link } from '@tanstack/react-router'
 import { PRODUCTS } from '~/content/products'
 import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
@@ -17,27 +17,51 @@ import { resolveSectionContent } from '~/lib/section-content'
 import { FaqAccordion } from '~/components/blocks/FaqAccordion'
 import { CtaBand } from '~/components/blocks/CtaBand'
 import { PricingSection } from '~/components/blocks/PricingSection'
-import { ProductComingSoon } from '~/components/blocks/ProductComingSoon'
 import { pricingFromConfig, yearlyPlan } from '~/lib/pricing'
 import { CmsHero } from '~/components/blocks/CmsHero'
 import { SectionHeading } from '~/components/blocks/SectionHeading'
 import { ScreenBandSection } from '~/components/blocks/ScreenBandSection'
 import { CmsCapabilitiesSection } from '~/components/blocks/cms-capabilities'
-import { LeadForm } from '~/components/blocks/LeadForm'
+import { LazyLeadForm } from '~/components/blocks/LazyLeadForm'
 import { Reveal } from '~/components/ui/reveal'
 import { 
   CheckCircle2, ArrowRight, Layers,   Monitor, Cpu, Activity, Smartphone, Sparkles 
 } from 'lucide-react'
+
+// Only unreleased products show this page, and it carries the waitlist form
+// (TanStack Form + schema), so released products such as Viewixsoft CMS do not
+// download it. The server still renders it in full.
+const ProductComingSoon = lazy(() =>
+  import('~/components/blocks/ProductComingSoon').then((m) => ({ default: m.ProductComingSoon })),
+)
 
 function cmsOffer(config: ReturnType<typeof siteConfigFromMatches>) {
   const plan = yearlyPlan(pricingFromConfig(config))
   return plan ? { price: plan.price, currency: 'USD', description: 'Per screen licence, per year' } : undefined
 }
 
+/** The product tour when the hero shows it with both a video and a poster, otherwise null. */
+function shownTour(config: ReturnType<typeof siteConfigFromMatches>) {
+  const tour = resolveSectionContent('product-cms:intro-video', config.content['product-cms:intro-video'])
+  if (!tour.video || !tour.poster || !isSectionEnabled(config, 'product-cms', 'intro-video')) return null
+  return { ...tour, video: tour.video, poster: tour.poster }
+}
+
+/**
+ * The tour's poster is the page's LCP element, but a `poster` attribute cannot
+ * carry fetchpriority and is only found once the <video> is parsed, so it is
+ * preloaded from <head> at high priority.
+ */
+function productTourPosterPreload(config: ReturnType<typeof siteConfigFromMatches>) {
+  const tour = shownTour(config)
+  if (!tour) return []
+  return [{ rel: 'preload', as: 'image', href: tour.poster.url, fetchPriority: 'high' as const }]
+}
+
 /** VideoObject for the product tour; Google needs the file and a thumbnail, so it waits for both. */
 function productTourLd(config: ReturnType<typeof siteConfigFromMatches>) {
-  const tour = resolveSectionContent('product-cms:intro-video', config.content['product-cms:intro-video'])
-  if (!tour.video || !tour.poster || !isSectionEnabled(config, 'product-cms', 'intro-video')) return []
+  const tour = shownTour(config)
+  if (!tour) return []
   const schema = getVideoSchema({
     title: tour.title,
     description: tour.description,
@@ -83,7 +107,7 @@ export const Route = createFileRoute('/products/$slug')({
 
     return {
       meta: seo.meta,
-      links: seo.links,
+      links: [...seo.links, ...(p.slug === 'cms' ? productTourPosterPreload(siteConfigFromMatches(matches)) : [])],
       scripts: [
         {
           type: 'application/ld+json',
@@ -129,7 +153,13 @@ function ProductDetailPage() {
   const isCms = product.slug === 'cms'
   const faqItems = isCms ? cmsFaq.items : product.faq
   const specGroups = isCms ? specTable.groups : product.specs
-  if (product.status === 'coming-soon') return <ProductComingSoon product={product} hero={hero} />
+  if (product.status === 'coming-soon') {
+    return (
+      <Suspense fallback={null}>
+        <ProductComingSoon product={product} hero={hero} />
+      </Suspense>
+    )
+  }
 
   const specs = (
     <section aria-labelledby="specs-title" className="space-y-8">
@@ -226,7 +256,7 @@ function ProductDetailPage() {
               Speak with a Viewixsoft specialist about screen compatibility, volume licensing, or hardware procurement.
             </p>
           </div>
-          <LeadForm
+          <LazyLeadForm
             variant="quick"
             idPrefix="product-faq-contact"
             submitLabel="Contact sales"

@@ -283,6 +283,9 @@ export function TiltedGridHero({
                       src={img.src}
                       alt={k === 0 ? (img.alt ?? "") : ""}
                       draggable={false}
+                      // Always below the fold (ScreenBandSection); without this React
+                      // preloads every tile and they compete with the page's LCP image.
+                      loading="lazy"
                       decoding="async"
                       className="absolute top-0 max-w-none object-cover"
                       style={{
