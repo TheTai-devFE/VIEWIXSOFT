@@ -3,7 +3,7 @@ import { parseAllPosts } from '~/content/blog'
 import { PRODUCTS } from '~/content/products'
 import { USE_CASES } from '~/content/useCases'
 import { blogPostSeo, productSeo, useCaseSeo } from '~/lib/seo/page-seo'
-import { buildTitle, DESCRIPTION_MAX, generateMetaTags, TITLE_MAX } from '~/lib/seo/meta'
+import { buildTitle, DESCRIPTION_MAX, generateMetaTags, shareImageTags, TITLE_MAX } from '~/lib/seo/meta'
 
 describe('generateMetaTags', () => {
   it('appends the brand with an em dash', () => {
@@ -30,6 +30,22 @@ describe('generateMetaTags', () => {
   it('advertises the Markdown twin when given', () => {
     const { links } = generateMetaTags({ title: 'A', description: 'x', markdownPath: '/products/cms.md' })
     expect(links).toContainEqual({ rel: 'alternate', type: 'text/markdown', href: 'https://viewixsoft.com/products/cms.md' })
+  })
+
+  it('leaves the preview image to the root route unless the page has its own', () => {
+    const { meta } = generateMetaTags({ title: 'A', description: 'x' })
+    expect(meta.some((m) => m.property === 'og:image' || m.name === 'twitter:image')).toBe(false)
+    const post = generateMetaTags({ title: 'A', description: 'x', ogImage: 'https://cdn.example.com/cover.webp' })
+    expect(post.meta).toContainEqual({ property: 'og:image', content: 'https://cdn.example.com/cover.webp' })
+  })
+
+  it('builds preview image tags with an absolute URL and the real size', () => {
+    expect(shareImageTags({ url: '/og-image.jpg', width: 1200, height: 630 })).toEqual([
+      { property: 'og:image', content: 'https://viewixsoft.com/og-image.jpg' },
+      { property: 'og:image:width', content: '1200' },
+      { property: 'og:image:height', content: '630' },
+      { name: 'twitter:image', content: 'https://viewixsoft.com/og-image.jpg' },
+    ])
   })
 
   it('marks noindex pages', () => {

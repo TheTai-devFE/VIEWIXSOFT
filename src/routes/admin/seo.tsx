@@ -1,22 +1,31 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
 import { AdminPageHeader, LoadError, Panel, SaveAllActions } from '~/components/admin/admin-ui'
+import { MediaSlotsEditor } from '~/components/admin/MediaSlotsEditor'
 import { SeoSnippetEditor } from '~/components/admin/SeoSnippetEditor'
 import { SeoGuide } from '~/components/admin/seo/SeoGuide'
 import { ADMIN_PAGE_GROUPS } from '~/data/admin-pages'
+import { MEDIA_SLOTS, SHARE_IMAGE_SLOT } from '~/data/media-slots'
 import { pageDefaults } from '~/data/page-content'
 import { useSaveAll } from '~/hooks/use-save-all'
 import { AI_CRAWLER_POLICY, AI_CRAWLERS } from '~/lib/seo/site-pages'
 import { useSiteConfig } from '~/lib/use-site-config'
+import { listMediaLibraryFn } from '~/server/functions/media-admin'
 import { getSiteAdminDataFn } from '~/server/functions/site-admin'
 
 export const Route = createFileRoute('/admin/seo')({
   loader: {
     staleReloadMode: 'blocking',
-    handler: () => getSiteAdminDataFn(),
+    handler: async () => {
+      // The image library needs media or pages access; without it the link preview panel is left out.
+      const [settings, media] = await Promise.all([getSiteAdminDataFn(), listMediaLibraryFn().catch(() => null)])
+      return { settings, media }
+    },
   },
   component: SeoModule,
 })
+
+const SHARE_SLOTS = MEDIA_SLOTS.filter((s) => s.key === SHARE_IMAGE_SLOT)
 
 /** Generated files AI assistants and search engines read; nothing here is edited by hand. */
 const MACHINE_FILES = [
@@ -28,7 +37,7 @@ const MACHINE_FILES = [
 ]
 
 function SeoModule() {
-  const data = Route.useLoaderData()
+  const { settings: data, media } = Route.useLoaderData()
   const config = useSiteConfig()
   const { bind, save, state, isDirty } = useSaveAll()
 
@@ -80,7 +89,21 @@ function SeoModule() {
             </div>
           </Panel>
 
-          <div className="min-w-0 xl:sticky xl:top-6">
+          <div className="min-w-0 space-y-6 xl:sticky xl:top-6">
+            {media?.ok && (
+              <Panel
+                title="Link preview image"
+                description="The picture Zalo, Facebook, Messenger, LinkedIn and Slack show when someone shares a link to the site. Blog posts and case studies use their own cover instead. Apps keep old previews for a while, so a change can take hours to show."
+              >
+                <MediaSlotsEditor
+                  {...bind('images:share')}
+                  pageKey="seo"
+                  slots={SHARE_SLOTS}
+                  assets={media.assets}
+                  saved={media.slots}
+                />
+              </Panel>
+            )}
             <Panel
               title="AI search (GEO)"
               description="GEO helps AI assistants read, quote and recommend Viewixsoft. It runs automatically: the files below are built from the site's content, so there is nothing to fill in."

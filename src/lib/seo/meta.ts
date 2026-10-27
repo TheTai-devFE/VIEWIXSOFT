@@ -34,10 +34,23 @@ export function absoluteUrl(path = '/') {
   return path === '/' ? `${SITE_URL}/` : `${SITE_URL}${path}`
 }
 
+/**
+ * The link preview image tags. The root route sets the site-wide image (picked
+ * in /admin/seo); a page that passes `ogImage` replaces it, since the deepest
+ * route's tag wins.
+ */
+export function shareImageTags(image: { url: string; width: number; height: number }): MetaTag[] {
+  return [
+    { property: 'og:image', content: assetUrl(image.url) },
+    { property: 'og:image:width', content: String(image.width) },
+    { property: 'og:image:height', content: String(image.height) },
+    { name: 'twitter:image', content: assetUrl(image.url) },
+  ]
+}
+
 export function generateMetaTags(options: SeoOptions) {
   const fullTitle = buildTitle(options.title)
   const canonical = absoluteUrl(options.canonicalUrl)
-  const image = options.ogImage ?? DEFAULT_OG_IMAGE
 
   const meta: MetaTag[] = [
     { title: fullTitle },
@@ -54,15 +67,12 @@ export function generateMetaTags(options: SeoOptions) {
     { property: 'og:title', content: fullTitle },
     { property: 'og:description', content: options.description },
     { property: 'og:url', content: canonical },
-    { property: 'og:image', content: image },
-    { property: 'og:image:width', content: '1200' },
-    { property: 'og:image:height', content: '630' },
+    ...(options.ogImage ? shareImageTags({ url: options.ogImage, width: 1200, height: 630 }) : []),
     { property: 'og:locale', content: 'en_US' },
 
     { name: 'twitter:card', content: 'summary_large_image' },
     { name: 'twitter:title', content: fullTitle },
     { name: 'twitter:description', content: options.description },
-    { name: 'twitter:image', content: image },
   ]
 
   const links: LinkTag[] = [

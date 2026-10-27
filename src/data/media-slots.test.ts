@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ADMIN_PAGES } from '~/data/admin-pages'
-import { altFromFileName, MEDIA_SLOTS, MEDIA_SLOT_KEYS, slotsForPage, slotsForSection } from '~/data/media-slots'
+import { altFromFileName, MEDIA_SLOTS, MEDIA_SLOT_KEYS, SHARE_IMAGE_SLOT, slotsForPage, slotsForSection } from '~/data/media-slots'
 import { SECTION_PAGES } from '~/data/site-sections'
 import { SaveMediaSlotsSchema } from '~/lib/admin-schemas'
 
@@ -10,7 +10,8 @@ describe('media slots', () => {
   })
 
   it('each show in at least one known page and section', () => {
-    for (const slot of MEDIA_SLOTS) {
+    // The link preview image is site-wide and picked in /admin/seo.
+    for (const slot of MEDIA_SLOTS.filter((s) => s.key !== SHARE_IMAGE_SLOT)) {
       expect(slot.places.length).toBeGreaterThan(0)
       for (const place of slot.places) {
         const page = ADMIN_PAGES.find((p) => p.key === place.page)
@@ -21,6 +22,10 @@ describe('media slots', () => {
         else expect(sections).toEqual([])
       }
     }
+  })
+
+  it('keep the link preview image off the page editors', () => {
+    expect(MEDIA_SLOTS.filter((s) => s.places.length === 0).map((s) => s.key)).toEqual([SHARE_IMAGE_SLOT])
   })
 
   it('are listed for the pages that show them', () => {

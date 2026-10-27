@@ -12,7 +12,9 @@ import { Footer } from '~/components/blocks/Footer'
 import { CookieConsent } from '~/components/blocks/CookieConsent'
 import { DefaultCatchBoundary } from '~/components/DefaultCatchBoundary'
 import { NotFound } from '~/components/NotFound'
+import { SHARE_IMAGE_SLOT } from '~/data/media-slots'
 import { getOrganizationSchema, getWebSiteSchema } from '~/lib/seo/jsonld'
+import { DEFAULT_OG_IMAGE, shareImageTags } from '~/lib/seo/meta'
 import { getSiteConfigFn } from '~/server/functions/site'
 import appCss from '~/styles/app.css?url'
 
@@ -21,12 +23,14 @@ export const Route = createRootRoute({
   // The server caches them for 30s; the client reuses them for 30s too.
   loader: () => getSiteConfigFn(),
   staleTime: 30_000,
-  head: () => ({
+  head: ({ loaderData }) => ({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { name: 'theme-color', content: '#ffffff' },
       { name: 'color-scheme', content: 'light' },
+      // Site-wide link preview image from /admin/seo; pages with their own (blog, case studies) replace it.
+      ...shareImageTags(loaderData?.media[SHARE_IMAGE_SLOT] ?? { url: DEFAULT_OG_IMAGE, width: 1200, height: 630 }),
     ],
     links: [
       { rel: 'stylesheet', href: appCss },

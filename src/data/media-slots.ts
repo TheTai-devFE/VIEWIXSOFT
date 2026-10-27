@@ -10,7 +10,7 @@ import { USE_CASES } from '~/content/useCases'
  */
 export interface MediaSlot {
   key: string
-  group: 'Use case covers' | 'Screen photos' | 'About photos'
+  group: 'Use case covers' | 'Screen photos' | 'About photos' | 'Link preview'
   label: string
   /** Shown to the editor, e.g. "Transparent WebP, about 800 × 800". */
   guidance: string
@@ -18,6 +18,7 @@ export interface MediaSlot {
   /**
    * Where the slot shows: an /admin/pages page key and, on pages with
    * sections, the section holding it. Picking an image in one place changes it in all.
+   * Empty for the site-wide link preview image, which is picked in /admin/seo.
    */
   places: { page: string; section?: string }[]
 }
@@ -26,7 +27,19 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
 
 const stockPhoto = (file: string) => STOCK_SCREEN_IMAGES.find((img) => img.src.endsWith(file)) ?? null
 
+/** The image chat apps and social networks show for a shared link, on every page without its own. */
+export const SHARE_IMAGE_SLOT = 'site.share-image'
+
 export const MEDIA_SLOTS: MediaSlot[] = [
+  {
+    key: SHARE_IMAGE_SLOT,
+    group: 'Link preview',
+    label: 'Link preview image',
+    // Uploads under 300 KB keep their format (src/lib/image-prepare.ts); some chat apps skip WebP previews.
+    guidance: 'JPG, exactly 1200 × 630, under 300 KB so it stays a JPG. Keep text away from the edges.',
+    fallback: { src: '/og-image.jpg', alt: 'Viewixsoft: run every advertising screen from one cloud platform', width: 1200, height: 630 },
+    places: [],
+  },
   {
     key: 'about.hero',
     group: 'About photos',
