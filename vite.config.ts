@@ -27,6 +27,8 @@ export default defineConfig(({ command, mode }) => {
   return {
   server: {
     port: 3000,
+    // Quick Cloudflare Tunnel URLs change on every run, so allow the whole domain.
+    allowedHosts: ['.trycloudflare.com'],
   },
   resolve: {
     alias: {

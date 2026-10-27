@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '~/components/ui/sheet'
 import { isVideoAsset } from '~/data/media-slots'
 import { cn } from '~/lib/cn'
+import { LazyImage } from '~/components/ui/lazy-image'
 
 export interface LibraryAsset {
   id: string
@@ -34,22 +35,22 @@ export function ImagePickerSheet({
 }) {
   // Each place on the site takes one kind of file.
   const assets = library.filter((a) => isVideoAsset(a) === (kind === 'video'))
-  const noun = kind === 'video' ? 'video' : 'image'
+  const noun = kind === 'video' ? 'video' : 'ảnh'
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent side="right" className="w-full gap-0 sm:max-w-xl">
         <SheetHeader className="border-b border-border">
-          <SheetTitle>Choose {kind === 'video' ? 'a video' : 'an image'}</SheetTitle>
+          <SheetTitle>Chọn {noun}</SheetTitle>
           <SheetDescription>{description}</SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto p-4">
           {assets.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              The library has no {noun}s yet.{' '}
+              Thư viện chưa có {noun} nào. Hãy{' '}
               <Link to="/admin/media" className="font-medium text-signal-400 underline-offset-2 hover:underline">
-                Upload {noun}s
+                tải {noun} lên
               </Link>{' '}
-              first.
+              trước.
             </p>
           ) : (
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -97,5 +98,5 @@ export function AssetPreview({ asset, className }: { asset: LibraryAsset; classN
       </span>
     )
   }
-  return <img src={asset.url} alt="" width={asset.width} height={asset.height} loading="lazy" className={box} />
+  return <LazyImage src={asset.url} alt="" width={asset.width} height={asset.height} className={box} />
 }

@@ -2,12 +2,16 @@ import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { Download, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { AdminPageHeader, buttonSecondary, LoadError, selectClass } from '~/components/admin/admin-ui'
+import { useConfirm, useToast } from '~/components/ui/feedback'
 import { Input } from '~/components/ui/input'
 import { PRODUCTS } from '~/content/products'
 import { deleteSubscriberFn, listSubscribersFn, setSubscriberStatusFn } from '~/server/functions/subscribers-admin'
 
 export const Route = createFileRoute('/admin/subscribers')({
-  loader: () => listSubscribersFn(),
+  loader: {
+    staleReloadMode: 'blocking',
+    handler: () => listSubscribersFn(),
+  },
   component: SubscribersModule,
 })
 
@@ -29,6 +33,8 @@ const dateOf = (d: Date | string | null) => (d ? new Date(d).toISOString().slice
 function SubscribersModule() {
   const res = Route.useLoaderData()
   const router = useRouter()
+  const confirm = useConfirm()
+  const toast = useToast()
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<'all' | keyof typeof STATUS_LABEL>('all')
   const [topic, setTopic] = useState('all')
@@ -172,11 +178,20 @@ function SubscribersModule() {
                   <button
                     type="button"
                     className="ml-4 text-xs font-medium text-destructive underline"
-                    onClick={() => {
-                      if (window.confirm(`Delete ${s.email} permanently? Use this for data-deletion requests.`)) {
-                        void act(() => deleteSubscriberFn({ data: { id: s.id } }))
-                      }
-                    }}
+                    onClick={() =>
+                      confirm({
+                        title: 'Xoá vĩnh viễn người đăng ký này?',
+                        description: `${s.email} bị xoá khỏi danh sách. Dùng khi có yêu cầu xoá dữ liệu.`,
+                        confirmText: 'Xoá vĩnh viễn',
+                        tone: 'danger',
+                        onConfirm: async () => {
+                          const res = await deleteSubscriberFn({ data: { id: s.id } })
+                          if (!res.ok) return res.error
+                          await router.invalidate()
+                          toast({ title: 'Đã xoá người đăng ký', description: s.email, tone: 'success' })
+                        },
+                      })
+                    }
                   >
                     Delete
                   </button>

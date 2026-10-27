@@ -30,7 +30,7 @@ Every product name strictly follows the full brand standard: **Viewixsoft** + pr
 | **Styling** | Tailwind CSS v4 + design tokens | Light and dark themes, WCAG 2.2 AA |
 | **Forms** | TanStack Form + Zod 4 | One schema shared by the form and the server function |
 | **Database** | Neon Postgres + Drizzle ORM (HTTP driver) | Leads, newsletter, admin auth, site settings |
-| **Auth** | Better Auth (email + password) | Protects `/admin/**` and every admin server function |
+| **Auth** | Better Auth (email + password, admin plugin for roles) | Protects `/admin/**` and every admin server function, per module |
 | **Email** | Resend HTTP API | Sales notification, visitor confirmation, newsletter double opt-in |
 | **Images & videos** | Cloudflare R2 (S3 API) | Admin-uploaded media library; videos upload straight from the browser |
 | **Anti-spam** | Turnstile + honeypot + rate limit | Rate limit counted in Postgres; only hashed IPs are stored |
@@ -70,7 +70,7 @@ Without `DATABASE_URL` the marketing site still runs with default settings; form
 | DB: new migration after editing the schema | `pnpm db:generate` |
 | DB: apply migrations | `pnpm db:migrate` |
 | DB: browse data | `pnpm db:studio` |
-| Create or reset an admin | `pnpm admin:create <email>` |
+| Create or reset an admin (other accounts: `/admin/users`) | `pnpm admin:create <email>` |
 
 Deployment steps: [docs/deploy-vercel.md](docs/deploy-vercel.md) (current) or [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md).
 
@@ -88,6 +88,13 @@ A sidebar app with a light/dark theme (stored per browser; the public site stays
 - **Home stats**: real figures, each with a source and a date.
 - **Customer quotes**: shown only when approved with a written-consent date.
 - **Images & videos**: upload to the media library, then pick them per page (hardware photos, use case covers, screen photos, the Viewixsoft CMS product tour video).
+- **Users & access** (`/admin/users`, admins only): create accounts with a temporary password, lock, unlock, reset passwords, sign out everywhere, delete. Each account is an **admin** (everything, including accounts) or a **member** who can open only the modules ticked for them; the "Marketing" preset ticks Blog posts, Case studies, Authors and Images & videos. The list of modules lives in [src/lib/permissions.ts](src/lib/permissions.ts) and drives the sidebar, the route guard and every admin server function. Members who edit blog posts, case studies, authors or pages can pick and upload images in their editor without the Images & videos module.
+- **My account** (`/admin/account`): every account can change its own password.
+- **Ownership**: every blog post and case study records who created it and who saved it last. Members change, publish and delete only what they created; the **Sửa bài của người khác** (`edit-others`) permission or the admin role lifts that. The lists filter by "Bài của tôi", and someone else's post opens read-only. The server functions enforce this, not just the UI.
+- **Authors ↔ accounts**: in `/admin/authors` an author profile can be linked to one admin account; that account's new blog posts start with that byline.
+- **Activity log** (`/admin/activity`, `activity` permission): who created, edited, published, deleted, changed access or signed in, with filters by person, module, date and text. Entries are kept 90 days (cleared when the page is opened). No passwords, and only ids for leads and subscribers, never their contact details.
+
+`pnpm admin:create <email>` always makes the account an unlocked admin, so it also gets you back in if every admin is locked out. The app never lets anyone demote, lock or delete their own account or the last working admin.
 
 Videos (MP4 or WebM, up to 200 MB) go from the browser straight to the R2 bucket on a signed URL, so the bucket needs a CORS rule. In Cloudflare: **R2 → your bucket → Settings → CORS policy**, add:
 
@@ -108,6 +115,10 @@ Sections that depend on real data (stats, quotes, use case results) stay hidden 
 
 ### Products and use cases
 Edit [src/content/products.ts](src/content/products.ts) and [src/content/useCases.ts](src/content/useCases.ts). Every product and use case needs a `seoTitle` (at most 47 characters, so "Title — Viewixsoft" fits in 60) and an `updatedAt` date; `pnpm test` fails on long or duplicate titles. Use case `evidence: 'sample'` keeps results and quotes out of production until you set `'verified'`.
+
+Blog posts are written in `/admin/blog`, with a live SEO & GEO checklist in the editor. Bylines come from `/admin/authors`: a real person with a role, a short bio, a photo and a LinkedIn link is published as a `Person` in JSON-LD (E-E-A-T). Posts and case studies from the admin are included in `sitemap.xml`, `rss.xml`, `llms.txt`, `llms-full.txt` and the `.md` twins alongside the bundled files (see `src/server/content/published.ts`).
+
+Case studies are edited in `/admin/use-cases`, laid out like a blog post: title, slug, summary and thumbnail, then the content as blocks (a heading, Markdown text and an optional image). A new page starts with two blocks; add more for longer stories. Blocks with an image alternate sides on the page. Highlights, products and FAQ are optional. Each page is either an **Industry guide** (no customer quotes or figures are ever shown, not even in the page source) or a **Customer story** (only with written customer approval; every result needs a period and a source, or saving fails). Block shapes live in [src/lib/case-study.ts](src/lib/case-study.ts).
 
 ### Blog posts
 One MDX file per post in `src/content/blog/`. Follow [docs/blog-writing-guide.md](docs/blog-writing-guide.md) and start from [docs/blog-template.mdx](docs/blog-template.mdx).

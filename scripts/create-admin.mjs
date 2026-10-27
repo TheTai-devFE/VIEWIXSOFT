@@ -1,4 +1,5 @@
-// Creates (or resets the password of) an admin account for /admin.
+// Creates an admin account for /admin, or resets an existing account's password
+// and makes it an unlocked admin. Other accounts are managed in /admin/users.
 //
 //   node --env-file=.env scripts/create-admin.mjs admin@example.com
 //
@@ -38,9 +39,12 @@ const existing = await sql.query('select id from "user" where email = $1', [emai
 const userId = existing[0]?.id ?? randomUUID()
 if (!existing[0]) {
   await sql.query(
-    'insert into "user" (id, name, email, email_verified, created_at, updated_at) values ($1, $2, $3, true, $4, $4)',
+    `insert into "user" (id, name, email, email_verified, role, created_at, updated_at) values ($1, $2, $3, true, 'admin', $4, $4)`,
     [userId, email.split('@')[0], email, now],
   )
+} else {
+  // Running the script on an existing account makes it a working admin again (e.g. after a lock-out).
+  await sql.query(`update "user" set role = 'admin', banned = false, ban_reason = null, ban_expires = null, updated_at = $1 where id = $2`, [now, userId])
 }
 const updated = await sql.query(
   `update account set password = $1, updated_at = $2 where user_id = $3 and provider_id = 'credential' returning id`,

@@ -4,7 +4,7 @@ import { HOME_FAQ } from '~/data/home-faq'
 import { PARTNERS } from '~/data/partners'
 import { PRODUCTS } from '~/content/products'
 import { pageDefaults } from '~/data/page-content'
-import { ORIGIN_STORY } from '~/data/company'
+import { FOUNDED_YEAR, ORIGIN_STORY, VIEWIX_CATALOGUE } from '~/data/company'
 import { CUSTOMER_SERVER, MAX_ONLINE_LICENCES, SALES_CONTACT, TERM_FEATURES, TERM_PLANS, formatUsd } from '~/data/pricing'
 
 /**
@@ -603,6 +603,67 @@ const ABOUT_CUSTOMERS_DEFAULTS: SectionIntroContent = {
   description: 'The first businesses running Viewix screens with Viewixsoft software.',
 }
 
+const ABOUT_FACT_COUNT = 4
+
+export const AboutFactsContentSchema = SectionIntroSchema.extend({
+  // A row of four figures, so the count is fixed.
+  items: z
+    .array(z.object({ id: z.string().min(1).max(60), value: text(1, 24), label: text(3, 120) }))
+    .length(ABOUT_FACT_COUNT),
+})
+
+export type AboutFactsContent = z.output<typeof AboutFactsContentSchema>
+
+const CATALOGUE_TOTAL = VIEWIX_CATALOGUE.indoorSignage + VIEWIX_CATALOGUE.outdoorSignage + VIEWIX_CATALOGUE.interactiveDisplays
+
+// Figures come from src/data/company.ts, each with its source.
+const ABOUT_FACTS_DEFAULTS: AboutFactsContent = {
+  eyebrow: 'At a glance',
+  title: 'Viewixsoft in four facts',
+  description: '',
+  items: [
+    { id: 'founded', value: String(FOUNDED_YEAR), label: 'Year Viewixsoft was founded' },
+    { id: 'parent', value: 'Viewix', label: 'Our parent company, a Hong Kong commercial display maker' },
+    {
+      id: 'catalogue',
+      value: String(CATALOGUE_TOTAL),
+      label: `Viewix display models: ${VIEWIX_CATALOGUE.indoorSignage} indoor, ${VIEWIX_CATALOGUE.outdoorSignage} outdoor and ${VIEWIX_CATALOGUE.interactiveDisplays} interactive`,
+    },
+    { id: 'products', value: String(PRODUCTS.length), label: `Software products: ${PRODUCTS.map((p) => p.name).join(', ').replace(/, ([^,]*)$/, ' and $1')}` },
+  ],
+}
+
+const ABOUT_FAQ_DEFAULTS: FaqContent = {
+  eyebrow: 'FAQ',
+  title: 'Questions about Viewixsoft',
+  items: [
+    {
+      question: 'What is Viewixsoft?',
+      answer:
+        'Viewixsoft is the software company of Viewix, a Hong Kong maker of commercial displays. It builds digital signage software for advertising screens, kiosks and menu boards, starting with Viewixsoft CMS.',
+    },
+    {
+      question: 'When was Viewixsoft founded?',
+      answer: `Viewixsoft was founded in ${FOUNDED_YEAR} to build the software that runs on Viewix screens.`,
+    },
+    {
+      question: 'How is Viewixsoft related to Viewix?',
+      answer:
+        'Viewixsoft is the software arm of Viewix (Shenzhen Viewix Electronic Technology Co., Limited), which is registered in Hong Kong. Viewix makes the screens; Viewixsoft makes the software that runs on them.',
+    },
+    {
+      question: 'Does Viewixsoft sell screens?',
+      answer:
+        'No. Screens, kiosks and other display hardware come from Viewix. Contact our sales team and we can advise on both the screens and the Viewixsoft software for your project.',
+    },
+    {
+      question: 'Which Viewixsoft products are available today?',
+      answer:
+        'Viewixsoft CMS is available now. Viewixsoft POS, Viewixsoft Tracking and Viewixsoft NFC are in development and are marked as coming soon on their product pages.',
+    },
+  ].map((f) => ({ id: slug(f.question), ...f })),
+}
+
 interface SectionContentMap {
   'home:devices': DevicesContent
   'home:hero': HomeHeroContent
@@ -624,6 +685,8 @@ interface SectionContentMap {
   'about:vision': AboutVisionContent
   'about:results': AboutResultsContent
   'about:customers': SectionIntroContent
+  'about:facts': AboutFactsContent
+  'about:faq': FaqContent
 }
 
 export type SectionContentKey = keyof SectionContentMap
@@ -649,6 +712,8 @@ export const SECTION_CONTENT: { [K in SectionContentKey]: { schema: z.ZodType<Se
   'about:vision': { schema: AboutVisionContentSchema, defaults: ABOUT_VISION_DEFAULTS },
   'about:results': { schema: AboutResultsContentSchema, defaults: ABOUT_RESULTS_DEFAULTS },
   'about:customers': { schema: SectionIntroSchema, defaults: ABOUT_CUSTOMERS_DEFAULTS },
+  'about:facts': { schema: AboutFactsContentSchema, defaults: ABOUT_FACTS_DEFAULTS },
+  'about:faq': { schema: FaqContentSchema, defaults: ABOUT_FAQ_DEFAULTS },
 }
 
 export const SECTION_CONTENT_KEYS = Object.keys(SECTION_CONTENT) as SectionContentKey[]

@@ -14,6 +14,16 @@ import {
 } from 'drizzle-orm/pg-core'
 // Relative import: drizzle-kit loads this file without the ~/ alias.
 import { LEAD_STATUSES, LEAD_TYPES, PRODUCT_STATUSES } from '../../lib/enums'
+import { CASE_STUDY_MODES } from '../../lib/case-study'
+import type {
+  CaseStudyResult,
+  ContentSection,
+  FaqEntry,
+  Highlight,
+  Reviewer,
+  SetupItem,
+  Story,
+} from '../../lib/case-study'
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -89,6 +99,13 @@ export const user = pgTable('user', {
   image: text('image'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  // Better Auth admin plugin. 'admin' can do everything; 'user' only what `permissions` lists.
+  role: text('role').notNull().default('user'),
+  banned: boolean('banned').notNull().default(false),
+  banReason: text('ban_reason'),
+  banExpires: timestamp('ban_expires', { withTimezone: true }),
+  /** Admin modules a 'user' may open; see ~/lib/permissions. */
+  permissions: text('permissions').array().notNull().default(sql`'{}'::text[]`),
 })
 
 export const session = pgTable(
@@ -104,6 +121,8 @@ export const session = pgTable(
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
+    // Required by the Better Auth admin plugin; impersonation itself is turned off.
+    impersonatedBy: text('impersonated_by'),
   },
   (t) => [index('session_user_id_idx').on(t.userId)],
 )
@@ -281,3 +300,137 @@ export type Testimonial = typeof testimonials.$inferSelect
 export type SiteMetric = typeof siteMetrics.$inferSelect
 export type MediaSlotRow = typeof mediaSlots.$inferSelect
 export type MediaAssetRow = typeof mediaAssets.$inferSelect
+
+// ─── Dynamic Blog Posts & Use Cases (Edited in /admin/blog & /admin/use-cases) ──
+
+export const AUTHOR_KINDS = ['person', 'organization'] as const
+
+/**
+ * Blog bylines. A named person with a role, a short bio, a photo and a
+ * profile link is what Google and answer engines read as E-E-A-T; an
+ * `organization` byline is published as the Organization in JSON-LD.
+ */
+export const authors = pgTable('authors', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  slug: text('slug').notNull().unique(),
+  name: text('name').notNull(),
+  role: text('role').notNull().default(''),
+  bio: text('bio').notNull().default(''),
+  avatarUrl: text('avatar_url'),
+  /** LinkedIn or another public profile, published as `sameAs`. */
+  profileUrl: text('profile_url'),
+  kind: text('kind', { enum: AUTHOR_KINDS }).notNull().default('person'),
+  /** The admin account that writes as this author, if any: its new posts get this byline. */
+  userId: text('user_id')
+    .unique()
+    .references(() => user.id, { onDelete: 'set null' }),
+  ...timestamps,
+})
+
+export const blogPosts = pgTable(
+  'blog_posts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    slug: text('slug').notNull().unique(),
+    title: text('title').notNull(),
+    seoTitle: text('seo_title'),
+    description: text('description').notNull(),
+    content: text('content').notNull().default(''),
+    coverUrl: text('cover_url'),
+    coverAlt: text('cover_alt'),
+    category: text('category').notNull().default('General'),
+    product: text('product').notNull().default('cms'),
+    tags: text('tags').array().notNull().default(sql`'{}'::text[]`),
+    authorId: uuid('author_id').references(() => authors.id, { onDelete: 'set null' }),
+    // The byline used before authors had profiles; still shown when no author is picked.
+    authorName: text('author_name').notNull().default('Viewixsoft Team'),
+    authorRole: text('author_role').default('Editorial Team'),
+    keyTakeaways: text('key_takeaways').array().notNull().default(sql`'{}'::text[]`),
+    /** Search snippet; the summary is used, shortened, when this is empty. */
+    seoDescription: text('seo_description'),
+    faq: jsonb('faq').$type<FaqEntry[]>().notNull().default(sql`'[]'::jsonb`),
+    /** Who created the post (owns it) and who saved it last; kept when the account is deleted. */
+    createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+    updatedBy: text('updated_by').references(() => user.id, { onDelete: 'set null' }),
+    status: text('status', { enum: ['draft', 'published'] }).notNull().default('draft'),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [
+    index('blog_posts_slug_idx').on(t.slug),
+    index('blog_posts_status_idx').on(t.status),
+    index('blog_posts_created_by_idx').on(t.createdBy),
+    index('blog_posts_published_at_idx').on(t.publishedAt),
+  ],
+)
+
+export const useCases = pgTable(
+  'use_cases',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    slug: text('slug').notNull().unique(),
+    title: text('title').notNull(),
+    seoTitle: text('seo_title'),
+    industry: text('industry').notNull(),
+    tagline: text('tagline').notNull(),
+    coverUrl: text('cover_url'),
+    coverAlt: text('cover_alt'),
+    // Superseded by `sections`; rows written before it are read as two sections (see use-case-from-row).
+    challengeHeading: text('challenge_heading').notNull().default('What was the challenge?'),
+    challenge: text('challenge').notNull().default(''),
+    solutionHeading: text('solution_heading').notNull().default('How did Viewixsoft solve it?'),
+    solution: text('solution').notNull().default(''),
+    results: jsonb('results').$type<CaseStudyResult[]>().notNull().default(sql`'[]'::jsonb`),
+    quote: jsonb('quote').$type<{ text: string; author: string; title: string; company: string } | null>(),
+    featuredProducts: jsonb('featured_products').$type<{ name: string; slug: string }[]>().notNull().default(sql`'[]'::jsonb`),
+    // Page blocks; shapes and meaning in src/lib/case-study.ts.
+    mode: text('mode', { enum: CASE_STUDY_MODES }).notNull().default('guide'),
+    highlights: jsonb('highlights').$type<Highlight[]>().notNull().default(sql`'[]'::jsonb`),
+    sections: jsonb('sections').$type<ContentSection[]>().notNull().default(sql`'[]'::jsonb`),
+    setup: jsonb('setup').$type<SetupItem[]>().notNull().default(sql`'[]'::jsonb`),
+    stories: jsonb('stories').$type<Story[]>().notNull().default(sql`'[]'::jsonb`),
+    faq: jsonb('faq').$type<FaqEntry[]>().notNull().default(sql`'[]'::jsonb`),
+    reviewedBy: jsonb('reviewed_by').$type<Reviewer | null>(),
+    /** Who created the post (owns it) and who saved it last; kept when the account is deleted. */
+    createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+    updatedBy: text('updated_by').references(() => user.id, { onDelete: 'set null' }),
+    status: text('status', { enum: ['draft', 'published'] }).notNull().default('draft'),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [
+    index('use_cases_slug_idx').on(t.slug),
+    index('use_cases_status_idx').on(t.status),
+    index('use_cases_created_by_idx').on(t.createdBy),
+    index('use_cases_published_at_idx').on(t.publishedAt),
+  ],
+)
+
+/** What admin accounts did, for /admin/activity. Rows older than 90 days are pruned. */
+export const activityLog = pgTable(
+  'activity_log',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    actorId: text('actor_id').references(() => user.id, { onDelete: 'set null' }),
+    /** The name at the time, so the entry still reads after the account is deleted. */
+    actorName: text('actor_name').notNull(),
+    action: text('action').notNull(),
+    entityType: text('entity_type').notNull(),
+    entityId: text('entity_id'),
+    /** A title or name to show; never a lead's or subscriber's contact details. */
+    entityLabel: text('entity_label'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index('activity_log_created_at_idx').on(t.createdAt),
+    index('activity_log_actor_id_idx').on(t.actorId),
+  ],
+)
+
+export type ActivityRow = typeof activityLog.$inferSelect
+export type AuthorRow = typeof authors.$inferSelect
+export type BlogPostRow = typeof blogPosts.$inferSelect
+export type NewBlogPost = typeof blogPosts.$inferInsert
+export type UseCaseRow = typeof useCases.$inferSelect
+export type NewUseCase = typeof useCases.$inferInsert
+

@@ -67,8 +67,14 @@ interface Particle {
 const MOBILE_BREAKPOINT = 768
 const SPREAD_FACTOR = 1.2
 const MAX_DPR = 2
+// Phones get a lighter backing store: the field is soft dots, so the extra
+// pixels cost frame time without being visible.
+const MOBILE_MAX_DPR = 1.5
+// Wait for the page to settle before animating, so the canvas does not compete
+// with hydration and the LCP paint.
+const START_IDLE_TIMEOUT_MS = 2000
 
-function hexToRgba(hex: string, alpha: number) {
+function hexToRgb(hex: string) {
   const clean = hex.replace("#", "").trim()
   const full =
     clean.length === 3
@@ -78,10 +84,10 @@ function hexToRgba(hex: string, alpha: number) {
           .join("")
       : clean
 
-  if (!/^[0-9a-f]{6}$/i.test(full)) return `rgba(139,92,246,${alpha})`
+  if (!/^[0-9a-f]{6}$/i.test(full)) return "rgb(139,92,246)"
 
   const n = Number.parseInt(full, 16)
-  return `rgba(${(n >> 16) & 0xff},${(n >> 8) & 0xff},${n & 0xff},${alpha})`
+  return `rgb(${(n >> 16) & 0xff},${(n >> 8) & 0xff},${n & 0xff})`
 }
 
 function deriveProjection(depth: number) {
@@ -173,13 +179,25 @@ export function Floating3DParticles({
     }
     syncReducedMotion()
 
+    // The colour is parsed only when it changes; per-particle opacity goes
+    // through globalAlpha instead of building an rgba() string per dot.
+    let parsedHex: string | null = null
+    let fill = ""
+    const applyFill = () => {
+      if (colorRef.current !== parsedHex) {
+        parsedHex = colorRef.current
+        fill = hexToRgb(parsedHex)
+      }
+      ctx.fillStyle = fill
+    }
+
     // Draw single particle
     const draw = (p: Particle) => {
       const r = Math.max(0, p.size * p.projectedScale)
       if (r <= 0) return
 
+      ctx.globalAlpha = p.opacity
       ctx.beginPath()
-      ctx.fillStyle = hexToRgba(colorRef.current, p.opacity)
       ctx.arc(p.screenX, p.screenY, r, 0, Math.PI * 2)
       ctx.fill()
     }
@@ -187,6 +205,7 @@ export function Floating3DParticles({
     // Static frame for reduced motion
     const staticFrame = () => {
       ctx.clearRect(0, 0, width, height)
+      applyFill()
       const cx = width / 2
       const cy = height / 2
 
@@ -256,6 +275,7 @@ export function Floating3DParticles({
 
       // Painter's algorithm: draw farthest particles first
       particles.sort((a, b) => a.projectedScale - b.projectedScale)
+      applyFill()
       for (const p of particles) draw(p)
 
       s.rafId = requestAnimationFrame(tick)
@@ -267,12 +287,13 @@ export function Floating3DParticles({
       width = Math.max(1, Math.round(rect.width))
       height = Math.max(1, Math.round(rect.height))
 
-      const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, MAX_DPR))
+      const isMobile = window.innerWidth < MOBILE_BREAKPOINT
+      const maxDpr = isMobile ? MOBILE_MAX_DPR : MAX_DPR
+      const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, maxDpr))
       canvas.width = Math.round(width * dpr)
       canvas.height = Math.round(height * dpr)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
-      const isMobile = window.innerWidth < MOBILE_BREAKPOINT
       const count = isMobile ? Math.round(quantity * 0.2) : quantity
 
       particles = Array.from({ length: Math.max(0, count) }, () =>
@@ -310,11 +331,21 @@ export function Floating3DParticles({
     document.addEventListener("visibilitychange", onVisibilityChange)
     mq.addEventListener("change", syncReducedMotion)
 
-    resize()
-    s.rafId = requestAnimationFrame(tick)
+    const start = () => {
+      if (!s.mounted) return
+      resize()
+      s.rafId = requestAnimationFrame(tick)
+    }
+    const idleId =
+      typeof requestIdleCallback !== "undefined"
+        ? requestIdleCallback(start, { timeout: START_IDLE_TIMEOUT_MS })
+        : null
+    const timeoutId = idleId === null ? window.setTimeout(start, 0) : null
 
     return () => {
       s.mounted = false
+      if (idleId !== null) cancelIdleCallback(idleId)
+      if (timeoutId !== null) window.clearTimeout(timeoutId)
       if (s.rafId !== null) {
         cancelAnimationFrame(s.rafId)
         s.rafId = null

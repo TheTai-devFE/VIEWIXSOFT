@@ -4,7 +4,10 @@ import { ProductsEditor } from '~/components/admin/ProductsEditor'
 import { getSiteAdminDataFn } from '~/server/functions/site-admin'
 
 export const Route = createFileRoute('/admin/products')({
-  loader: () => getSiteAdminDataFn(),
+  loader: {
+    staleReloadMode: 'blocking',
+    handler: () => getSiteAdminDataFn(),
+  },
   component: ProductsModule,
 })
 

@@ -9,6 +9,7 @@ import { ImagePickerSheet } from '~/components/admin/ImagePickerSheet'
 import type { LibraryAsset } from '~/components/admin/ImagePickerSheet'
 import { cn } from '~/lib/cn'
 import type { SectionContentKey } from '~/lib/section-content'
+import { LazyImage } from '~/components/ui/lazy-image'
 
 /*
  * One editor for sections that are text plus simple lists, described by a
@@ -215,7 +216,7 @@ export function SectionTextEditor({
                   const label = `photo ${i + 1}`
                   return (
                     <li key={str(item.id) || i} className="flex items-start gap-3 px-3 py-2.5">
-                      <img
+                      <LazyImage
                         src={str(image.url)}
                         alt=""
                         width={Number(image.width) || undefined}

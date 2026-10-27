@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, notFound } from '@tanstack/react-router'
 import { z } from 'zod'
 import { SCREEN_RANGES } from '~/components/story/story-content'
 import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
@@ -10,6 +10,8 @@ import { FaqAccordion } from '~/components/blocks/FaqAccordion'
 import { LeadForm } from '~/components/blocks/LeadForm'
 import { LeadNextSteps } from '~/components/blocks/LeadFormSection'
 import { CONTACT_EMAILS, LEGAL_ENTITY } from '~/data/company'
+import { getSiteConfigFn } from '~/server/functions/site'
+import { isPageVisible } from '~/lib/page-visibility'
 
 const SUPPORT_EMAIL = CONTACT_EMAILS.find((c) => c.department === 'Technical support')?.email ?? CONTACT_EMAILS[0].email
 
@@ -37,6 +39,10 @@ const contactSearchSchema = z.object({
 
 export const Route = createFileRoute('/contact')({
   validateSearch: contactSearchSchema,
+  loader: async () => {
+    const config = await getSiteConfigFn()
+    if (!isPageVisible(config, 'contact')) throw notFound()
+  },
   head: ({ matches }) => {
     const seo = generateMetaTags({
       ...pageContent(siteConfigFromMatches(matches), 'contact').seo,

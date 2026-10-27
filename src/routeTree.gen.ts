@@ -21,6 +21,10 @@ import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as RssDotxmlRouteImport } from './routes/rss[.]xml'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAccountRouteImport } from './routes/admin/account'
+import { Route as AdminActivityRouteImport } from './routes/admin/activity'
+import { Route as AdminAuthorsRouteImport } from './routes/admin/authors'
+import { Route as AdminFooterRouteImport } from './routes/admin/footer'
 import { Route as AdminLeadsRouteImport } from './routes/admin/leads'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminMediaRouteImport } from './routes/admin/media'
@@ -30,9 +34,13 @@ import { Route as AdminSiteRouteImport } from './routes/admin/site'
 import { Route as AdminStatsRouteImport } from './routes/admin/stats'
 import { Route as AdminSubscribersRouteImport } from './routes/admin/subscribers'
 import { Route as AdminTestimonialsRouteImport } from './routes/admin/testimonials'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as BlogChar123slugChar125DotmdRouteImport } from './routes/blog/{$slug}[.]md'
+import { Route as CaseStudiesIndexRouteImport } from './routes/case-studies/index'
+import { Route as CaseStudiesSlugRouteImport } from './routes/case-studies/$slug'
+import { Route as CaseStudiesChar123slugChar125DotmdRouteImport } from './routes/case-studies/{$slug}[.]md'
 import { Route as LegalCookiesRouteImport } from './routes/legal/cookies'
 import { Route as LegalPrivacyRouteImport } from './routes/legal/privacy'
 import { Route as LegalTermsRouteImport } from './routes/legal/terms'
@@ -44,8 +52,14 @@ import { Route as ProductsChar123slugChar125DotmdRouteImport } from './routes/pr
 import { Route as UseCasesIndexRouteImport } from './routes/use-cases/index'
 import { Route as UseCasesSlugRouteImport } from './routes/use-cases/$slug'
 import { Route as UseCasesChar123slugChar125DotmdRouteImport } from './routes/use-cases/{$slug}[.]md'
+import { Route as AdminBlogIndexRouteImport } from './routes/admin/blog/index'
+import { Route as AdminBlogIdRouteImport } from './routes/admin/blog/$id'
+import { Route as AdminBlogNewRouteImport } from './routes/admin/blog/new'
 import { Route as AdminPagesIndexRouteImport } from './routes/admin/pages/index'
 import { Route as AdminPagesPageRouteImport } from './routes/admin/pages/$page'
+import { Route as AdminUseCasesIndexRouteImport } from './routes/admin/use-cases/index'
+import { Route as AdminUseCasesIdRouteImport } from './routes/admin/use-cases/$id'
+import { Route as AdminUseCasesNewRouteImport } from './routes/admin/use-cases/new'
 import { Route as ApiAdminMediaUploadRouteImport } from './routes/api/admin/media-upload'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as BlogCategorySlugRouteImport } from './routes/blog/category/$slug'
@@ -110,6 +124,26 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminAccountRoute = AdminAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminActivityRoute = AdminActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAuthorsRoute = AdminAuthorsRouteImport.update({
+  id: '/authors',
+  path: '/authors',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminFooterRoute = AdminFooterRouteImport.update({
+  id: '/footer',
+  path: '/footer',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminLeadsRoute = AdminLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
@@ -155,6 +189,11 @@ const AdminTestimonialsRoute = AdminTestimonialsRouteImport.update({
   path: '/testimonials',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
@@ -169,6 +208,22 @@ const BlogChar123slugChar125DotmdRoute =
   BlogChar123slugChar125DotmdRouteImport.update({
     id: '/blog/{$slug}.md',
     path: '/blog/{$slug}.md',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CaseStudiesIndexRoute = CaseStudiesIndexRouteImport.update({
+  id: '/case-studies/',
+  path: '/case-studies/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CaseStudiesSlugRoute = CaseStudiesSlugRouteImport.update({
+  id: '/case-studies/$slug',
+  path: '/case-studies/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CaseStudiesChar123slugChar125DotmdRoute =
+  CaseStudiesChar123slugChar125DotmdRouteImport.update({
+    id: '/case-studies/{$slug}.md',
+    path: '/case-studies/{$slug}.md',
     getParentRoute: () => rootRouteImport,
   } as any)
 const LegalCookiesRoute = LegalCookiesRouteImport.update({
@@ -228,6 +283,21 @@ const UseCasesChar123slugChar125DotmdRoute =
     path: '/use-cases/{$slug}.md',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminBlogIndexRoute = AdminBlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminBlogIdRoute = AdminBlogIdRouteImport.update({
+  id: '/blog/$id',
+  path: '/blog/$id',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminBlogNewRoute = AdminBlogNewRouteImport.update({
+  id: '/blog/new',
+  path: '/blog/new',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminPagesIndexRoute = AdminPagesIndexRouteImport.update({
   id: '/pages/',
   path: '/pages/',
@@ -236,6 +306,21 @@ const AdminPagesIndexRoute = AdminPagesIndexRouteImport.update({
 const AdminPagesPageRoute = AdminPagesPageRouteImport.update({
   id: '/pages/$page',
   path: '/pages/$page',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminUseCasesIndexRoute = AdminUseCasesIndexRouteImport.update({
+  id: '/use-cases/',
+  path: '/use-cases/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminUseCasesIdRoute = AdminUseCasesIdRouteImport.update({
+  id: '/use-cases/$id',
+  path: '/use-cases/$id',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminUseCasesNewRoute = AdminUseCasesNewRouteImport.update({
+  id: '/use-cases/new',
+  path: '/use-cases/new',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const ApiAdminMediaUploadRoute = ApiAdminMediaUploadRouteImport.update({
@@ -266,6 +351,10 @@ export interface FileRoutesByFullPath {
   '/robots.txt': typeof RobotsDottxtRoute
   '/rss.xml': typeof RssDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/account': typeof AdminAccountRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/authors': typeof AdminAuthorsRoute
+  '/admin/footer': typeof AdminFooterRoute
   '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
@@ -275,8 +364,11 @@ export interface FileRoutesByFullPath {
   '/admin/stats': typeof AdminStatsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
   '/admin/testimonials': typeof AdminTestimonialsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/{$slug}.md': typeof BlogChar123slugChar125DotmdRoute
+  '/case-studies/$slug': typeof CaseStudiesSlugRoute
+  '/case-studies/{$slug}.md': typeof CaseStudiesChar123slugChar125DotmdRoute
   '/legal/cookies': typeof LegalCookiesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
@@ -288,13 +380,20 @@ export interface FileRoutesByFullPath {
   '/use-cases/{$slug}.md': typeof UseCasesChar123slugChar125DotmdRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
+  '/case-studies/': typeof CaseStudiesIndexRoute
   '/products/': typeof ProductsIndexRoute
   '/use-cases/': typeof UseCasesIndexRoute
+  '/admin/blog/$id': typeof AdminBlogIdRoute
+  '/admin/blog/new': typeof AdminBlogNewRoute
   '/admin/pages/$page': typeof AdminPagesPageRoute
+  '/admin/use-cases/$id': typeof AdminUseCasesIdRoute
+  '/admin/use-cases/new': typeof AdminUseCasesNewRoute
   '/api/admin/media-upload': typeof ApiAdminMediaUploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
+  '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/pages/': typeof AdminPagesIndexRoute
+  '/admin/use-cases/': typeof AdminUseCasesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -307,6 +406,10 @@ export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
   '/rss.xml': typeof RssDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/account': typeof AdminAccountRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/authors': typeof AdminAuthorsRoute
+  '/admin/footer': typeof AdminFooterRoute
   '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
@@ -316,8 +419,11 @@ export interface FileRoutesByTo {
   '/admin/stats': typeof AdminStatsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
   '/admin/testimonials': typeof AdminTestimonialsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/{$slug}.md': typeof BlogChar123slugChar125DotmdRoute
+  '/case-studies/$slug': typeof CaseStudiesSlugRoute
+  '/case-studies/{$slug}.md': typeof CaseStudiesChar123slugChar125DotmdRoute
   '/legal/cookies': typeof LegalCookiesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
@@ -329,13 +435,20 @@ export interface FileRoutesByTo {
   '/use-cases/{$slug}.md': typeof UseCasesChar123slugChar125DotmdRoute
   '/admin': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
+  '/case-studies': typeof CaseStudiesIndexRoute
   '/products': typeof ProductsIndexRoute
   '/use-cases': typeof UseCasesIndexRoute
+  '/admin/blog/$id': typeof AdminBlogIdRoute
+  '/admin/blog/new': typeof AdminBlogNewRoute
   '/admin/pages/$page': typeof AdminPagesPageRoute
+  '/admin/use-cases/$id': typeof AdminUseCasesIdRoute
+  '/admin/use-cases/new': typeof AdminUseCasesNewRoute
   '/api/admin/media-upload': typeof ApiAdminMediaUploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
+  '/admin/blog': typeof AdminBlogIndexRoute
   '/admin/pages': typeof AdminPagesIndexRoute
+  '/admin/use-cases': typeof AdminUseCasesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -350,6 +463,10 @@ export interface FileRoutesById {
   '/robots.txt': typeof RobotsDottxtRoute
   '/rss.xml': typeof RssDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/account': typeof AdminAccountRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/authors': typeof AdminAuthorsRoute
+  '/admin/footer': typeof AdminFooterRoute
   '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
@@ -359,8 +476,11 @@ export interface FileRoutesById {
   '/admin/stats': typeof AdminStatsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
   '/admin/testimonials': typeof AdminTestimonialsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/{$slug}.md': typeof BlogChar123slugChar125DotmdRoute
+  '/case-studies/$slug': typeof CaseStudiesSlugRoute
+  '/case-studies/{$slug}.md': typeof CaseStudiesChar123slugChar125DotmdRoute
   '/legal/cookies': typeof LegalCookiesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
@@ -372,13 +492,20 @@ export interface FileRoutesById {
   '/use-cases/{$slug}.md': typeof UseCasesChar123slugChar125DotmdRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
+  '/case-studies/': typeof CaseStudiesIndexRoute
   '/products/': typeof ProductsIndexRoute
   '/use-cases/': typeof UseCasesIndexRoute
+  '/admin/blog/$id': typeof AdminBlogIdRoute
+  '/admin/blog/new': typeof AdminBlogNewRoute
   '/admin/pages/$page': typeof AdminPagesPageRoute
+  '/admin/use-cases/$id': typeof AdminUseCasesIdRoute
+  '/admin/use-cases/new': typeof AdminUseCasesNewRoute
   '/api/admin/media-upload': typeof ApiAdminMediaUploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
+  '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/pages/': typeof AdminPagesIndexRoute
+  '/admin/use-cases/': typeof AdminUseCasesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -394,6 +521,10 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/rss.xml'
     | '/sitemap.xml'
+    | '/admin/account'
+    | '/admin/activity'
+    | '/admin/authors'
+    | '/admin/footer'
     | '/admin/leads'
     | '/admin/login'
     | '/admin/media'
@@ -403,8 +534,11 @@ export interface FileRouteTypes {
     | '/admin/stats'
     | '/admin/subscribers'
     | '/admin/testimonials'
+    | '/admin/users'
     | '/blog/$slug'
     | '/blog/{$slug}.md'
+    | '/case-studies/$slug'
+    | '/case-studies/{$slug}.md'
     | '/legal/cookies'
     | '/legal/privacy'
     | '/legal/terms'
@@ -416,13 +550,20 @@ export interface FileRouteTypes {
     | '/use-cases/{$slug}.md'
     | '/admin/'
     | '/blog/'
+    | '/case-studies/'
     | '/products/'
     | '/use-cases/'
+    | '/admin/blog/$id'
+    | '/admin/blog/new'
     | '/admin/pages/$page'
+    | '/admin/use-cases/$id'
+    | '/admin/use-cases/new'
     | '/api/admin/media-upload'
     | '/api/auth/$'
     | '/blog/category/$slug'
+    | '/admin/blog/'
     | '/admin/pages/'
+    | '/admin/use-cases/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -435,6 +576,10 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/rss.xml'
     | '/sitemap.xml'
+    | '/admin/account'
+    | '/admin/activity'
+    | '/admin/authors'
+    | '/admin/footer'
     | '/admin/leads'
     | '/admin/login'
     | '/admin/media'
@@ -444,8 +589,11 @@ export interface FileRouteTypes {
     | '/admin/stats'
     | '/admin/subscribers'
     | '/admin/testimonials'
+    | '/admin/users'
     | '/blog/$slug'
     | '/blog/{$slug}.md'
+    | '/case-studies/$slug'
+    | '/case-studies/{$slug}.md'
     | '/legal/cookies'
     | '/legal/privacy'
     | '/legal/terms'
@@ -457,13 +605,20 @@ export interface FileRouteTypes {
     | '/use-cases/{$slug}.md'
     | '/admin'
     | '/blog'
+    | '/case-studies'
     | '/products'
     | '/use-cases'
+    | '/admin/blog/$id'
+    | '/admin/blog/new'
     | '/admin/pages/$page'
+    | '/admin/use-cases/$id'
+    | '/admin/use-cases/new'
     | '/api/admin/media-upload'
     | '/api/auth/$'
     | '/blog/category/$slug'
+    | '/admin/blog'
     | '/admin/pages'
+    | '/admin/use-cases'
   id:
     | '__root__'
     | '/'
@@ -477,6 +632,10 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/rss.xml'
     | '/sitemap.xml'
+    | '/admin/account'
+    | '/admin/activity'
+    | '/admin/authors'
+    | '/admin/footer'
     | '/admin/leads'
     | '/admin/login'
     | '/admin/media'
@@ -486,8 +645,11 @@ export interface FileRouteTypes {
     | '/admin/stats'
     | '/admin/subscribers'
     | '/admin/testimonials'
+    | '/admin/users'
     | '/blog/$slug'
     | '/blog/{$slug}.md'
+    | '/case-studies/$slug'
+    | '/case-studies/{$slug}.md'
     | '/legal/cookies'
     | '/legal/privacy'
     | '/legal/terms'
@@ -499,13 +661,20 @@ export interface FileRouteTypes {
     | '/use-cases/{$slug}.md'
     | '/admin/'
     | '/blog/'
+    | '/case-studies/'
     | '/products/'
     | '/use-cases/'
+    | '/admin/blog/$id'
+    | '/admin/blog/new'
     | '/admin/pages/$page'
+    | '/admin/use-cases/$id'
+    | '/admin/use-cases/new'
     | '/api/admin/media-upload'
     | '/api/auth/$'
     | '/blog/category/$slug'
+    | '/admin/blog/'
     | '/admin/pages/'
+    | '/admin/use-cases/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -522,6 +691,8 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   BlogSlugRoute: typeof BlogSlugRoute
   BlogChar123slugChar125DotmdRoute: typeof BlogChar123slugChar125DotmdRoute
+  CaseStudiesSlugRoute: typeof CaseStudiesSlugRoute
+  CaseStudiesChar123slugChar125DotmdRoute: typeof CaseStudiesChar123slugChar125DotmdRoute
   LegalCookiesRoute: typeof LegalCookiesRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalTermsRoute: typeof LegalTermsRoute
@@ -532,6 +703,7 @@ export interface RootRouteChildren {
   UseCasesSlugRoute: typeof UseCasesSlugRoute
   UseCasesChar123slugChar125DotmdRoute: typeof UseCasesChar123slugChar125DotmdRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  CaseStudiesIndexRoute: typeof CaseStudiesIndexRoute
   ProductsIndexRoute: typeof ProductsIndexRoute
   UseCasesIndexRoute: typeof UseCasesIndexRoute
   ApiAdminMediaUploadRoute: typeof ApiAdminMediaUploadRoute
@@ -625,6 +797,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/account': {
+      id: '/admin/account'
+      path: '/account'
+      fullPath: '/admin/account'
+      preLoaderRoute: typeof AdminAccountRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/activity': {
+      id: '/admin/activity'
+      path: '/activity'
+      fullPath: '/admin/activity'
+      preLoaderRoute: typeof AdminActivityRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/authors': {
+      id: '/admin/authors'
+      path: '/authors'
+      fullPath: '/admin/authors'
+      preLoaderRoute: typeof AdminAuthorsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/footer': {
+      id: '/admin/footer'
+      path: '/footer'
+      fullPath: '/admin/footer'
+      preLoaderRoute: typeof AdminFooterRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/leads': {
       id: '/admin/leads'
       path: '/leads'
@@ -688,6 +888,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTestimonialsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/blog/': {
       id: '/blog/'
       path: '/blog'
@@ -707,6 +914,27 @@ declare module '@tanstack/react-router' {
       path: '/blog/{$slug}.md'
       fullPath: '/blog/{$slug}.md'
       preLoaderRoute: typeof BlogChar123slugChar125DotmdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/case-studies/': {
+      id: '/case-studies/'
+      path: '/case-studies'
+      fullPath: '/case-studies/'
+      preLoaderRoute: typeof CaseStudiesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/case-studies/$slug': {
+      id: '/case-studies/$slug'
+      path: '/case-studies/$slug'
+      fullPath: '/case-studies/$slug'
+      preLoaderRoute: typeof CaseStudiesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/case-studies/{$slug}.md': {
+      id: '/case-studies/{$slug}.md'
+      path: '/case-studies/{$slug}.md'
+      fullPath: '/case-studies/{$slug}.md'
+      preLoaderRoute: typeof CaseStudiesChar123slugChar125DotmdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/legal/cookies': {
@@ -786,6 +1014,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UseCasesChar123slugChar125DotmdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/blog/': {
+      id: '/admin/blog/'
+      path: '/blog'
+      fullPath: '/admin/blog/'
+      preLoaderRoute: typeof AdminBlogIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/blog/$id': {
+      id: '/admin/blog/$id'
+      path: '/blog/$id'
+      fullPath: '/admin/blog/$id'
+      preLoaderRoute: typeof AdminBlogIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/blog/new': {
+      id: '/admin/blog/new'
+      path: '/blog/new'
+      fullPath: '/admin/blog/new'
+      preLoaderRoute: typeof AdminBlogNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/pages/': {
       id: '/admin/pages/'
       path: '/pages'
@@ -798,6 +1047,27 @@ declare module '@tanstack/react-router' {
       path: '/pages/$page'
       fullPath: '/admin/pages/$page'
       preLoaderRoute: typeof AdminPagesPageRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/use-cases/': {
+      id: '/admin/use-cases/'
+      path: '/use-cases'
+      fullPath: '/admin/use-cases/'
+      preLoaderRoute: typeof AdminUseCasesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/use-cases/$id': {
+      id: '/admin/use-cases/$id'
+      path: '/use-cases/$id'
+      fullPath: '/admin/use-cases/$id'
+      preLoaderRoute: typeof AdminUseCasesIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/use-cases/new': {
+      id: '/admin/use-cases/new'
+      path: '/use-cases/new'
+      fullPath: '/admin/use-cases/new'
+      preLoaderRoute: typeof AdminUseCasesNewRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/api/admin/media-upload': {
@@ -825,6 +1095,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteRouteChildren {
+  AdminAccountRoute: typeof AdminAccountRoute
+  AdminActivityRoute: typeof AdminActivityRoute
+  AdminAuthorsRoute: typeof AdminAuthorsRoute
+  AdminFooterRoute: typeof AdminFooterRoute
   AdminLeadsRoute: typeof AdminLeadsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMediaRoute: typeof AdminMediaRoute
@@ -834,12 +1108,23 @@ interface AdminRouteRouteChildren {
   AdminStatsRoute: typeof AdminStatsRoute
   AdminSubscribersRoute: typeof AdminSubscribersRoute
   AdminTestimonialsRoute: typeof AdminTestimonialsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminBlogIdRoute: typeof AdminBlogIdRoute
+  AdminBlogNewRoute: typeof AdminBlogNewRoute
   AdminPagesPageRoute: typeof AdminPagesPageRoute
+  AdminUseCasesIdRoute: typeof AdminUseCasesIdRoute
+  AdminUseCasesNewRoute: typeof AdminUseCasesNewRoute
+  AdminBlogIndexRoute: typeof AdminBlogIndexRoute
   AdminPagesIndexRoute: typeof AdminPagesIndexRoute
+  AdminUseCasesIndexRoute: typeof AdminUseCasesIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminAccountRoute: AdminAccountRoute,
+  AdminActivityRoute: AdminActivityRoute,
+  AdminAuthorsRoute: AdminAuthorsRoute,
+  AdminFooterRoute: AdminFooterRoute,
   AdminLeadsRoute: AdminLeadsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMediaRoute: AdminMediaRoute,
@@ -849,9 +1134,16 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminStatsRoute: AdminStatsRoute,
   AdminSubscribersRoute: AdminSubscribersRoute,
   AdminTestimonialsRoute: AdminTestimonialsRoute,
+  AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminBlogIdRoute: AdminBlogIdRoute,
+  AdminBlogNewRoute: AdminBlogNewRoute,
   AdminPagesPageRoute: AdminPagesPageRoute,
+  AdminUseCasesIdRoute: AdminUseCasesIdRoute,
+  AdminUseCasesNewRoute: AdminUseCasesNewRoute,
+  AdminBlogIndexRoute: AdminBlogIndexRoute,
   AdminPagesIndexRoute: AdminPagesIndexRoute,
+  AdminUseCasesIndexRoute: AdminUseCasesIndexRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
@@ -872,6 +1164,9 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   BlogSlugRoute: BlogSlugRoute,
   BlogChar123slugChar125DotmdRoute: BlogChar123slugChar125DotmdRoute,
+  CaseStudiesSlugRoute: CaseStudiesSlugRoute,
+  CaseStudiesChar123slugChar125DotmdRoute:
+    CaseStudiesChar123slugChar125DotmdRoute,
   LegalCookiesRoute: LegalCookiesRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalTermsRoute: LegalTermsRoute,
@@ -882,6 +1177,7 @@ const rootRouteChildren: RootRouteChildren = {
   UseCasesSlugRoute: UseCasesSlugRoute,
   UseCasesChar123slugChar125DotmdRoute: UseCasesChar123slugChar125DotmdRoute,
   BlogIndexRoute: BlogIndexRoute,
+  CaseStudiesIndexRoute: CaseStudiesIndexRoute,
   ProductsIndexRoute: ProductsIndexRoute,
   UseCasesIndexRoute: UseCasesIndexRoute,
   ApiAdminMediaUploadRoute: ApiAdminMediaUploadRoute,

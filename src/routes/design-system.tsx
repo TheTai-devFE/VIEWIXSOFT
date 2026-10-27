@@ -9,8 +9,16 @@ import { generateMetaTags } from '~/lib/seo/meta'
 import { Screen, TestBars } from '~/components/story/primitives/Screen'
 import { BootStandby } from '~/components/story/primitives/BootStandby'
 import { HeroOne } from '~/components/blocks/hero-01'
+import { AnimatedBadge } from '~/components/ui/animated-badge'
 import { Button } from '~/components/ui/button'
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
+import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Input } from '~/components/ui/input'
+import { FieldInput } from '~/components/ui/field-input'
+import { FeedbackProvider, useConfirm, useToast } from '~/components/ui/feedback'
+import { LazyImage } from '~/components/ui/lazy-image'
+import { StatefulButton } from '~/components/ui/stateful-button'
+import type { ButtonState } from '~/components/ui/stateful-button'
 import { Label } from '~/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 
@@ -50,6 +58,9 @@ export const Route = createFileRoute('/design-system')({
 function DesignSystemPage() {
   const [activeTab, setActiveTab] = useState<'tokens' | 'primitives' | 'form'>('tokens')
   const [checkboxChecked, setCheckboxChecked] = useState(true)
+  const [demoTab, setDemoTab] = useState('split')
+  const [demoEmail, setDemoEmail] = useState('')
+  const [demoButton, setDemoButton] = useState<ButtonState>('idle')
 
   return (
     <div className="page-x py-16 space-y-16">
@@ -150,7 +161,7 @@ function DesignSystemPage() {
             </h2>
             <div className="space-y-4 p-6 rounded-2xl panel border border-ink-800">
               <div className="border-b border-ink-800/80 pb-3">
-                <div className="text-xs text-ink-500 font-mono mb-1">Hero — --text-hero (Space Grotesk)</div>
+                <div className="text-xs text-ink-500 font-mono mb-1">Hero — --text-hero (Manrope)</div>
                 <div className="text-3xl sm:text-5xl font-black text-ink-50">The Power of Connected Screens</div>
               </div>
               <div className="border-b border-ink-800/80 pb-3">
@@ -225,6 +236,67 @@ function DesignSystemPage() {
               ))}
             </Marquee>
           </div>
+
+          {/* beUI primitives used by the admin editors */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-ink-50">beUI: Card, Tabs, Animated badge, Field input, Stateful button</h2>
+            <div className="grid gap-6 rounded-2xl border border-ink-800 p-6 panel md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Card title</CardTitle>
+                  <CardDescription>Header, description, action and content parts.</CardDescription>
+                  <CardAction>
+                    <AnimatedBadge status="success" size="sm">Published</AnimatedBadge>
+                  </CardAction>
+                </CardHeader>
+                <CardContent className="text-muted-foreground">Card content sits on the panel surface in both themes.</CardContent>
+              </Card>
+              <div className="space-y-4">
+                <Tabs value={demoTab} onValueChange={setDemoTab}>
+                  <TabsList aria-label="Demo tabs">
+                    <TabsTrigger value="write">Write</TabsTrigger>
+                    <TabsTrigger value="split">Split</TabsTrigger>
+                    <TabsTrigger value="preview">Preview</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <div className="flex flex-wrap gap-2">
+                  <AnimatedBadge status="neutral" size="sm">Not saved</AnimatedBadge>
+                  <AnimatedBadge status="info" size="sm">Customer story</AnimatedBadge>
+                  <AnimatedBadge status="warning" size="sm">Draft</AnimatedBadge>
+                  <AnimatedBadge status="danger" size="sm">SEO 9/17</AnimatedBadge>
+                  <AnimatedBadge status="loading" size="sm">Saving</AnimatedBadge>
+                </div>
+              </div>
+              <FieldInput
+                label="Field input"
+                type="email"
+                placeholder="you@company.com"
+                value={demoEmail}
+                onChange={setDemoEmail}
+                success={demoEmail.includes('@')}
+                error={demoEmail.length > 0 && !demoEmail.includes('@') ? 'Enter a valid email' : undefined}
+                reserveErrorLine
+              />
+              <div className="flex flex-wrap items-end gap-3">
+                <StatefulButton
+                  state={demoButton}
+                  loadingText="Saving"
+                  successText="Saved"
+                  onClick={() => {
+                    setDemoButton('loading')
+                    setTimeout(() => setDemoButton('success'), 1200)
+                    setTimeout(() => setDemoButton('idle'), 2600)
+                  }}
+                >
+                  Stateful button
+                </StatefulButton>
+              </div>
+            </div>
+          </div>
+
+          <FeedbackProvider>
+            <FeedbackDemo />
+          </FeedbackProvider>
 
           {/* shadcn/ui primitives (components/ui) */}
           <div className="space-y-6">
@@ -370,6 +442,40 @@ function DesignSystemPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+/** Confirm dialog, toasts and lazy image, as the admin uses them. */
+function FeedbackDemo() {
+  const confirm = useConfirm()
+  const toast = useToast()
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-ink-50">Feedback: Confirm dialog, Toast, Lazy image</h2>
+      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-ink-800 p-6 panel">
+        <Button
+          variant="destructive"
+          onClick={() =>
+            confirm({
+              title: 'Delete this item?',
+              description: 'The action runs inside the dialog with a spinner, then a toast reports the result.',
+              confirmText: 'Delete',
+              tone: 'danger',
+              onConfirm: async () => {
+                await new Promise((r) => setTimeout(r, 1200))
+                toast({ title: 'Item deleted', tone: 'success' })
+              },
+            })
+          }
+        >
+          Open confirm dialog
+        </Button>
+        <Button variant="outline" onClick={() => toast({ title: 'Could not save', description: 'Check your connection.', tone: 'error' })}>
+          Error toast
+        </Button>
+        <LazyImage src="/devices/stock/retail-screens.webp" alt="Screens in a retail store" width={160} height={90} className="h-[90px] w-40 rounded-md object-cover" />
+      </div>
     </div>
   )
 }

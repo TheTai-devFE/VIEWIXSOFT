@@ -95,9 +95,10 @@ interface LeadFormProps {
   /** Keeps field ids unique if both variants ever share a page. */
   idPrefix: string
   initialValues?: Partial<LeadFormValues>
+  submitLabel?: string
 }
 
-export function LeadForm({ variant, idPrefix, initialValues }: LeadFormProps) {
+export function LeadForm({ variant, idPrefix, initialValues, submitLabel }: LeadFormProps) {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const [sentTo, setSentTo] = useState('')
@@ -333,7 +334,7 @@ export function LeadForm({ variant, idPrefix, initialValues }: LeadFormProps) {
             disabled={isSubmitting}
             className="bg-brand-gradient mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-on-gradient hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
-            {isSubmitting ? 'Sending…' : isFull ? 'Contact sales' : 'Get started'}
+            {isSubmitting ? 'Sending…' : submitLabel ?? (isFull ? 'Contact sales' : 'Get started')}
             {!isSubmitting && <ArrowRight aria-hidden="true" className="size-4" />}
           </button>
         )}

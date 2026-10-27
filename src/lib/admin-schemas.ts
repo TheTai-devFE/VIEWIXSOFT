@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { CaseStudyBlocksSchema, FaqEntrySchema, ResultSchema, storyProblems } from '~/lib/case-study'
 import { PRODUCTS } from '~/content/products'
 import { METRIC_DEFS, SECTION_PAGES, SECTION_PAGE_KEYS } from '~/data/site-sections'
 import type { SectionPage } from '~/data/site-sections'
@@ -6,6 +7,7 @@ import { PRODUCT_STATUSES } from '~/lib/enums'
 import { ADMIN_PAGES } from '~/data/admin-pages'
 import { MEDIA_SLOT_KEYS } from '~/data/media-slots'
 import { buildTitle, DESCRIPTION_MAX, TITLE_MAX } from '~/lib/seo/meta'
+import { PERMISSIONS, PermissionSchema, ROLES } from '~/lib/permissions'
 
 /** Shared by the /admin/site forms and the server functions that save them. */
 
@@ -148,3 +150,176 @@ export const SaveMediaSlotsSchema = z.object({
 })
 
 export type SaveMediaSlotsInput = z.input<typeof SaveMediaSlotsSchema>
+
+// ─── Blog Post & Use Case Admin Schemas ────────────────────────────────────────
+
+/** An author profile in /admin/authors. Messages are admin UI copy (Vietnamese, AGENTS.md §0.6). */
+export const AuthorFormSchema = z.object({
+  name: z.string().trim().min(2, 'Tên tác giả cần ít nhất 2 ký tự').max(100),
+  slug: z
+    .string()
+    .trim()
+    .min(2)
+    .max(60)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug chỉ gồm chữ thường, số và dấu gạch ngang'),
+  role: z.string().trim().max(100).default(''),
+  bio: z.string().trim().max(600, 'Giới thiệu tối đa 600 ký tự').default(''),
+  avatarUrl: z.string().trim().max(500).optional(),
+  profileUrl: z
+    .string()
+    .trim()
+    .max(300)
+    .refine((v) => v === '' || /^https:\/\//.test(v), 'Link hồ sơ phải bắt đầu bằng https://')
+    .optional(),
+  kind: z.enum(['person', 'organization']).default('person'),
+  /** Admin account that writes as this author; '' or null for none. */
+  userId: z
+    .string()
+    .trim()
+    .max(64)
+    .nullish()
+    .transform((v) => v || null),
+})
+
+export type AuthorFormInput = z.infer<typeof AuthorFormSchema>
+
+export const BlogPostFormSchema = z.object({
+  id: z.string().uuid().optional(),
+  title: z.string().trim().min(5, 'Title must be at least 5 characters').max(160),
+  slug: z
+    .string()
+    .trim()
+    .min(3, 'Slug must be at least 3 characters')
+    .max(100)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase alphanumeric with hyphens (e.g. my-post-title)'),
+  seoTitle: z.string().trim().max(120).optional(),
+  description: z.string().trim().min(10, 'Description must be at least 10 characters').max(600, 'Description must not exceed 600 characters'),
+  content: z.string().trim().min(10, 'Content must be at least 10 characters'),
+  coverUrl: z.string().trim().optional(),
+  coverAlt: z.string().trim().max(200).optional(),
+  category: z.string().trim().min(2).max(60).default('General'),
+  product: z.enum(['cms', 'pos', 'tracking', 'nfc']).default('cms'),
+  tags: z.array(z.string().trim().min(1).max(40)).default([]),
+  authorId: z.string().uuid().nullable().optional(),
+  authorName: z.string().trim().min(2).max(100).default('Viewixsoft Team'),
+  authorRole: z.string().trim().max(100).optional(),
+  keyTakeaways: z.array(z.string().trim().min(3).max(300)).default([]),
+  seoDescription: z.string().trim().max(160).optional(),
+  faq: z.array(FaqEntrySchema).max(8).default([]),
+  status: z.enum(['draft', 'published']).default('draft'),
+})
+
+export type BlogPostFormInput = z.infer<typeof BlogPostFormSchema>
+
+export const UseCaseFormSchema = z.object({
+  id: z.string().uuid().optional(),
+  title: z.string().trim().min(5, 'Title must be at least 5 characters').max(160),
+  slug: z
+    .string()
+    .trim()
+    .min(3, 'Slug must be at least 3 characters')
+    .max(100)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase alphanumeric with hyphens'),
+  seoTitle: z.string().trim().max(120).optional(),
+  industry: z.string().trim().min(2, 'Industry is required').max(60),
+  tagline: z.string().trim().min(5, 'Tagline is required').max(250),
+  coverUrl: z.string().trim().optional(),
+  coverAlt: z.string().trim().max(200).optional(),
+  results: z.array(ResultSchema).max(3).default([]),
+  quote: z
+    .object({
+      text: z.string().trim().min(5).max(1000),
+      author: z.string().trim().min(2).max(100),
+      title: z.string().trim().min(2).max(100),
+      company: z.string().trim().min(2).max(120),
+    })
+    .nullable()
+    .optional(),
+  featuredProducts: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1),
+        slug: z.string().trim().min(1),
+      }),
+    )
+    .default([]),
+  status: z.enum(['draft', 'published']).default('draft'),
+})
+  .merge(CaseStudyBlocksSchema)
+  .superRefine((data, ctx) => {
+    for (const message of storyProblems(data)) ctx.addIssue({ code: 'custom', path: ['results'], message })
+  })
+
+export type UseCaseFormInput = z.infer<typeof UseCaseFormSchema>
+
+export const FooterSettingsSchema = z.object({
+  legalEntity: z.object({
+    name: z.string().trim().min(1, 'Company name is required'),
+    businessRegistrationNo: z.string().trim().min(1, 'Registration number is required'),
+    addressLines: z.array(z.string().trim()).min(1, 'At least one address line is required'),
+    hotline: z.string().trim().optional().default(''),
+  }),
+  contacts: z.array(
+    z.object({
+      department: z.string().trim().min(1, 'Department is required'),
+      email: z.string().trim(),
+      phone: z.string().trim().optional().default(''),
+    }),
+  ),
+  socials: z.array(
+    z.object({
+      network: z.enum(['facebook', 'tiktok', 'linkedin', 'x', 'youtube']),
+      label: z.string(),
+      url: z.string().trim(),
+    }),
+  ),
+  copyright: z.string().trim().min(1, 'Copyright is required'),
+  companyLinks: z
+    .array(
+      z.object({
+        label: z.string().trim().min(1, 'Label is required'),
+        to: z.string().trim().min(1, 'Path is required'),
+      }),
+    )
+    .optional(),
+  legalLinks: z
+    .array(
+      z.object({
+        label: z.string().trim().min(1, 'Label is required'),
+        to: z.string().trim().min(1, 'Path is required'),
+      }),
+    )
+    .optional(),
+})
+
+export type FooterSettings = z.infer<typeof FooterSettingsSchema>
+
+export const PageVisibilitySchema = z.record(z.string(), z.boolean())
+export type PageVisibilityInput = z.infer<typeof PageVisibilitySchema>
+
+
+// Accounts in /admin/users. Messages are admin UI copy, so they are in Vietnamese.
+export const PASSWORD_MIN = 12
+
+export const PasswordSchema = z
+  .string()
+  .min(PASSWORD_MIN, `Mật khẩu cần ít nhất ${PASSWORD_MIN} ký tự`)
+  .max(128, 'Mật khẩu tối đa 128 ký tự')
+
+export const UserAccessSchema = z.object({
+  role: z.enum(ROLES),
+  permissions: z.array(PermissionSchema).max(PERMISSIONS.length),
+})
+
+export const UserCreateSchema = UserAccessSchema.extend({
+  name: z.string().trim().min(1, 'Nhập tên').max(120),
+  email: z.string().trim().toLowerCase().email('Email không hợp lệ'),
+  password: PasswordSchema,
+})
+export type UserCreateInput = z.infer<typeof UserCreateSchema>
+
+export const UserUpdateSchema = UserAccessSchema.extend({
+  userId: z.string().min(1),
+  name: z.string().trim().min(1, 'Nhập tên').max(120),
+})
+export type UserUpdateInput = z.infer<typeof UserUpdateSchema>

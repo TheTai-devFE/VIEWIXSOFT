@@ -25,6 +25,11 @@ export function buildTitle(title: string) {
   return title.includes(SITE_NAME) ? title : `${title} — ${SITE_NAME}`
 }
 
+/** An image or file URL for meta tags and JSON-LD: site paths get the site URL, media library URLs are already absolute. */
+export function assetUrl(src: string) {
+  return /^https?:\/\//.test(src) ? src : `${SITE_URL}${src}`
+}
+
 export function absoluteUrl(path = '/') {
   return path === '/' ? `${SITE_URL}/` : `${SITE_URL}${path}`
 }

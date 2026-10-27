@@ -36,7 +36,7 @@ export const ADMIN_PAGE_GROUPS: AdminPageGroup[] = [
     label: 'Main pages',
     pages: [
       { key: 'home', label: 'Home', path: '/', sections: 'home' },
-      { key: 'use-cases', label: 'Use cases', path: '/use-cases' },
+      { key: 'use-cases', label: 'Case studies', path: '/case-studies' },
       { key: 'pricing', label: 'Pricing', path: '/pricing' },
       { key: 'blog', label: 'Blog', path: '/blog' },
       { key: 'about', label: 'About', path: '/about', sections: 'about' },
@@ -55,11 +55,11 @@ export const ADMIN_PAGE_GROUPS: AdminPageGroup[] = [
   },
   {
     id: 'use-cases',
-    label: 'Use cases',
+    label: 'Case studies',
     pages: USE_CASES.map((u) => ({
       key: `use-case-${u.slug}`,
       label: USE_CASE_LABELS[u.slug] ?? u.industry,
-      path: `/use-cases/${u.slug}`,
+      path: `/case-studies/${u.slug}`,
       sections: 'use-case' as const,
     })),
   },

@@ -3,7 +3,9 @@ import { z } from 'zod'
 import { ALLOWED_VIDEO_TYPES, altFromFileName, MAX_VIDEO_BYTES } from '~/data/media-slots'
 import { MAX_CAPTIONS_BYTES } from '~/lib/section-content'
 import type { CaptionsFile } from '~/lib/section-content'
+import { can, UPLOAD_PERMISSIONS } from '~/lib/permissions'
 import { getAdminSession } from '~/server/auth'
+import { logActivity } from '~/server/activity/repository'
 import { errorFields, logger } from '~/server/logger'
 import { insertMediaAsset } from '~/server/media/repository'
 import { getStorage, UPLOAD_CACHE_CONTROL } from '~/server/media/storage'
@@ -61,6 +63,7 @@ export async function handleMediaUpload(request: Request) {
   if (origin && origin !== new URL(request.url).origin) return fail('Forbidden', 403)
   const admin = await getAdminSession()
   if (!admin) return fail('Sign in again to upload.', 401)
+  if (!can(admin, ...UPLOAD_PERMISSIONS)) return fail('Your account cannot upload files.', 403)
 
   // Refuse oversized bodies before reading them into memory.
   const length = Number(request.headers.get('content-length') ?? 0)
@@ -116,6 +119,7 @@ export async function handleMediaUpload(request: Request) {
         uploadedBy: admin.email,
       })
       logger.info('admin.media_uploaded', { bytes, contentType, direct: true })
+      await logActivity(admin, 'media.upload', { type: 'media', label: name })
       return ok({ ok: true, kind: 'video' })
     }
 
@@ -155,6 +159,7 @@ export async function handleMediaUpload(request: Request) {
       uploadedBy: admin.email,
     })
     logger.info('admin.media_uploaded', { bytes: bytes.length, contentType })
+    await logActivity(admin, 'media.upload', { type: 'media', label: fileName })
     return ok({ ok: true, kind: 'video' })
   } catch (error) {
     logger.error('admin.media_upload_failed', errorFields(error))

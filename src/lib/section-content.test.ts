@@ -179,3 +179,14 @@ describe('capabilities label', () => {
     expect(resolveSectionContent('product-cms:capabilities', saved).eyebrow).toBe('Features')
   })
 })
+
+describe('About at a glance', () => {
+  it('keeps exactly four figures', () => {
+    const { schema, defaults } = SECTION_CONTENT['about:facts']
+    expect(schema.safeParse({ ...defaults, items: defaults.items.slice(0, 3) }).success).toBe(false)
+  })
+
+  it('takes the founding year from the company facts', () => {
+    expect(SECTION_CONTENT['about:facts'].defaults.items[0]?.value).toBe('2026')
+  })
+})

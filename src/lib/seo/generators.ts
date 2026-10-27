@@ -13,6 +13,8 @@ import type { PricingPlans } from '~/lib/pricing'
 import { SECTION_CONTENT } from '~/lib/section-content'
 import { absoluteUrl, SITE_NAME, SITE_URL } from '~/lib/seo/meta'
 import { AI_CRAWLER_POLICY, AI_CRAWLERS, DISALLOWED_PATHS, STATIC_PAGES } from '~/lib/seo/site-pages'
+import { isPageVisible } from '~/lib/page-visibility'
+import type { SiteConfig } from '~/lib/site-config'
 
 /*
  * Pure builders for sitemap.xml, robots.txt, rss.xml, llms.txt, llms-full.txt
@@ -31,29 +33,58 @@ function escapeXml(value: string) {
 
 const latest = (dates: string[]) => dates.reduce((a, b) => (b > a ? b : a), '')
 
+export interface PublishedPost {
+  post: BlogPost
+  /** The post's Markdown, for the .md twin and llms-full.txt. */
+  body: string
+}
+
+/** What the generators publish; the server loads it from the admin and the bundled files (src/server/content/published.ts). */
+export interface PublishedContent {
+  posts: PublishedPost[]
+  useCases: UseCase[]
+}
+
+/** The bundled files alone, for tests and as a fallback. */
+export function bundledContent(postBody: (slug: string) => string | null = () => null): PublishedContent {
+  return {
+    posts: PUBLISHED_POSTS.map((post) => ({ post, body: postBody(post.slug) ?? '' })),
+    useCases: USE_CASES,
+  }
+}
+
 export interface SitemapEntry {
   path: string
   lastmod: string
 }
 
-/** Products as published: pass `visibleProducts(config)` so hidden ones drop out. */
-export function sitemapEntries(products: Product[] = PRODUCTS): SitemapEntry[] {
-  const useCasesLastmod = latest(USE_CASES.map((u) => u.updatedAt))
-  const blogLastmod = latest(PUBLISHED_POSTS.map((b) => b.updatedAt))
+/** Products as published: pass `visibleProducts(config)` so hidden ones drop out. Pass `config` to drop hidden pages. */
+export function sitemapEntries(
+  products: Product[] = PRODUCTS,
+  config?: SiteConfig | null,
+  content: PublishedContent = bundledContent(),
+): SitemapEntry[] {
+  const posts = content.posts.map((p) => p.post)
   // Index pages change whenever an item in their collection does.
   const collectionLastmod: Record<string, string> = {
-    '/use-cases': useCasesLastmod,
-    '/blog': blogLastmod,
+    '/case-studies': latest(content.useCases.map((u) => u.updatedAt)),
+    '/blog': latest(posts.map((b) => b.updatedAt)),
   }
 
+  const staticPages = STATIC_PAGES.filter((p) => isPageVisible(config, p.path))
+
   return [
-    ...STATIC_PAGES.map((p) => ({
+    ...staticPages.map((p) => ({
       path: p.path,
       lastmod: latest([p.updatedAt, collectionLastmod[p.path] ?? '']),
     })),
-    ...products.map((p) => ({ path: `/products/${p.slug}`, lastmod: p.updatedAt })),
-    ...USE_CASES.map((u) => ({ path: `/use-cases/${u.slug}`, lastmod: u.updatedAt })),
-    ...PUBLISHED_POSTS.map((b) => ({ path: `/blog/${b.slug}`, lastmod: b.updatedAt })),
+    ...products
+      .filter((p) => isPageVisible(config, `/products/${p.slug}`))
+      .map((p) => ({ path: `/products/${p.slug}`, lastmod: p.updatedAt })),
+    ...content.useCases
+      .filter((u) => isPageVisible(config, `/case-studies/${u.slug}`))
+      .map((u) => ({ path: `/case-studies/${u.slug}`, lastmod: u.updatedAt })),
+    ...(isPageVisible(config, '/blog') ? posts.map((b) => ({ path: `/blog/${b.slug}`, lastmod: b.updatedAt })) : []),
   ]
 }
 
@@ -130,12 +161,12 @@ function statusLabel(p: Product) {
   return p.status === 'available' ? 'available now' : 'coming soon'
 }
 
-export function buildLlmsTxt(published: Product[] = PRODUCTS) {
+export function buildLlmsTxt(published: Product[] = PRODUCTS, content: PublishedContent = bundledContent()) {
   const products = published.map(
     (p) => `- [${p.name}](${SITE_URL}/products/${p.slug}.md) (${statusLabel(p)}): ${PRODUCT_ONE_LINERS[p.slug] ?? p.tagline}`,
   )
-  const useCases = USE_CASES.map((u) => `- [${u.title}](${SITE_URL}/use-cases/${u.slug}.md): ${u.tagline}`)
-  const posts = PUBLISHED_POSTS.map((b) => `- [${b.title}](${SITE_URL}/blog/${b.slug}.md): ${b.description}`)
+  const useCases = content.useCases.map((u) => `- [${u.title}](${SITE_URL}/case-studies/${u.slug}.md): ${u.tagline}`)
+  const posts = content.posts.map(({ post: b }) => `- [${b.title}](${SITE_URL}/blog/${b.slug}.md): ${b.description}`)
   return [
     `# ${SITE_NAME}`,
     '',
@@ -145,7 +176,7 @@ export function buildLlmsTxt(published: Product[] = PRODUCTS) {
     '',
     ...products,
     '',
-    '## Use cases',
+    '## Case studies',
     '',
     ...useCases,
     '',
@@ -161,7 +192,7 @@ export function buildLlmsTxt(published: Product[] = PRODUCTS) {
     '',
     '## Optional',
     '',
-    `- [Full text](${SITE_URL}/llms-full.txt): Every product, use case and post in one file.`,
+    `- [Full text](${SITE_URL}/llms-full.txt): Every product, case study and post in one file.`,
     '',
   ].join('\n')
 }
@@ -195,28 +226,43 @@ export function productMarkdown(p: Product) {
     lines.push(...group.items.map((i) => `- ${i.label}: ${i.value}`), '')
   }
   if (p.relatedUseCases.length) {
-    lines.push('## Use cases', '', ...p.relatedUseCases.map((u) => `- [${u.title}](${SITE_URL}/use-cases/${u.slug})`), '')
+    lines.push('## Case studies', '', ...p.relatedUseCases.map((u) => `- [${u.title}](${SITE_URL}/case-studies/${u.slug})`), '')
   }
   if (p.faq.length) lines.push('## FAQ', '', ...faqMarkdown(p.faq))
   return lines.join('\n')
 }
 
 export function useCaseMarkdown(u: UseCase) {
+  const section = (heading: string, lines: string[]) => (lines.length > 0 ? [`## ${heading}`, '', ...lines, ''] : [])
+  const productLink = (slug: string | null, name: string) => (slug ? `[${name}](${SITE_URL}/products/${slug})` : name)
+  // Figures and quotes are published only on approved customer stories, same as the page.
+  const isStory = u.mode === 'story'
+
   return [
     `# ${u.title}`,
     '',
     `> ${u.tagline}`,
     '',
-    `Industry: ${u.industry}. Last updated: ${u.updatedAt}. Source: ${SITE_URL}/use-cases/${u.slug}`,
+    `Industry: ${u.industry}. Type: ${isStory ? 'customer story' : 'industry guide'}. Last updated: ${u.updatedAt}. Source: ${SITE_URL}/case-studies/${u.slug}`,
     '',
-    `## ${u.challengeHeading}`,
-    '',
-    u.challenge,
-    '',
-    `## ${u.solutionHeading}`,
-    '',
-    u.solution,
-    '',
+    ...section('Highlights', u.highlights.map((h) => `- **${h.title}.** ${h.description}`)),
+    ...u.sections.flatMap((s) => [`## ${s.heading}`, '', s.body, '']),
+    ...section(
+      `Viewixsoft products for ${u.industry.toLowerCase()}`,
+      u.setup.map((s) => `- ${productLink(s.productSlug, s.name)} (${s.productSlug ? s.need : 'hardware'})${s.role ? `: ${s.role}` : ''}`),
+    ),
+    ...(isStory
+      ? [
+          ...section('Customer stories', u.stories.flatMap((st) => [`> ${st.quote}`, `> — ${st.role}, ${st.team} (${st.topic})`, ''])),
+          ...section(
+            'Results',
+            u.results.map(
+              (r) => `- ${r.metric} ${r.label}${r.baseline ? ` (before: ${r.baseline})` : ''}. ${[r.period, r.source].filter(Boolean).join(', ')}`,
+            ),
+          ),
+        ]
+      : []),
+    ...section('FAQ', u.faq.flatMap((f) => [`### ${f.question}`, '', f.answer, ''])),
     '## Products used',
     '',
     ...u.featuredProducts.map((p) => `- [${p.name}](${SITE_URL}/products/${p.slug})`),
@@ -245,7 +291,7 @@ export function blogPostMarkdown(b: BlogPost, body: string) {
 
 export function buildLlmsFullTxt(
   published: Product[] = PRODUCTS,
-  postBody: (slug: string) => string | null = () => null,
+  content: PublishedContent = bundledContent(),
   homeFaq: { question: string; answer: string }[] = HOME_FAQ,
   prices: PricingPlans = SECTION_CONTENT['product-cms:pricing-plans'].defaults,
 ) {
@@ -261,8 +307,8 @@ export function buildLlmsFullTxt(
     '',
     ...faqMarkdown(pricingFaq(prices)),
     ...published.map((p) => productMarkdown(p).replace(/^# /, '## ').replace(/\n## /g, '\n### ')),
-    ...USE_CASES.map((u) => useCaseMarkdown(u).replace(/^# /, '## ').replace(/\n## /g, '\n### ')),
-    ...PUBLISHED_POSTS.map((b) => blogPostMarkdown(b, postBody(b.slug) ?? '').replace(/^# /, '## ')),
+    ...content.useCases.map((u) => useCaseMarkdown(u).replace(/^# /, '## ').replace(/\n## /g, '\n### ')),
+    ...content.posts.map(({ post, body }) => blogPostMarkdown(post, body).replace(/^# /, '## ')),
   ].join('\n')
 }
 

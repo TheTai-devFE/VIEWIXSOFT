@@ -9,6 +9,7 @@ import { isSectionEnabled, orderSections, productStatus } from '~/lib/site-confi
 import { useSiteConfig } from '~/lib/use-site-config'
 import { useSectionContent } from '~/lib/use-section-content'
 import { getSiteConfigFn } from '~/server/functions/site'
+import { isPageVisible } from '~/lib/page-visibility'
 import type { Product } from '~/content/products'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { getSoftwareApplicationSchema, getFaqSchema, getBreadcrumbSchema, getVideoSchema } from '~/lib/seo/jsonld'
@@ -22,6 +23,7 @@ import { CmsHero } from '~/components/blocks/CmsHero'
 import { SectionHeading } from '~/components/blocks/SectionHeading'
 import { ScreenBandSection } from '~/components/blocks/ScreenBandSection'
 import { CmsCapabilitiesSection } from '~/components/blocks/cms-capabilities'
+import { LeadForm } from '~/components/blocks/LeadForm'
 import { Reveal } from '~/components/ui/reveal'
 import { 
   CheckCircle2, ArrowRight, Layers,   Monitor, Cpu, Activity, Smartphone, Sparkles 
@@ -51,7 +53,9 @@ export const Route = createFileRoute('/products/$slug')({
     const base = PRODUCTS.find((p) => p.slug === params.slug)
     if (!base) throw notFound()
     // The admin can switch a product between available, coming soon and hidden.
-    const status = productStatus(await getSiteConfigFn(), base)
+    const config = await getSiteConfigFn()
+    if (!isPageVisible(config, `/products/${base.slug}`)) throw notFound()
+    const status = productStatus(config, base)
     if (status === 'hidden') throw notFound()
     return { product: { ...base, status } }
   },
@@ -186,13 +190,49 @@ function ProductDetailPage() {
     </section>
   )
   const faq = (
-    <section aria-labelledby="product-faq-title" className="space-y-8 border-t border-ink-900 pt-16">
+    <section aria-labelledby="product-faq-title" className="space-y-12 border-t border-ink-900 pt-16">
       <SectionHeading
         id="product-faq-title"
         eyebrow={isCms ? cmsFaq.eyebrow : 'Product FAQ'}
         title={isCms ? cmsFaq.title : 'Frequently asked questions'}
+        description={
+          isCms
+            ? 'Answers to common technical questions about Viewixsoft CMS. Have specific network requirements or need custom pricing? Contact our sales team directly.'
+            : undefined
+        }
       />
-      <FaqAccordion items={faqItems} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        {/* Left column: FAQ questions */}
+        <div className="lg:col-span-6 space-y-6">
+          <div>
+            <h3 className="font-display text-xl font-semibold text-ink-50">
+              Common questions
+            </h3>
+            <p className="mt-1 text-sm text-ink-400">
+              Quick answers about playback stability, remote screen controls, and hardware support.
+            </p>
+          </div>
+          <FaqAccordion items={faqItems} className="w-full max-w-none" />
+        </div>
+
+        {/* Right column: Contact sales form */}
+        <div className="lg:col-span-6 space-y-6">
+          <div>
+            <h3 className="font-display text-xl font-semibold text-ink-50">
+              Contact sales & request a demo
+            </h3>
+            <p className="mt-1 text-sm text-ink-400">
+              Speak with a Viewixsoft specialist about screen compatibility, volume licensing, or hardware procurement.
+            </p>
+          </div>
+          <LeadForm
+            variant="quick"
+            idPrefix="product-faq-contact"
+            submitLabel="Contact sales"
+          />
+        </div>
+      </div>
     </section>
   )
 

@@ -1,27 +1,34 @@
 import { Fragment } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, notFound } from '@tanstack/react-router'
 import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { getBreadcrumbSchema } from '~/lib/seo/jsonld'
-import { ThreeDMarquee } from '~/components/ui/3d-marquee'
 import { Reveal } from '~/components/ui/reveal'
 import { CustomerMarquee } from '~/components/blocks/CustomerMarquee'
 import { SectionHeading } from '~/components/blocks/SectionHeading'
 import { AboutVision } from '~/components/blocks/AboutVision'
+import { AboutFacts } from '~/components/blocks/AboutFacts'
 import { EARLY_CUSTOMER_PLACEHOLDERS } from '~/data/early-customers'
 import type { EarlyCustomer } from '~/data/early-customers'
 import { AboutResults, resultStories } from '~/components/blocks/AboutResults'
 import { orderSections, SHOW_SAMPLE_CONTENT } from '~/lib/site-config'
 import { useSectionContent } from '~/lib/use-section-content'
 import { useSiteConfig } from '~/lib/use-site-config'
-import { imageUrl, useMedia, useScreenWall } from '~/lib/use-media'
+import { imageUrl, useMedia } from '~/lib/use-media'
 import { RollLink } from '~/components/ui/roll-link'
 import { cn } from '~/lib/cn'
+import { getSiteConfigFn } from '~/server/functions/site'
+import { isPageVisible } from '~/lib/page-visibility'
 
 export const Route = createFileRoute('/about')({
+  loader: async () => {
+    const config = await getSiteConfigFn()
+    if (!isPageVisible(config, 'about')) throw notFound()
+  },
   head: ({ matches }) => {
+    const config = siteConfigFromMatches(matches)
     const seo = generateMetaTags({
-      ...pageContent(siteConfigFromMatches(matches), 'about').seo,
+      ...pageContent(config, 'about').seo,
       canonicalUrl: '/about',
     })
     return {
@@ -43,9 +50,13 @@ export const Route = createFileRoute('/about')({
   component: AboutPage,
 })
 
+// Opt-in per deploy (a Vercel preview, say); leave unset on viewixsoft.com.
+const SHOW_PLACEHOLDER_QUOTES = SHOW_SAMPLE_CONTENT || import.meta.env.VITE_PUBLIC_SHOW_PLACEHOLDER_QUOTES === 'true'
+
 /**
- * Approved testimonials from /admin/site. Placeholders show in the dev server
- * only; production hides the section until a real quote is approved.
+ * Approved testimonials from /admin/site. Until one is approved, lorem ipsum
+ * placeholders show in the dev server or when SHOW_PLACEHOLDER_QUOTES is on;
+ * otherwise the section is hidden.
  */
 function useCustomers(): EarlyCustomer[] {
   const { testimonials } = useSiteConfig()
@@ -60,7 +71,7 @@ function useCustomers(): EarlyCustomer[] {
       rating: toRating(t.rating),
     }))
   }
-  return SHOW_SAMPLE_CONTENT ? EARLY_CUSTOMER_PLACEHOLDERS : []
+  return SHOW_PLACEHOLDER_QUOTES ? EARLY_CUSTOMER_PLACEHOLDERS : []
 }
 
 function toRating(value: number | null): EarlyCustomer['rating'] {
@@ -77,6 +88,7 @@ function AboutPage() {
   // Order and visibility come from /admin/pages → About; text from each section's editor there.
   const sections = orderSections(config, 'about', {
     hero: <AboutHero />,
+    facts: <AboutFacts />,
     story: <AboutStory />,
     vision: <AboutVision id="vision" />,
     results: stories.length > 0 && <AboutResults stories={stories} />,
@@ -92,14 +104,21 @@ function AboutPage() {
 }
 
 function AboutHero() {
-  // Twelve tiles so each of the marquee's three columns stays full.
-  const wall = useScreenWall(12)
+  const photo = useMedia('about.hero')
   const { eyebrow, title, highlight, description } = useSectionContent('about:hero')
   return (
     <header className="relative isolate overflow-hidden px-4 py-24 text-center sm:px-6 md:py-32">
-      <div className="absolute inset-0 -z-10 opacity-60" aria-hidden="true">
-        <ThreeDMarquee images={wall} className="h-full max-xl:h-full max-sm:h-full rounded-none" />
-      </div>
+      {photo && (
+        <img
+          src={imageUrl(photo.src, 2400)}
+          alt=""
+          width={photo.width}
+          height={photo.height}
+          loading="eager"
+          fetchPriority="high"
+          className="absolute inset-0 -z-10 size-full object-cover opacity-60"
+        />
+      )}
       <div
         className="absolute inset-0 -z-10 bg-radial from-ink-950 from-25% via-ink-950/85 to-ink-950/40"
         aria-hidden="true"

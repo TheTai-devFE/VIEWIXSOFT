@@ -1,6 +1,7 @@
 import { useBlocker, useRouter } from '@tanstack/react-router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { EditorHandle, SaveState } from '~/components/admin/admin-ui'
+import { useConfirm } from '~/components/ui/feedback'
 
 interface Binding {
   ref: (handle: EditorHandle | null) => void
@@ -15,6 +16,7 @@ interface Binding {
  */
 export function useSaveAll() {
   const router = useRouter()
+  const confirm = useConfirm()
   const handles = useRef(new Map<string, EditorHandle>())
   const bindings = useRef(new Map<string, Binding>())
   const [dirtyKeys, setDirtyKeys] = useState<ReadonlySet<string>>(() => new Set())
@@ -67,7 +69,17 @@ export function useSaveAll() {
   }, [isDirty, saving, save])
 
   useBlocker({
-    shouldBlockFn: () => isDirty && !window.confirm('You have unsaved changes. Leave without saving?'),
+    shouldBlockFn: async () => {
+      if (!isDirty) return false
+      const leave = await confirm({
+        title: 'Rời trang khi chưa lưu?',
+        description: 'Những thay đổi chưa lưu trên trang này sẽ mất.',
+        confirmText: 'Rời trang',
+        cancelText: 'Ở lại',
+        tone: 'danger',
+      })
+      return !leave
+    },
     enableBeforeUnload: isDirty,
   })
 

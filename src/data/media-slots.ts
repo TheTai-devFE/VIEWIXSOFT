@@ -27,6 +27,17 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
 const stockPhoto = (file: string) => STOCK_SCREEN_IMAGES.find((img) => img.src.endsWith(file)) ?? null
 
 export const MEDIA_SLOTS: MediaSlot[] = [
+  {
+    key: 'about.hero',
+    group: 'About photos',
+    label: 'Hero photo',
+    guidance: 'Wide photo of screens in a real place, 16:9, WebP, 2400 × 1350.',
+    fallback: (() => {
+      const photo = stockPhoto('digital-menu-boards.webp')
+      return photo ? { ...photo, width: 960, height: 540 } : null
+    })(),
+    places: [{ page: 'about', section: 'hero' }],
+  },
   // The two photos beside the About page story, small on the left and large on the right.
   ...[
     { key: 'about.story.small', label: 'Story photo, small', guidance: 'Screens in a real place, 4:3, WebP, 1200 × 900.', file: 'retail-screens.webp' },
@@ -54,11 +65,8 @@ export const MEDIA_SLOTS: MediaSlot[] = [
     label: img.alt,
     guidance: 'Screens in a real place, 16:9, WebP, 1600 × 900. Avoid third-party logos.',
     fallback: { ...img, width: 960, height: 540 },
-    // The screen walls behind the home use cases section and the About hero.
-    places: [
-      { page: 'home', section: 'use-cases' },
-      { page: 'about', section: 'hero' },
-    ],
+    // The screen wall behind the home use cases section.
+    places: [{ page: 'home', section: 'use-cases' }],
   })),
 ]
 

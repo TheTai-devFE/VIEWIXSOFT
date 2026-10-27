@@ -3,6 +3,7 @@ import { revalidateLogic, useForm } from '@tanstack/react-form'
 import { useState } from 'react'
 import { buttonPrimary, buttonSecondary, firstError, Panel, SaveStatus } from '~/components/admin/admin-ui'
 import type { SaveState } from '~/components/admin/admin-ui'
+import { useConfirm, useToast } from '~/components/ui/feedback'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { TestimonialSchema } from '~/lib/admin-schemas'
@@ -57,6 +58,8 @@ function toForm(t: SavedTestimonial): FormValues {
 /** Customer quotes for the About page. Only approved quotes with a consent date are shown. */
 export function TestimonialsEditor({ saved }: { saved: SavedTestimonial[] }) {
   const router = useRouter()
+  const confirm = useConfirm()
+  const toast = useToast()
   const [editing, setEditing] = useState<FormValues>(EMPTY)
   const [formKey, setFormKey] = useState(0)
 
@@ -87,11 +90,20 @@ export function TestimonialsEditor({ saved }: { saved: SavedTestimonial[] }) {
                 <button
                   type="button"
                   className={buttonSecondary}
-                  onClick={async () => {
-                    if (!window.confirm(`Delete the quote from ${t.name}?`)) return
-                    await deleteTestimonialFn({ data: { id: t.id } })
-                    await router.invalidate()
-                  }}
+                  onClick={() =>
+                    confirm({
+                      title: `Xoá trích dẫn của ${t.name}?`,
+                      description: 'Trích dẫn này sẽ không còn hiện trên website.',
+                      confirmText: 'Xoá trích dẫn',
+                      tone: 'danger',
+                      onConfirm: async () => {
+                        const res = await deleteTestimonialFn({ data: { id: t.id } })
+                        if (!res.ok) return res.error
+                        await router.invalidate()
+                        toast({ title: 'Đã xoá trích dẫn', description: t.name, tone: 'success' })
+                      },
+                    })
+                  }
                 >
                   Delete
                 </button>

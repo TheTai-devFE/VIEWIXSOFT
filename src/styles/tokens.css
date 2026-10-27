@@ -11,8 +11,8 @@
 
 @theme {
   /* Typography */
-  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Manrope', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Neutral "ink" scale (warm carbon → newsprint paper) */
@@ -87,6 +87,9 @@
 
   /* Page gutter: content runs full width; the side space grows with the screen. */
   --spacing-page-gutter: clamp(1rem, 4vw, 6rem);
+
+  /* Container max width for wide displays (Google Antigravity layout standard) */
+  --container-max: 100rem;
 
   /* Fluid type scale */
   --text-hero: clamp(2.25rem, 3.4vw + 0.9rem, 4.25rem);

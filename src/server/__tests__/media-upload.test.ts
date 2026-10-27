@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const session = vi.fn<() => Promise<{ email: string } | null>>()
+const session = vi.fn<() => Promise<{ userId?: string; name?: string; email: string; role: 'admin' | 'user'; permissions: string[] } | null>>()
 const put = vi.fn(async (key: string) => ({ url: `/media-dev/${key}` }))
 const remove = vi.fn(async () => undefined)
 // Set per test: R2's browser-to-bucket uploads, or undefined for local storage.
@@ -15,6 +15,7 @@ vi.mock('~/server/media/storage', () => ({
   getStorage: () => ({ put, remove, direct, urlFor: (k: string) => `https://cdn.example/${k}` }),
 }))
 vi.mock('~/server/media/repository', () => ({ insertMediaAsset }))
+vi.mock('~/server/activity/repository', () => ({ logActivity: vi.fn() }))
 vi.mock('~/server/logger', () => ({ logger: { info: vi.fn(), error: vi.fn() }, errorFields: () => ({}) }))
 
 const { handleMediaUpload } = await import('~/routes/api/admin/media-upload')
@@ -31,7 +32,7 @@ const video = { kind: 'video', file: new Blob([MP4]), width: '1920', height: '10
 
 describe('media upload route', () => {
   beforeEach(() => {
-    session.mockResolvedValue({ email: 'admin@example.com' })
+    session.mockResolvedValue({ email: 'admin@example.com', role: 'admin', permissions: [] })
     put.mockClear()
     remove.mockClear()
     insertMediaAsset.mockClear()
@@ -57,6 +58,17 @@ describe('media upload route', () => {
     session.mockResolvedValue(null)
     expect((await handleMediaUpload(request(video))).status).toBe(401)
     expect(put).not.toHaveBeenCalled()
+  })
+
+  it('refuses accounts without an editor or media permission', async () => {
+    session.mockResolvedValue({ email: 'sales@example.com', role: 'user', permissions: ['leads'] })
+    expect((await handleMediaUpload(request(video))).status).toBe(403)
+    expect(put).not.toHaveBeenCalled()
+  })
+
+  it('lets a blog writer upload', async () => {
+    session.mockResolvedValue({ email: 'mkt@example.com', role: 'user', permissions: ['blog'] })
+    expect((await handleMediaUpload(request(video))).status).toBe(200)
   })
 
   it('refuses cross-site posts', async () => {

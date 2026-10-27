@@ -4,7 +4,10 @@ import { MetricsEditor } from '~/components/admin/MetricsEditor'
 import { getSiteAdminDataFn } from '~/server/functions/site-admin'
 
 export const Route = createFileRoute('/admin/stats')({
-  loader: () => getSiteAdminDataFn(),
+  loader: {
+    staleReloadMode: 'blocking',
+    handler: () => getSiteAdminDataFn(),
+  },
   component: StatsModule,
 })
 

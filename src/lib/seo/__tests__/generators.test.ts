@@ -4,6 +4,7 @@ import { PRODUCTS } from '~/content/products'
 import { USE_CASES } from '~/content/useCases'
 import {
   buildLlmsFullTxt,
+  bundledContent,
   buildLlmsTxt,
   buildRobotsTxt,
   buildRssXml,
@@ -12,6 +13,7 @@ import {
   sitemapEntries,
 } from '~/lib/seo/generators'
 import { AI_CRAWLERS } from '~/lib/seo/site-pages'
+import { SITE_URL } from '~/lib/seo/meta'
 
 /** Split robots.txt into { agent → rules } groups. */
 function robotsGroups(txt: string) {
@@ -29,7 +31,7 @@ describe('sitemap', () => {
   it('lists every product, use case and post', () => {
     const paths = entries.map((e) => e.path)
     for (const p of PRODUCTS) expect(paths).toContain(`/products/${p.slug}`)
-    for (const u of USE_CASES) expect(paths).toContain(`/use-cases/${u.slug}`)
+    for (const u of USE_CASES) expect(paths).toContain(`/case-studies/${u.slug}`)
     for (const b of BLOG_POSTS.filter((p) => !p.draft)) expect(paths).toContain(`/blog/${b.slug}`)
     for (const b of BLOG_POSTS.filter((p) => p.draft)) expect(paths).not.toContain(`/blog/${b.slug}`)
   })
@@ -53,6 +55,25 @@ describe('sitemap', () => {
     const xml = buildSitemapXml()
     expect(xml).toContain('<loc>https://viewixsoft.com/</loc>')
     expect(xml).toContain('<loc>https://viewixsoft.com/products/cms</loc>')
+  })
+
+  it('filters out hidden pages and collections from sitemap when config hides them', () => {
+    const mockConfig = {
+      content: {
+        'global:page_visibility': {
+          pricing: false,
+          blog: false,
+        },
+      },
+    } as any
+
+    const filtered = sitemapEntries(PRODUCTS, mockConfig)
+    const paths = filtered.map((e) => e.path)
+    expect(paths).not.toContain('/pricing')
+    expect(paths).not.toContain('/blog')
+    expect(paths.some((p) => p.startsWith('/blog/'))).toBe(false)
+    expect(paths).toContain('/')
+    expect(paths).toContain('/about')
   })
 })
 
@@ -90,7 +111,7 @@ describe('rss', () => {
 describe('llms.txt and Markdown twins', () => {
   it('lists the home FAQ it is given, so admin edits reach llms-full.txt', () => {
     const faq = [{ question: 'Can I edit this FAQ?', answer: 'Yes, from the admin.' }]
-    const txt = buildLlmsFullTxt(PRODUCTS, () => null, faq)
+    const txt = buildLlmsFullTxt(PRODUCTS, bundledContent(), faq)
     expect(txt).toContain('Can I edit this FAQ?')
     expect(txt).toContain('Yes, from the admin.')
   })
@@ -110,5 +131,30 @@ describe('llms.txt and Markdown twins', () => {
     const md = productMarkdown(cms)
     expect(md.startsWith('# Viewixsoft CMS')).toBe(true)
     expect(md).toContain('Status: available now')
+  })
+})
+
+describe('admin content in the generated files', () => {
+  const base = BLOG_POSTS[0]
+  if (!base) throw new Error('These tests need at least one bundled post')
+  const adminPost = {
+    ...base,
+    slug: 'written-in-admin',
+    title: 'Written in the admin',
+    publishedAt: '2030-01-01',
+    updatedAt: '2030-01-02',
+    draft: false,
+  }
+  const content = { posts: [{ post: adminPost, body: '## Section\n\nAdmin body text.' }], useCases: [] }
+
+  it('lists admin posts in the sitemap, llms.txt and llms-full.txt', () => {
+    expect(sitemapEntries(PRODUCTS, null, content).map((e) => e.path)).toContain('/blog/written-in-admin')
+    expect(buildLlmsTxt(PRODUCTS, content)).toContain(`${SITE_URL}/blog/written-in-admin.md`)
+    expect(buildLlmsFullTxt(PRODUCTS, content)).toContain('Admin body text.')
+  })
+
+  it('dates the blog index by its newest post', () => {
+    const blog = sitemapEntries(PRODUCTS, null, content).find((e) => e.path === '/blog')
+    expect(blog?.lastmod).toBe('2030-01-02')
   })
 })

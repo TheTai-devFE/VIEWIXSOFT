@@ -163,6 +163,28 @@ export const PAGE_TEXT_EDITORS = {
       ],
     },
   },
+  'about:facts': {
+    name: 'At a glance',
+    spec: {
+      intro:
+        'Four figures in a row under the hero. Only publish figures with a source: the defaults come from the Viewixsoft team and viewixfactory.com.',
+      fields: [
+        eyebrow,
+        { kind: 'text', name: 'title', label: 'Heading' },
+        description,
+        {
+          kind: 'fixedItems',
+          name: 'items',
+          label: 'Figures',
+          itemLabel: 'Figure',
+          fields: [
+            { name: 'value', label: 'Figure (a year, number or name)' },
+            { name: 'label', label: 'What it means', rows: 2 },
+          ],
+        },
+      ],
+    },
+  },
   'about:customers': {
     name: 'First customers',
     spec: {

@@ -17,9 +17,12 @@ import {
 } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/leads')({
-  loader: async () => {
-    const res = await getLeadsFn()
-    return { initialLeads: res.leads, loadFailed: !res.ok }
+  loader: {
+    staleReloadMode: 'blocking',
+    handler: async () => {
+      const res = await getLeadsFn()
+      return { initialLeads: res.leads, loadFailed: !res.ok }
+    },
   },
   head: () => {
     const seo = generateMetaTags({

@@ -15,6 +15,12 @@ export const CONTACT_EMAILS = [
   { department: 'Technical support', email: 'support@viewix.hk' },
 ] as const
 
+// Stated by the Viewixsoft team (2026-10-23).
+export const FOUNDED_YEAR = 2026
+
+// The Viewix catalogue as listed on viewixfactory.com, read 2026-10-23. Update when the catalogue changes.
+export const VIEWIX_CATALOGUE = { indoorSignage: 8, outdoorSignage: 2, interactiveDisplays: 1 } as const
+
 // Story copy approved by the Viewix team (2026-10-16). The Gen Z founding team
 // is their statement; no dates until they are confirmed.
 export const ORIGIN_STORY = [

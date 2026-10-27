@@ -30,6 +30,7 @@ Each role has a detailed playbook in `.claude/skills/`. Claude Code loads these 
 4. **Keep changes small and focused.** One concern per change. No drive-by refactors. No new dependency without stating why (see §11).
 5. **Verify before you claim it's done.** Run `typecheck`, `lint`, `test` and `build`. Report real results, including any failures.
 6. **Use English everywhere in the codebase:** UI copy, code, comments, commit messages, content.
+   - **Exception: the admin UI copy is in Vietnamese**, because the team running `/admin` is Vietnamese. This covers labels, buttons, hints and error messages shown in `/admin` (done so far: Blog and Case studies; other admin screens follow). Code, identifiers and comments stay in English, and so does everything published on the public site, including example placeholders for content fields.
 
 ---
 

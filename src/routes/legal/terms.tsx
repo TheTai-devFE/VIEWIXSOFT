@@ -1,9 +1,15 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, notFound } from '@tanstack/react-router'
 import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
 import { usePageContent } from '~/lib/use-page-content'
 import { generateMetaTags } from '~/lib/seo/meta'
+import { getSiteConfigFn } from '~/server/functions/site'
+import { isPageVisible } from '~/lib/page-visibility'
 
 export const Route = createFileRoute('/legal/terms')({
+  loader: async () => {
+    const config = await getSiteConfigFn()
+    if (!isPageVisible(config, 'legal-terms')) throw notFound()
+  },
   head: ({ matches }) => {
     const seo = generateMetaTags({
       ...pageContent(siteConfigFromMatches(matches), 'legal-terms').seo,

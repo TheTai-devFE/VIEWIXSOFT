@@ -1,10 +1,16 @@
-export interface UseCase {
+import { EMPTY_CASE_STUDY_BLOCKS } from '~/lib/case-study'
+import type { CaseStudyBlocks, CaseStudyResult, ContentSection } from '~/lib/case-study'
+
+export interface UseCase extends CaseStudyBlocks {
   slug: string
   title: string
   /** Search title, at most 47 characters so "Title — Viewixsoft" fits in 60. */
   seoTitle: string
   industry: string
-  /** Question-style H2s for the challenge and solution sections. */
+  /**
+   * The first article layout: a challenge and a solution. Kept for old rows
+   * and these samples; pages render `sections`, built from them when empty.
+   */
   challengeHeading: string
   solutionHeading: string
   publishedAt: string
@@ -16,7 +22,7 @@ export interface UseCase {
   tagline: string
   challenge: string
   solution: string
-  results: { metric: string; label: string }[]
+  results: CaseStudyResult[]
   featuredProducts: { name: string; slug: string }[]
   quote: {
     text: string
@@ -33,8 +39,9 @@ export interface UseCase {
  * before launch. Several stories also use Viewixsoft POS, Tracking and NFC,
  * which are not released yet.
  */
-export const USE_CASES: UseCase[] = [
+const SAMPLE_USE_CASES: UseCase[] = [
   {
+    ...EMPTY_CASE_STUDY_BLOCKS,
     slug: 'retail',
     title: 'Retail & Shopping Centers',
     seoTitle: 'Digital Signage for Retail Stores',
@@ -65,6 +72,7 @@ export const USE_CASES: UseCase[] = [
     }
   },
   {
+    ...EMPTY_CASE_STUDY_BLOCKS,
     slug: 'qsr-menu-boards',
     title: 'Restaurants & Digital Menu Boards',
     seoTitle: 'Digital Menu Boards for Restaurants and QSR',
@@ -95,6 +103,7 @@ export const USE_CASES: UseCase[] = [
     }
   },
   {
+    ...EMPTY_CASE_STUDY_BLOCKS,
     slug: 'corporate-comms',
     title: 'Offices & Corporate Campuses',
     seoTitle: 'Digital Signage for Corporate Communications',
@@ -125,6 +134,7 @@ export const USE_CASES: UseCase[] = [
     }
   },
   {
+    ...EMPTY_CASE_STUDY_BLOCKS,
     slug: 'hospitality',
     title: 'Hotels & Resorts',
     seoTitle: 'Digital Signage for Hotels and Resorts',
@@ -155,6 +165,7 @@ export const USE_CASES: UseCase[] = [
     }
   },
   {
+    ...EMPTY_CASE_STUDY_BLOCKS,
     slug: 'healthcare',
     title: 'Hospitals & Clinics',
     seoTitle: 'Digital Signage for Hospitals and Clinics',
@@ -184,3 +195,19 @@ export const USE_CASES: UseCase[] = [
     },
   }
 ]
+
+/** The two original paragraphs as content sections, for rows written before `sections` existed. */
+export function legacySections(
+  u: Pick<UseCase, 'challengeHeading' | 'challenge' | 'solutionHeading' | 'solution'>,
+): ContentSection[] {
+  return [
+    { heading: u.challengeHeading, body: u.challenge },
+    { heading: u.solutionHeading, body: u.solution },
+  ].filter((s) => s.heading.trim() && s.body.trim())
+}
+
+export const USE_CASES: UseCase[] = SAMPLE_USE_CASES.map((u) => ({
+  ...u,
+  sections: u.sections.length > 0 ? u.sections : legacySections(u),
+}))
+

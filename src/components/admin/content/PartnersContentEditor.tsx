@@ -141,7 +141,7 @@ export function PartnersContentEditor({
                               alt=""
                               width={partner.logo.width}
                               height={partner.logo.height}
-                              className="max-h-full w-auto object-contain"
+                              className="max-h-full max-w-full object-contain"
                             />
                           ) : (
                             <ImagePlus aria-hidden="true" className="size-5 text-ink-500 group-hover:text-ink-300" />

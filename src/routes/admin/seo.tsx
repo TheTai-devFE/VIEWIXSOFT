@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
 import { AdminPageHeader, LoadError, Panel, SaveAllActions } from '~/components/admin/admin-ui'
 import { SeoSnippetEditor } from '~/components/admin/SeoSnippetEditor'
+import { SeoGuide } from '~/components/admin/seo/SeoGuide'
 import { ADMIN_PAGE_GROUPS } from '~/data/admin-pages'
 import { pageDefaults } from '~/data/page-content'
 import { useSaveAll } from '~/hooks/use-save-all'
@@ -10,7 +11,10 @@ import { useSiteConfig } from '~/lib/use-site-config'
 import { getSiteAdminDataFn } from '~/server/functions/site-admin'
 
 export const Route = createFileRoute('/admin/seo')({
-  loader: () => getSiteAdminDataFn(),
+  loader: {
+    staleReloadMode: 'blocking',
+    handler: () => getSiteAdminDataFn(),
+  },
   component: SeoModule,
 })
 
@@ -33,7 +37,12 @@ function SeoModule() {
       <AdminPageHeader
         title="SEO & GEO"
         description="How your pages show up in Google search and in AI assistants such as ChatGPT, Claude and Perplexity."
-        actions={<SaveAllActions state={state} isDirty={isDirty} onSave={() => void save()} />}
+        actions={
+          <div className="flex flex-wrap items-center gap-3">
+            <SeoGuide />
+            <SaveAllActions state={state} isDirty={isDirty} onSave={() => void save()} />
+          </div>
+        }
       />
 
       {data.ok ? (

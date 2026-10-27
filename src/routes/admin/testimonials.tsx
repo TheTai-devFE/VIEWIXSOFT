@@ -4,7 +4,10 @@ import { TestimonialsEditor } from '~/components/admin/TestimonialsEditor'
 import { getSiteAdminDataFn } from '~/server/functions/site-admin'
 
 export const Route = createFileRoute('/admin/testimonials')({
-  loader: () => getSiteAdminDataFn(),
+  loader: {
+    staleReloadMode: 'blocking',
+    handler: () => getSiteAdminDataFn(),
+  },
   component: TestimonialsModule,
 })
 

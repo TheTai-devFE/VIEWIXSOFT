@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, notFound } from '@tanstack/react-router'
 import { PricingSection } from '~/components/blocks/PricingSection'
 import { FaqAccordion } from '~/components/blocks/FaqAccordion'
 import { CtaBand } from '~/components/blocks/CtaBand'
@@ -10,6 +10,8 @@ import { usePageContent } from '~/lib/use-page-content'
 import { HeroTitle } from '~/components/ui/hero-heading'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { getBreadcrumbSchema, getFaqSchema } from '~/lib/seo/jsonld'
+import { getSiteConfigFn } from '~/server/functions/site'
+import { isPageVisible } from '~/lib/page-visibility'
 
 const BREADCRUMBS = [
   { name: 'Home', path: '/' },
@@ -18,6 +20,10 @@ const BREADCRUMBS = [
 
 
 export const Route = createFileRoute('/pricing')({
+  loader: async () => {
+    const config = await getSiteConfigFn()
+    if (!isPageVisible(config, 'pricing')) throw notFound()
+  },
   head: ({ matches }) => {
     const config = siteConfigFromMatches(matches)
     const seo = generateMetaTags({

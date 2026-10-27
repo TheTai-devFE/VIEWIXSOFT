@@ -3,7 +3,7 @@ import { buildLlmsFullTxt, textResponse } from '~/lib/seo/generators'
 import { resolveSectionContent } from '~/lib/section-content'
 import { pricingFromConfig } from '~/lib/pricing'
 import { visibleProducts } from '~/lib/site-config'
-import { postMarkdown } from '~/server/content/blog-raw'
+import { loadPublishedContent } from '~/server/content/published'
 import { loadSiteConfig } from '~/server/site/config'
 
 export const Route = createFileRoute('/llms-full.txt')({
@@ -13,7 +13,7 @@ export const Route = createFileRoute('/llms-full.txt')({
         const config = await loadSiteConfig()
         const faq = resolveSectionContent('home:faq', config.content['home:faq']).items
         return textResponse(
-          buildLlmsFullTxt(visibleProducts(config), postMarkdown, faq, pricingFromConfig(config)),
+          buildLlmsFullTxt(visibleProducts(config), await loadPublishedContent(config), faq, pricingFromConfig(config)),
           'text/plain',
         )
       },

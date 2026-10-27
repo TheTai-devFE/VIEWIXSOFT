@@ -12,6 +12,7 @@ import { slotPages } from '~/data/media-slots'
 import type { MediaSlot } from '~/data/media-slots'
 import { MediaAltSchema } from '~/lib/admin-schemas'
 import { saveMediaSlotsFn } from '~/server/functions/media-admin'
+import { LazyImage } from '~/components/ui/lazy-image'
 
 
 type Pick = { assetId: string | null; alt: string }
@@ -91,12 +92,11 @@ export function MediaSlotsEditor({
           return (
             <li key={slot.key} className="flex flex-wrap items-start gap-4 px-4 py-3 sm:flex-nowrap">
               {shown ? (
-                <img
+                <LazyImage
                   src={shown.src}
                   alt=""
                   width={shown.width}
                   height={shown.height}
-                  loading="lazy"
                   className="aspect-4/3 w-24 shrink-0 rounded-md bg-ink-950 object-contain"
                 />
               ) : (

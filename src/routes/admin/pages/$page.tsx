@@ -1,5 +1,5 @@
-import { createFileRoute, Link, notFound } from '@tanstack/react-router'
-import { ArrowUpRight } from 'lucide-react'
+import { createFileRoute, Link, notFound, useRouter } from '@tanstack/react-router'
+import { ArrowUpRight, Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { AdminPageHeader, LoadError, Panel, SaveAllActions } from '~/components/admin/admin-ui'
@@ -22,14 +22,18 @@ import type { SectionDef } from '~/data/site-sections'
 import { useSaveAll } from '~/hooks/use-save-all'
 import { resolveSectionContent, sectionContentKey } from '~/lib/section-content'
 import { listMediaLibraryFn } from '~/server/functions/media-admin'
-import { getSiteAdminDataFn } from '~/server/functions/site-admin'
+import { getSiteAdminDataFn, togglePageVisibilityFn } from '~/server/functions/site-admin'
+import { cn } from '~/lib/cn'
 
 export const Route = createFileRoute('/admin/pages/$page')({
-  loader: async ({ params }) => {
-    const found = findAdminPage(params.page)
-    if (!found) throw notFound()
-    const [settings, media] = await Promise.all([getSiteAdminDataFn(), listMediaLibraryFn()])
-    return { ...found, settings, media }
+  loader: {
+    staleReloadMode: 'blocking',
+    handler: async ({ params }) => {
+      const found = findAdminPage(params.page)
+      if (!found) throw notFound()
+      const [settings, media] = await Promise.all([getSiteAdminDataFn(), listMediaLibraryFn()])
+      return { ...found, settings, media }
+    },
   },
   component: PageEditor,
 })
@@ -37,9 +41,33 @@ export const Route = createFileRoute('/admin/pages/$page')({
 const LOAD_ERROR = 'Settings could not be loaded. Check DATABASE_URL and that migrations have run.'
 
 function PageEditor() {
+  const router = useRouter()
   const { page, group, settings, media } = Route.useLoaderData()
   const shared = pagesSharingSections(page)
   const { bind, save, state, isDirty } = useSaveAll()
+
+  const rawVisibility = settings.ok
+    ? ((settings.content.find((c) => c.page === 'global' && c.sectionKey === 'page_visibility')?.content as Record<string, boolean> | undefined) ?? {})
+    : {}
+  const [isVisible, setIsVisible] = useState(page.key === 'home' ? true : rawVisibility[page.key] !== false)
+  const [togglingVisibility, setTogglingVisibility] = useState(false)
+
+  const handleToggleVisibility = async () => {
+    if (page.key === 'home') return
+    const next = !isVisible
+    setIsVisible(next)
+    setTogglingVisibility(true)
+    try {
+      const res = await togglePageVisibilityFn({ data: { pageKey: page.key, visible: next } })
+      if (!res.ok) setIsVisible(!next)
+      else await router.invalidate()
+    } catch {
+      setIsVisible(!next)
+    } finally {
+      setTogglingVisibility(false)
+    }
+  }
+
   const defs: readonly SectionDef[] = page.sections ? SECTION_PAGES[page.sections].sections : []
   const [picked, setSelected] = useState('')
   // Falls back to the first section when the pick is not on this page (e.g. after moving to another page).
@@ -121,6 +149,7 @@ function PageEditor() {
       case 'home:demo-form':
         return <ContactSectionEditor ref={binding.ref} onDirtyChange={binding.onDirtyChange} initial={resolveSectionContent(key, stored)} />
       case 'product-cms:faq':
+      case 'about:faq':
         return (
           <FaqContentEditor
             ref={binding.ref}
@@ -141,6 +170,24 @@ function PageEditor() {
         description={`${group.label} · ${page.path}`}
         actions={
           <SaveAllActions state={state} isDirty={isDirty} onSave={() => void save()}>
+            {page.key !== 'home' && (
+              <button
+                type="button"
+                onClick={handleToggleVisibility}
+                disabled={togglingVisibility}
+                title={isVisible ? 'Click to hide this page site-wide' : 'Click to make this page visible site-wide'}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                  isVisible
+                    ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+                    : 'border-rose-500/40 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20',
+                  togglingVisibility && 'opacity-50 cursor-wait',
+                )}
+              >
+                {isVisible ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                {isVisible ? 'Visible' : 'Hidden'}
+              </button>
+            )}
             <a
               href={page.path}
               target="_blank"

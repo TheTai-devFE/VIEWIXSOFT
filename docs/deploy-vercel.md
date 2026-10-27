@@ -38,6 +38,7 @@ Project → **Settings → Environment Variables**, scope **Production** (and **
 | `SALES_NOTIFICATION_EMAIL` | Inbox that receives leads |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | From the R2 API token |
 | `R2_PUBLIC_URL` | Public URL of the bucket, no trailing slash |
+| `VITE_PUBLIC_SHOW_PLACEHOLDER_QUOTES` | Optional. `true` shows lorem ipsum customer quotes on /about until real ones are approved. Remove it before the site goes live on `viewixsoft.com`. |
 
 Do not set `NODE_ENV`: Vercel sets it, and a value here breaks the build. Leave `VITE_PUBLIC_IMAGE_TRANSFORMS` unset; image transformations are a Cloudflare zone feature.
 

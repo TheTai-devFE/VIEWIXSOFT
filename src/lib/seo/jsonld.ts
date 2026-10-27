@@ -1,6 +1,6 @@
-import { CONTACT_EMAILS } from '~/data/company'
+import { CONTACT_EMAILS, FOUNDED_YEAR } from '~/data/company'
 import { SOCIAL_LINKS } from '~/data/social'
-import { DEFAULT_OG_IMAGE, LOGO_URL, SITE_NAME, SITE_URL } from './meta'
+import { assetUrl, DEFAULT_OG_IMAGE, LOGO_URL, SITE_NAME, SITE_URL } from './meta'
 
 // Official profiles only: the social links in src/data/social.ts that have a URL.
 // TODO(content): add Crunchbase, G2 etc. once those listings exist.
@@ -15,6 +15,7 @@ export function getOrganizationSchema() {
     url: `${SITE_URL}/`,
     logo: LOGO_URL,
     description: 'Digital signage software for advertising screens, kiosks and menu boards, built for Viewix hardware.',
+    foundingDate: String(FOUNDED_YEAR),
     parentOrganization: { '@type': 'Organization', name: 'Viewix', url: 'https://viewixfactory.com/' },
     ...(SAME_AS.length ? { sameAs: SAME_AS } : {}),
     ...(sales
@@ -116,6 +117,10 @@ export function getArticleSchema(article: {
   authorName: string
   /** Set for a person; omitted for a team byline, which is published as the Organization. */
   authorType?: 'Person' | 'Organization'
+  /** A person's role, photo and public profile (LinkedIn): what search engines read as E-E-A-T. */
+  authorJobTitle?: string
+  authorImage?: string
+  authorUrl?: string
   image?: string
   keywords?: string[]
 }) {
@@ -127,7 +132,7 @@ export function getArticleSchema(article: {
     description: article.description,
     url,
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
-    image: article.image ? `${SITE_URL}${article.image}` : DEFAULT_OG_IMAGE,
+    image: article.image ? assetUrl(article.image) : DEFAULT_OG_IMAGE,
     inLanguage: 'en',
     datePublished: article.publishedAt,
     dateModified: article.updatedAt,
@@ -135,6 +140,14 @@ export function getArticleSchema(article: {
     author: {
       '@type': article.authorType ?? 'Person',
       name: article.authorName,
+      ...((article.authorType ?? 'Person') === 'Person'
+        ? {
+            ...(article.authorJobTitle ? { jobTitle: article.authorJobTitle } : {}),
+            ...(article.authorImage ? { image: assetUrl(article.authorImage) } : {}),
+            ...(article.authorUrl ? { url: article.authorUrl, sameAs: [article.authorUrl] } : {}),
+            worksFor: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+          }
+        : { url: SITE_URL }),
     },
     publisher: {
       '@type': 'Organization',

@@ -1,14 +1,18 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import { useState } from 'react'
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
 import { z } from 'zod'
-import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
+import { ViewixLogo } from '~/components/blocks/ViewixLogo'
+import { FieldInput } from '~/components/ui/field-input'
+import { MagicCard } from '~/components/ui/magic-card'
+import { StatefulButton } from '~/components/ui/stateful-button'
+import type { ButtonState } from '~/components/ui/stateful-button'
 import { authClient } from '~/lib/auth-client'
 
 const LoginSchema = z.object({
-  email: z.string().trim().email('Enter your admin email'),
-  password: z.string().min(1, 'Enter your password'),
+  email: z.string().trim().email('Nhập email quản trị của bạn'),
+  password: z.string().min(1, 'Nhập mật khẩu'),
 })
 
 const SearchSchema = z.object({
@@ -37,6 +41,8 @@ function LoginPage() {
   const { redirect } = Route.useSearch()
   const router = useRouter()
   const [error, setError] = useState('')
+  const [revealPassword, setRevealPassword] = useState(false)
+  const [signedIn, setSignedIn] = useState(false)
 
   const form = useForm({
     defaultValues: { email: '', password: '' },
@@ -46,73 +52,121 @@ function LoginPage() {
       setError('')
       const res = await authClient.signIn.email({ email: value.email, password: value.password })
       if (res.error) {
-        setError('Email or password is incorrect.')
+        setError('Email hoặc mật khẩu không đúng.')
         return
       }
+      setSignedIn(true)
       await router.invalidate()
       await router.navigate({ to: redirect ?? '/admin' })
     },
   })
 
   return (
-    <main id="main-content" className="mx-auto min-h-screen max-w-md px-4 py-20">
-      <h1 className="font-display text-3xl font-semibold tracking-tight text-ink-50">Admin sign in</h1>
-      <p className="mt-2 text-sm text-ink-400">Accounts are created with pnpm admin:create.</p>
-      <form
-        noValidate
-        onSubmit={(e) => {
-          e.preventDefault()
-          void form.handleSubmit()
-        }}
-        className="mt-8 space-y-5 rounded-2xl border border-ink-800 bg-ink-900 p-6"
-      >
-        {error && (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
-          </p>
-        )}
-        {(['email', 'password'] as const).map((name) => (
-          <form.Field key={name} name={name}>
-            {(field) => {
-              const message = form.state.submissionAttempts > 0 ? firstError(field.state.meta.errors) : undefined
-              return (
-                <div>
-                  <Label htmlFor={`login-${name}`}>{name === 'email' ? 'Email' : 'Password'}</Label>
-                  <Input
-                    id={`login-${name}`}
-                    name={name}
-                    type={name}
-                    autoComplete={name === 'email' ? 'username' : 'current-password'}
-                    required
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    aria-invalid={message ? true : undefined}
-                    aria-describedby={message ? `login-${name}-error` : undefined}
-                    className="mt-2 h-11 bg-ink-950 text-ink-50"
-                  />
-                  {message && (
-                    <p id={`login-${name}-error`} className="mt-1.5 text-xs text-destructive">
-                      {message}
-                    </p>
-                  )}
-                </div>
-              )
+    <main id="main-content" className="flex min-h-screen items-center justify-center px-4 py-16">
+      <div className="w-full max-w-sm">
+        <ViewixLogo className="mx-auto h-6 text-ink-50" title="Viewixsoft" withSoft />
+        <MagicCard className="mt-8">
+          <form
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault()
+              void form.handleSubmit()
             }}
-          </form.Field>
-        ))}
-        <form.Subscribe selector={(s) => s.isSubmitting}>
-          {(isSubmitting) => (
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-brand-gradient w-full rounded-lg px-5 py-3 text-sm font-semibold text-on-gradient hover:opacity-90 disabled:opacity-60"
-            >
-              {isSubmitting ? 'Signing in…' : 'Sign in'}
-            </button>
-          )}
-        </form.Subscribe>
-      </form>
+            className="flex flex-col gap-5 p-6 sm:p-8"
+          >
+            <div className="space-y-1">
+              <h1 className="font-display text-2xl font-semibold tracking-tight text-ink-50">Đăng nhập quản trị</h1>
+              <p className="text-sm text-ink-400">
+                Tài khoản được tạo bằng lệnh <code className="font-mono text-xs">pnpm admin:create</code>.
+              </p>
+            </div>
+
+            {error && (
+              <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            )}
+
+            <div className="flex flex-col gap-1">
+              <form.Field name="email">
+                {(field) => {
+                  const message = form.state.submissionAttempts > 0 ? firstError(field.state.meta.errors) : undefined
+                  const valid = field.state.meta.isTouched && LoginSchema.shape.email.safeParse(field.state.value).success
+                  return (
+                    <FieldInput
+                      id="login-email"
+                      name="email"
+                      type="email"
+                      inputMode="email"
+                      label="Email"
+                      autoComplete="username"
+                      required
+                      leftIcon={<Mail />}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={field.handleChange}
+                      error={message}
+                      success={valid && !message}
+                      reserveErrorLine
+                    />
+                  )
+                }}
+              </form.Field>
+
+              <form.Field name="password">
+                {(field) => {
+                  const message = form.state.submissionAttempts > 0 ? firstError(field.state.meta.errors) : undefined
+                  return (
+                    <FieldInput
+                      id="login-password"
+                      name="password"
+                      type={revealPassword ? 'text' : 'password'}
+                      label="Mật khẩu"
+                      autoComplete="current-password"
+                      required
+                      leftIcon={<Lock />}
+                      rightSlot={
+                        <button
+                          type="button"
+                          onClick={() => setRevealPassword((prev) => !prev)}
+                          aria-label={revealPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                          aria-controls="login-password"
+                          className="rounded-full outline-none transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                        >
+                          {revealPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                        </button>
+                      }
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={field.handleChange}
+                      error={message}
+                      reserveErrorLine
+                    />
+                  )
+                }}
+              </form.Field>
+            </div>
+
+            <form.Subscribe selector={(s) => s.isSubmitting}>
+              {(isSubmitting) => {
+                const state: ButtonState = signedIn ? 'success' : isSubmitting ? 'loading' : 'idle'
+                return (
+                  <StatefulButton
+                    type="submit"
+                    size="lg"
+                    state={state}
+                    loadingText="Đang đăng nhập"
+                    successText="Đã đăng nhập"
+                    className="h-11 w-full rounded-full font-semibold"
+                  >
+                    Đăng nhập
+                  </StatefulButton>
+                )
+              }}
+            </form.Subscribe>
+          </form>
+        </MagicCard>
+      </div>
     </main>
   )
 }

@@ -8,7 +8,10 @@ import { LEAD_STATUSES } from '~/lib/enums'
 import { getDashboardFn } from '~/server/functions/dashboard'
 
 export const Route = createFileRoute('/admin/')({
-  loader: () => getDashboardFn(),
+  loader: {
+    staleReloadMode: 'blocking',
+    handler: () => getDashboardFn(),
+  },
   component: DashboardPage,
 })
 

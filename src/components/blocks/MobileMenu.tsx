@@ -3,14 +3,15 @@ import { Link } from '@tanstack/react-router'
 import { ArrowRight, ArrowUpRight, Mail, X } from 'lucide-react'
 import { ViewixLogo } from '~/components/blocks/ViewixLogo'
 import { CONTACT_EMAILS } from '~/data/company'
-import { useProducts } from '~/lib/use-site-config'
+import { useProducts, useSiteConfig } from '~/lib/use-site-config'
+import { isPageVisible } from '~/lib/page-visibility'
 
 const MENU_ID = 'site-menu'
 // Tailwind's lg breakpoint, where SiteHeader shows its inline links.
 const DESKTOP_QUERY = '(min-width: 64rem)'
 
 const MAIN_LINKS = [
-  { to: '/use-cases', label: 'Use cases' },
+  { to: '/case-studies', label: 'Case studies' },
   { to: '/pricing', label: 'Pricing' },
   { to: '/blog', label: 'Blog' },
   { to: '/about', label: 'About' },
@@ -30,6 +31,8 @@ export function MobileMenu() {
   const closeRef = useRef<HTMLButtonElement>(null)
   const [open, setOpen] = useState(false)
   const products = useProducts()
+  const config = useSiteConfig()
+  const visibleLinks = MAIN_LINKS.filter((l) => isPageVisible(config, l.to))
 
   const openMenu = () => {
     if (window.matchMedia(DESKTOP_QUERY).matches) return
@@ -138,7 +141,7 @@ export function MobileMenu() {
                   ))}
                 </ul>
               </li>
-              {MAIN_LINKS.map((l) => (
+              {visibleLinks.map((l) => (
                 <li key={l.to} className="menu-item" style={delay()}>
                   <Link
                     to={l.to}

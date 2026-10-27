@@ -25,7 +25,7 @@ export function FaqContentEditor({
   ref,
   onDirtyChange,
 }: {
-  contentKey?: 'home:faq' | 'product-cms:faq'
+  contentKey?: 'home:faq' | 'product-cms:faq' | 'about:faq'
   initial: FaqContent
   ref?: Ref<EditorHandle>
   onDirtyChange?: (dirty: boolean) => void

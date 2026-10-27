@@ -1,15 +1,21 @@
 import { Link, useRouter, useRouterState } from '@tanstack/react-router'
 import { Loader2, LogOut } from 'lucide-react'
 import { useState } from 'react'
-import { ADMIN_NAV } from '~/components/admin/admin-nav'
+import { navFor } from '~/components/admin/admin-nav'
 import { PagesNavTree } from '~/components/admin/PagesNavTree'
 import { ViewixLogo } from '~/components/blocks/ViewixLogo'
 import { AnimatedThemeToggler } from '~/components/ui/animated-theme-toggler'
 import type { AdminTheme } from '~/hooks/use-admin-theme'
 import { authClient } from '~/lib/auth-client'
+import type { Access } from '~/lib/permissions'
+
+export interface AdminUser extends Access {
+  email: string
+  name: string
+}
 
 interface Props {
-  email: string
+  admin: AdminUser
   theme: AdminTheme
   onThemeChange: (theme: AdminTheme) => void
   /** Called after a link is chosen, so the mobile drawer can close. */
@@ -17,7 +23,8 @@ interface Props {
 }
 
 /** Admin navigation: module groups, then theme, account and sign-out at the bottom. */
-export function AdminSidebar({ email, theme, onThemeChange, onNavigate }: Props) {
+export function AdminSidebar({ admin, theme, onThemeChange, onNavigate }: Props) {
+  const nav = navFor(admin)
   const router = useRouter()
   const [signingOut, setSigningOut] = useState(false)
   // The page being loaded after a click, so its item can show a spinner.
@@ -47,7 +54,7 @@ export function AdminSidebar({ email, theme, onThemeChange, onNavigate }: Props)
       </div>
 
       <nav aria-label="Admin" className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
-        {ADMIN_NAV.map((section) => (
+        {nav.map((section) => (
           <div key={section.group} className="mb-5">
             <p className="px-3 pb-2 font-mono text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
               {section.group}
@@ -89,8 +96,11 @@ export function AdminSidebar({ email, theme, onThemeChange, onNavigate }: Props)
           <AnimatedThemeToggler theme={theme} onThemeChange={onThemeChange} />
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="min-w-0 truncate text-xs text-muted-foreground" title={email}>
-            {email}
+          <span className="min-w-0 text-xs">
+            <span className="block truncate text-muted-foreground" title={admin.email}>
+              {admin.email}
+            </span>
+            <span className="block text-muted-foreground/80">{admin.role === 'admin' ? 'Quản trị viên' : 'Thành viên'}</span>
           </span>
           <button
             type="button"

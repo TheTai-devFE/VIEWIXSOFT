@@ -31,7 +31,7 @@ export function UseCasesSection() {
               <li key={uc.slug}>
                 <Reveal delay={i * 70}>
                   <Link
-                    to="/use-cases/$slug"
+                    to="/case-studies/$slug"
                     params={{ slug: uc.slug }}
                     preload="intent"
                     className="group flex items-center justify-between gap-4 py-4"
@@ -53,11 +53,11 @@ export function UseCasesSection() {
           </ul>
 
           <Link
-            to="/use-cases"
+            to="/case-studies"
             preload="intent"
             className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-signal-400 hover:text-signal-300"
           >
-            Browse all use cases
+            Browse all case studies
             <ArrowRight aria-hidden="true" className="size-4" />
           </Link>
         </div>

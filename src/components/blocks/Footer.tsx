@@ -1,26 +1,11 @@
 import { Link } from '@tanstack/react-router'
-import type { LinkProps } from '@tanstack/react-router'
 import { ViewixLogo } from '~/components/blocks/ViewixLogo'
-import { useProducts } from '~/lib/use-site-config'
+import { useProducts, useSiteConfig } from '~/lib/use-site-config'
 import { USE_CASES } from '~/content/useCases'
-import { CONTACT_EMAILS, LEGAL_ENTITY } from '~/data/company'
-import { SOCIAL_LINKS } from '~/data/social'
+import { resolveFooterConfig } from '~/data/footer'
+import type { FooterSocialLink } from '~/data/footer'
 import { SocialIcon } from '~/components/ui/social-icon'
-
-type FooterLink = { label: string; to: LinkProps['to'] }
-
-const COMPANY_LINKS: FooterLink[] = [
-  { label: 'About', to: '/about' },
-  { label: 'Blog', to: '/blog' },
-  { label: 'Pricing', to: '/pricing' },
-  { label: 'Contact', to: '/contact' },
-]
-
-const LEGAL_LINKS: FooterLink[] = [
-  { label: 'Privacy Policy', to: '/legal/privacy' },
-  { label: 'Terms of Service', to: '/legal/terms' },
-  { label: 'Cookie Policy', to: '/legal/cookies' },
-]
+import { isPageVisible } from '~/lib/page-visibility'
 
 const linkClass = 'text-ink-400 transition-colors hover:text-ink-50'
 
@@ -35,8 +20,8 @@ function ColumnHeading({ id, children }: { id: string; children: string }) {
 const socialClass = 'flex size-9 items-center justify-center rounded-full border border-ink-800 text-ink-400'
 
 /** Official profiles; one without a URL shows as a faded stand-in in the dev server only. */
-function SocialLinks() {
-  const shown = SOCIAL_LINKS.filter((s) => s.url || import.meta.env.DEV)
+function SocialLinks({ socials }: { socials: FooterSocialLink[] }) {
+  const shown = socials.filter((s) => s.url || import.meta.env.DEV)
   if (!shown.length) return null
   return (
     <ul aria-label="Viewixsoft on social media" className="mt-6 flex gap-2.5">
@@ -53,7 +38,7 @@ function SocialLinks() {
               <SocialIcon network={s.network} className="size-4" />
             </a>
           ) : (
-            <span title={`${s.label}: add the URL in src/data/social.ts`} className={`${socialClass} border-dashed opacity-50`}>
+            <span title={`${s.label}: add the URL in /admin/footer or src/data/footer.ts`} className={`${socialClass} border-dashed opacity-50`}>
               <SocialIcon network={s.network} className="size-4" />
               <span className="sr-only">{s.label} profile not set yet</span>
             </span>
@@ -66,6 +51,11 @@ function SocialLinks() {
 
 export function Footer() {
   const products = useProducts()
+  const siteConfig = useSiteConfig()
+  const footer = resolveFooterConfig(siteConfig.content?.['global:footer'])
+  const companyLinks = footer.companyLinks.filter((l) => isPageVisible(siteConfig, l.to))
+  const legalLinks = footer.legalLinks.filter((l) => isPageVisible(siteConfig, l.to))
+
   return (
     <footer className="border-t border-ink-800 bg-ink-950 text-sm">
       <div className="page-x pt-16 pb-8">
@@ -74,7 +64,7 @@ export function Footer() {
             <Link to="/" aria-label="Viewixsoft home" className="inline-block text-ink-50">
               <ViewixLogo className="h-6" withSoft />
             </Link>
-            <SocialLinks />
+            <SocialLinks socials={footer.socials} />
           </div>
 
           <nav aria-labelledby="footer-products">
@@ -96,11 +86,11 @@ export function Footer() {
           </nav>
 
           <nav aria-labelledby="footer-use-cases">
-            <ColumnHeading id="footer-use-cases">Use cases</ColumnHeading>
+            <ColumnHeading id="footer-use-cases">Case studies</ColumnHeading>
             <ul className="mt-4 space-y-3">
               {USE_CASES.map((uc) => (
                 <li key={uc.slug}>
-                  <Link to="/use-cases/$slug" params={{ slug: uc.slug }} className={linkClass}>
+                  <Link to="/case-studies/$slug" params={{ slug: uc.slug }} className={linkClass}>
                     {uc.industry}
                   </Link>
                 </li>
@@ -111,7 +101,7 @@ export function Footer() {
           <nav aria-labelledby="footer-company">
             <ColumnHeading id="footer-company">Company</ColumnHeading>
             <ul className="mt-4 space-y-3">
-              {COMPANY_LINKS.map((l) => (
+              {companyLinks.map((l) => (
                 <li key={l.label}>
                   <Link to={l.to} className={linkClass}>
                     {l.label}
@@ -124,7 +114,7 @@ export function Footer() {
           <nav aria-labelledby="footer-legal">
             <ColumnHeading id="footer-legal">Legal</ColumnHeading>
             <ul className="mt-4 space-y-3">
-              {LEGAL_LINKS.map((l) => (
+              {legalLinks.map((l) => (
                 <li key={l.label}>
                   <Link to={l.to} className={linkClass}>
                     {l.label}
@@ -141,30 +131,51 @@ export function Footer() {
         >
           <div className="space-y-1.5">
             <h2 id="footer-entity" className="font-bold tracking-wide text-ink-50 uppercase">
-              {LEGAL_ENTITY.name}
+              {footer.legalEntity.name}
             </h2>
             <p className="text-ink-400">
               Business Registration No.{' '}
-              <span className="font-mono text-ink-200">{LEGAL_ENTITY.businessRegistrationNo}</span>
+              <span className="font-mono text-ink-200">{footer.legalEntity.businessRegistrationNo}</span>
             </p>
+            {footer.legalEntity.hotline && (
+              <p className="text-ink-400">
+                Hotline:{' '}
+                <a
+                  href={`tel:${footer.legalEntity.hotline.replace(/\s+/g, '')}`}
+                  className="font-mono text-ink-200 hover:text-ink-50"
+                >
+                  {footer.legalEntity.hotline}
+                </a>
+              </p>
+            )}
           </div>
           <div className="space-y-1.5">
             <h3 className="text-ink-500">Registered business address</h3>
             <address className="text-ink-300 not-italic">
-              {LEGAL_ENTITY.addressLines.map((line) => (
+              {footer.legalEntity.addressLines.map((line) => (
                 <div key={line}>{line}</div>
               ))}
             </address>
           </div>
           <div className="space-y-1.5">
             <h3 className="text-ink-500">Contact</h3>
-            <ul className="space-y-1">
-              {CONTACT_EMAILS.map((c) => (
-                <li key={c.email} className="text-ink-400">
-                  {c.department}:{' '}
-                  <a href={`mailto:${c.email}`} className="font-mono text-ink-200 transition-colors hover:text-ink-50">
-                    {c.email}
-                  </a>
+            <ul className="space-y-1.5">
+              {footer.contacts.map((c) => (
+                <li key={c.email || c.department} className="text-ink-400">
+                  <span>{c.department}: </span>
+                  {c.email && (
+                    <a href={`mailto:${c.email}`} className="font-mono text-ink-200 transition-colors hover:text-ink-50">
+                      {c.email}
+                    </a>
+                  )}
+                  {c.phone && (
+                    <span className="block font-mono text-ink-300 mt-0.5">
+                      Tel:{' '}
+                      <a href={`tel:${c.phone.replace(/\s+/g, '')}`} className="hover:text-ink-50">
+                        {c.phone}
+                      </a>
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
@@ -172,10 +183,7 @@ export function Footer() {
         </section>
 
         <div className="mt-8 border-t border-ink-800 pt-8 text-xs text-ink-500">
-          {/* TODO(content): use the registered legal entity name once confirmed. */}
-          <p>
-            © {new Date().getFullYear()} Viewixsoft. All rights reserved. Viewixsoft is part of Viewix.
-          </p>
+          <p>{footer.copyright}</p>
         </div>
       </div>
     </footer>

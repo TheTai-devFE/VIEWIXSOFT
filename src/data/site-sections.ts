@@ -31,6 +31,7 @@ export const SECTION_PAGES = {
     label: 'About',
     sections: [
       { key: 'hero', label: 'Hero', locked: true },
+      { key: 'facts', label: 'At a glance' },
       { key: 'story', label: 'Our story' },
       { key: 'vision', label: 'Vision' },
       { key: 'results', label: 'Customer results', note: 'Shows use cases with verified results; sample ones never show in production.' },

@@ -1,12 +1,12 @@
 import { createServerFn } from '@tanstack/react-start'
 import { readDashboard } from '~/server/admin/dashboard'
 import { getEnv } from '~/server/env'
-import { adminMiddleware } from '~/server/functions/admin-middleware'
+import { requirePermission } from '~/server/functions/admin-middleware'
 import { errorFields, logger } from '~/server/logger'
 import { systemStatus } from '~/server/site/system-status'
 
 export const getDashboardFn = createServerFn({ method: 'GET' })
-  .middleware([adminMiddleware])
+  .middleware([requirePermission('dashboard')])
   .handler(async () => {
     const system = systemStatus(getEnv())
     try {

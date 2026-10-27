@@ -46,6 +46,8 @@ export interface BlogPost extends Omit<BlogFrontmatter, 'author'> {
   slug: string
   authorKey: BlogFrontmatter['author']
   author: Author
+  /** Search snippet when it differs from the summary; set in /admin/blog. */
+  seoDescription?: string
 }
 
 // `?meta` (src/lib/mdx/plugin.ts) yields only the frontmatter, so listing posts

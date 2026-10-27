@@ -6,11 +6,12 @@
  * with no URL is hidden on the live site (the dev server shows a faded
  * stand-in), because a link to a missing profile weakens the brand entity.
  */
-export type SocialNetwork = 'facebook' | 'tiktok' | 'linkedin' | 'x'
+export type SocialNetwork = 'facebook' | 'tiktok' | 'linkedin' | 'x' | 'youtube'
 
 export const SOCIAL_LINKS: { network: SocialNetwork; label: string; url: string }[] = [
   { network: 'facebook', label: 'Facebook', url: '' },
   { network: 'tiktok', label: 'TikTok', url: '' },
   { network: 'linkedin', label: 'LinkedIn', url: '' },
   { network: 'x', label: 'X', url: '' },
+  { network: 'youtube', label: 'YouTube', url: '' },
 ]

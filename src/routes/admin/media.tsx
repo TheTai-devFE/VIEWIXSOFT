@@ -3,6 +3,7 @@ import { ImageUp, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import type { DragEvent } from 'react'
 import { AdminPageHeader, buttonSecondary, LoadError } from '~/components/admin/admin-ui'
+import { useConfirm, useToast } from '~/components/ui/feedback'
 import { AssetPreview } from '~/components/admin/ImagePickerSheet'
 import { findAdminPage } from '~/data/admin-pages'
 import { ALLOWED_VIDEO_TYPES, isVideoAsset, MAX_VIDEO_BYTES, MEDIA_SLOTS, slotPages } from '~/data/media-slots'
@@ -12,7 +13,10 @@ import { readVideoSize, uploadLibraryVideo } from '~/lib/media-upload'
 import { deleteMediaAssetFn, listMediaLibraryFn, uploadMediaAssetFn } from '~/server/functions/media-admin'
 
 export const Route = createFileRoute('/admin/media')({
-  loader: () => listMediaLibraryFn(),
+  loader: {
+    staleReloadMode: 'blocking',
+    handler: () => listMediaLibraryFn(),
+  },
   component: MediaLibrary,
 })
 
@@ -45,9 +49,10 @@ function usedOn(
 function MediaLibrary() {
   const data = Route.useLoaderData()
   const router = useRouter()
+  const confirm = useConfirm()
+  const toast = useToast()
   const [progress, setProgress] = useState<Progress>({ kind: 'idle' })
   const [dragging, setDragging] = useState(false)
-  const [deleteError, setDeleteError] = useState<{ id: string; message: string } | null>(null)
   const uploading = progress.kind === 'working'
 
   // Videos go as they are, straight to storage where possible; they are too big for a server function.
@@ -100,13 +105,19 @@ function MediaLibrary() {
     void upload([...e.dataTransfer.files])
   }
 
-  const remove = async (id: string, name: string) => {
-    if (!window.confirm(`Delete ${name} from the library?`)) return
-    setDeleteError(null)
-    const res = await deleteMediaAssetFn({ data: { id } })
-    if (!res.ok) return setDeleteError({ id, message: res.error })
-    await router.invalidate()
-  }
+  const remove = (id: string, name: string) =>
+    confirm({
+      title: 'Xoá khỏi thư viện?',
+      description: `${name} sẽ bị xoá khỏi thư viện media.`,
+      confirmText: 'Xoá',
+      tone: 'danger',
+      onConfirm: async () => {
+        const res = await deleteMediaAssetFn({ data: { id } })
+        if (!res.ok) return res.error
+        await router.invalidate()
+        toast({ title: 'Đã xoá khỏi thư viện', description: name, tone: 'success' })
+      },
+    })
 
   return (
     <>
@@ -220,11 +231,6 @@ function MediaLibrary() {
                       <Trash2 aria-hidden="true" className="size-4" />
                     </button>
                   </div>
-                  {deleteError?.id === asset.id && (
-                    <p role="alert" className="text-xs text-destructive">
-                      {deleteError.message}
-                    </p>
-                  )}
                 </div>
               </li>
             )

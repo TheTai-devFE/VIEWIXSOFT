@@ -4,9 +4,9 @@
  * page is deleted (AGENTS.md §8). Keys and targets are site paths.
  */
 export const REDIRECTS: Record<string, string> = {
-  // Use cases removed on 2026-10-22; their industry is not covered any more.
-  '/use-cases/transportation': '/use-cases',
-  '/use-cases/dooh-advertising': '/use-cases',
+  '/use-cases': '/case-studies',
+  '/use-cases/transportation': '/case-studies',
+  '/use-cases/dooh-advertising': '/case-studies',
 }
 
 /** Where an old path now lives, if it moved; also covers its Markdown twin (`.md`). */
