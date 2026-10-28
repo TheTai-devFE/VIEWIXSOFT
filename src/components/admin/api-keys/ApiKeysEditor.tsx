@@ -72,11 +72,14 @@ function CopyButton({ text, label, compact = false }: { text: string; label: str
   )
 }
 
+/** The admin module behind each scope, named in the hint of a scope the account can't give. */
+const SCOPE_MODULE: Record<ApiScope, string> = { 'schema:read': 'Schema markup', 'schema:write': 'Schema markup', 'blog:write': 'Blog posts' }
+
 /** Creating a key: name and permissions, then the key shown once. */
-function CreateKey() {
+function CreateKey({ allowedScopes }: { allowedScopes: ApiScope[] }) {
   const router = useRouter()
   const [name, setName] = useState('')
-  const [scopes, setScopes] = useState<ApiScope[]>(['schema:read', 'schema:write'])
+  const [scopes, setScopes] = useState<ApiScope[]>(() => allowedScopes.filter((s) => s !== 'blog:write'))
   const [error, setError] = useState('')
   const [state, setState] = useState<ButtonState>('idle')
   const [created, setCreated] = useState<{ key: string; name: string } | null>(null)
@@ -129,20 +132,24 @@ function CreateKey() {
         <fieldset className="space-y-3">
           <legend className="mb-2 text-sm font-medium text-foreground">Quyền</legend>
           <div className="grid gap-3 sm:grid-cols-3">
-            {API_SCOPES.map((s) => (
-              <div
-                key={s}
-                className={cn('rounded-xl border p-3 transition-colors', scopes.includes(s) ? 'border-signal-500/50 bg-signal-500/5' : 'border-border')}
-              >
-                <Checkbox
-                  id={`scope-${s.replace(':', '-')}`}
-                  checked={scopes.includes(s)}
-                  onCheckedChange={(on) => toggle(s, on)}
-                  label={API_SCOPE_LABELS[s].label}
-                  description={`${API_SCOPE_LABELS[s].hint} (${s})`}
-                />
-              </div>
-            ))}
+            {API_SCOPES.map((s) => {
+              const allowed = allowedScopes.includes(s)
+              return (
+                <div
+                  key={s}
+                  className={cn('rounded-xl border p-3 transition-colors', scopes.includes(s) ? 'border-signal-500/50 bg-signal-500/5' : 'border-border')}
+                >
+                  <Checkbox
+                    id={`scope-${s.replace(':', '-')}`}
+                    checked={allowed && scopes.includes(s)}
+                    disabled={!allowed}
+                    onCheckedChange={(on) => toggle(s, on)}
+                    label={API_SCOPE_LABELS[s].label}
+                    description={allowed ? `${API_SCOPE_LABELS[s].hint} (${s})` : `Cần quyền "${SCOPE_MODULE[s]}" trên tài khoản của bạn.`}
+                  />
+                </div>
+              )
+            })}
           </div>
         </fieldset>
         {error && name.trim() && (
@@ -192,7 +199,7 @@ function CreateKey() {
   )
 }
 
-function KeyList({ keys }: { keys: ApiKeyListRow[] }) {
+function KeyList({ keys, isAdmin }: { keys: ApiKeyListRow[]; isAdmin: boolean }) {
   const router = useRouter()
   const confirm = useConfirm()
   const toast = useToast()
@@ -216,9 +223,12 @@ function KeyList({ keys }: { keys: ApiKeyListRow[] }) {
     <Card>
       <CardHeader>
         <CardTitle as="h2" className="text-base">
-          Khóa đã tạo
+          {isAdmin ? 'Tất cả khóa' : 'Khóa của bạn'}
         </CardTitle>
-        <CardDescription>Chỉ lưu mã băm của khóa: không ai xem lại được khóa đầy đủ. Không lưu IP của tool.</CardDescription>
+        <CardDescription>
+          Chỉ lưu mã băm của khóa: không ai xem lại được khóa đầy đủ. Không lưu IP của tool.
+          {isAdmin && ' Khóa của một tài khoản tự ngừng hoạt động khi tài khoản đó bị khoá, bị xoá hoặc mất quyền.'}
+        </CardDescription>
         <CardAction>
           <AnimatedBadge status={active ? 'success' : 'neutral'} size="sm">
             {`${active} đang dùng`}
@@ -234,6 +244,7 @@ function KeyList({ keys }: { keys: ApiKeyListRow[] }) {
               <li key={k.id} className={cn('flex flex-wrap items-center gap-x-6 gap-y-3 py-4', k.revokedAt && 'opacity-60')}>
                 <div className="min-w-40 flex-1">
                   <p className="font-medium text-foreground">{k.name}</p>
+                  {isAdmin && <p className="text-xs text-muted-foreground">Chủ khóa: {k.ownerName ?? 'tài khoản đã xoá'}</p>}
                   <div className="mt-1 flex items-center gap-1">
                     <code className="rounded bg-muted/40 px-1.5 py-0.5 font-mono text-xs text-muted-foreground">{k.prefix}…</code>
                     <CopyButton text={k.prefix} label={`Sao chép mã nhận diện của khóa ${k.name}`} compact />
@@ -393,7 +404,7 @@ function ApiGuide() {
   )
 }
 
-export function ApiKeysEditor({ keys }: { keys: ApiKeyListRow[] }) {
+export function ApiKeysEditor({ keys, isAdmin, allowedScopes }: { keys: ApiKeyListRow[]; isAdmin: boolean; allowedScopes: ApiScope[] }) {
   return (
     <div className="space-y-6">
       <div className="flex gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-xs leading-relaxed text-foreground">
@@ -403,8 +414,14 @@ export function ApiKeysEditor({ keys }: { keys: ApiKeyListRow[] }) {
           bấm <strong>Thu hồi</strong> và tạo khóa mới.
         </p>
       </div>
-      <CreateKey />
-      <KeyList keys={keys} />
+      {allowedScopes.length ? (
+        <CreateKey allowedScopes={allowedScopes} />
+      ) : (
+        <p className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+          Tài khoản của bạn chưa có quyền Blog posts hay Schema markup, nên chưa tạo được khóa nào. Nhờ admin cấp quyền ở mục Người dùng &amp; quyền.
+        </p>
+      )}
+      <KeyList keys={keys} isAdmin={isAdmin} />
       <ApiGuide />
     </div>
   )

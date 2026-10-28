@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { can } from '~/lib/permissions'
+import type { Access, Permission } from '~/lib/permissions'
 
 /**
  * Access an API key can be given, for outside tools calling /api/v1. Labels
@@ -11,6 +13,29 @@ export const API_SCOPE_LABELS: Record<ApiScope, { label: string; hint: string }>
   'schema:read': { label: 'Đọc schema', hint: 'Xem danh sách trang và schema đã có' },
   'schema:write': { label: 'Ghi schema', hint: 'Thêm, sửa, xoá schema. Schema mới luôn chờ admin duyệt.' },
   'blog:write': { label: 'Gửi bài blog', hint: 'Tạo và sửa bài nháp. Bài thuộc về người tạo khóa; chỉ người trong admin bấm Đăng được.' },
+}
+
+/** The admin module an account needs before a key of its may carry each scope. */
+const SCOPE_PERMISSION: Record<ApiScope, Permission> = {
+  'schema:read': 'schema',
+  'schema:write': 'schema',
+  'blog:write': 'blog',
+}
+
+/** Scopes an account may put on its keys: never more than it can do in the admin itself. */
+export function scopesAllowed(access: Access): ApiScope[] {
+  return API_SCOPES.filter((s) => can(access, SCOPE_PERMISSION[s]))
+}
+
+/**
+ * What a key may do on this request: its scopes, cut to what its owner may do
+ * now. A locked or deleted owner, or one who lost the "api-keys" permission,
+ * leaves the key with nothing.
+ */
+export function effectiveScopes(keyScopes: readonly string[], owner: (Access & { banned: boolean }) | null): ApiScope[] {
+  if (!owner || owner.banned || !can(owner, 'api-keys')) return []
+  const allowed = scopesAllowed(owner)
+  return API_SCOPES.filter((s) => keyScopes.includes(s) && allowed.includes(s))
 }
 
 /** Requests per key per minute. */

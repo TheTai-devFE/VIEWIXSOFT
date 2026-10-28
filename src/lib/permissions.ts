@@ -26,6 +26,7 @@ export const PERMISSIONS = [
   'testimonials',
   'media',
   'activity',
+  'api-keys',
 ] as const
 export type Permission = (typeof PERMISSIONS)[number]
 
@@ -48,6 +49,7 @@ export const PERMISSION_LABELS: Record<Permission, { label: string; hint: string
   testimonials: { label: 'Customer quotes', hint: 'Trích dẫn khách hàng' },
   media: { label: 'Ảnh & video', hint: 'Quản lý thư viện: tải lên, xoá, gán ảnh' },
   activity: { label: 'Nhật ký hoạt động', hint: 'Xem ai đã làm gì trong admin (90 ngày gần nhất)' },
+  'api-keys': { label: 'Khóa API cá nhân', hint: 'Tự tạo khóa API cho tool của mình; khóa chỉ có các quyền Blog/Schema mà tài khoản đang có' },
 }
 
 /** One-click starting points in the account form; the ticks can still be changed after. */

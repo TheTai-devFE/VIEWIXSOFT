@@ -85,7 +85,7 @@ export const ADMIN_NAV: { group: string; items: AdminNavItem[] }[] = [
     group: 'Tài khoản',
     items: [
       { to: '/admin/users', label: 'Người dùng & quyền', icon: Users, access: 'admin' },
-      { to: '/admin/api-keys', label: 'Khóa API', icon: KeyRound, access: 'admin' },
+      { to: '/admin/api-keys', label: 'Khóa API', icon: KeyRound, access: 'api-keys' },
       { to: '/admin/activity', label: 'Nhật ký hoạt động', icon: History, access: 'activity' },
       { to: '/admin/account', label: 'Tài khoản của tôi', icon: UserCog, access: 'everyone' },
     ],

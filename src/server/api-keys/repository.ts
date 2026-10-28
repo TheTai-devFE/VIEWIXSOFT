@@ -1,9 +1,10 @@
 import '@tanstack/react-start/server-only'
 import { desc, eq, isNull, sql, and } from 'drizzle-orm'
-import { API_KEY_PREFIX, API_RATE_LIMIT_PER_MINUTE, API_SCOPES } from '~/lib/api-keys'
+import { API_KEY_PREFIX, API_RATE_LIMIT_PER_MINUTE, effectiveScopes } from '~/lib/api-keys'
 import type { ApiScope, CreateApiKeyInput } from '~/lib/api-keys'
+import { parsePermissions, parseRole } from '~/lib/permissions'
 import { getDb } from '~/server/db/client'
-import { apiKeys } from '~/server/db/schema'
+import { apiKeys, user } from '~/server/db/schema'
 
 function toBase64Url(bytes: Uint8Array) {
   let binary = ''
@@ -32,8 +33,14 @@ const listed = {
   createdAt: apiKeys.createdAt,
 }
 
-export async function listApiKeys() {
-  return getDb().select(listed).from(apiKeys).orderBy(desc(apiKeys.createdAt))
+/** Every key with its owner's name (admins), or only `ownerId`'s keys (members managing their own). */
+export async function listApiKeys(ownerId?: string) {
+  return getDb()
+    .select({ ...listed, ownerId: apiKeys.createdBy, ownerName: user.name })
+    .from(apiKeys)
+    .leftJoin(user, eq(apiKeys.createdBy, user.id))
+    .where(ownerId ? eq(apiKeys.createdBy, ownerId) : undefined)
+    .orderBy(desc(apiKeys.createdAt))
 }
 
 export type ApiKeyListRow = Awaited<ReturnType<typeof listApiKeys>>[number]
@@ -55,11 +62,12 @@ export async function createApiKey(input: CreateApiKeyInput, userId: string) {
   return { key, row }
 }
 
-export async function revokeApiKey(id: string) {
+/** Revokes a live key; with `ownerId`, only a key that account owns. */
+export async function revokeApiKey(id: string, ownerId?: string) {
   const [row] = await getDb()
     .update(apiKeys)
     .set({ revokedAt: new Date() })
-    .where(and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt)))
+    .where(and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt), ownerId ? eq(apiKeys.createdBy, ownerId) : undefined))
     .returning(listed)
   return row ?? null
 }
@@ -68,7 +76,7 @@ export interface AuthenticatedKey {
   id: string
   name: string
   scopes: ApiScope[]
-  /** The admin account that made the key; posts sent with it belong to that account. */
+  /** The account that owns the key; posts sent with it belong to that account. */
   createdBy: string | null
   /** True when this request went over the per-minute limit. */
   limited: boolean
@@ -92,10 +100,29 @@ export async function authenticateApiKey(key: string): Promise<AuthenticatedKey 
     .where(and(eq(apiKeys.keyHash, keyHash), isNull(apiKeys.revokedAt)))
     .returning({ id: apiKeys.id, name: apiKeys.name, scopes: apiKeys.scopes, createdBy: apiKeys.createdBy, windowCount: apiKeys.windowCount })
   if (!row) return null
+  // The owner's access now, not when the key was made: a locked, deleted or
+  // demoted owner takes the key's power away with them.
+  const [owner] = row.createdBy
+    ? await getDb()
+        .select({ role: user.role, permissions: user.permissions, banned: user.banned, banExpires: user.banExpires })
+        .from(user)
+        .where(eq(user.id, row.createdBy))
+    : []
+  const scopes = effectiveScopes(
+    row.scopes,
+    owner
+      ? {
+          role: parseRole(owner.role),
+          permissions: parsePermissions(owner.permissions),
+          banned: owner.banned && (!owner.banExpires || owner.banExpires > new Date()),
+        }
+      : null,
+  )
+  if (!scopes.length) return null
   return {
     id: row.id,
     name: row.name,
-    scopes: API_SCOPES.filter((s) => row.scopes.includes(s)),
+    scopes,
     createdBy: row.createdBy,
     limited: row.windowCount > API_RATE_LIMIT_PER_MINUTE,
   }
