@@ -23,6 +23,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAccountRouteImport } from './routes/admin/account'
 import { Route as AdminActivityRouteImport } from './routes/admin/activity'
+import { Route as AdminApiKeysRouteImport } from './routes/admin/api-keys'
 import { Route as AdminAuthorsRouteImport } from './routes/admin/authors'
 import { Route as AdminFooterRouteImport } from './routes/admin/footer'
 import { Route as AdminLeadsRouteImport } from './routes/admin/leads'
@@ -57,12 +58,22 @@ import { Route as AdminBlogIdRouteImport } from './routes/admin/blog/$id'
 import { Route as AdminBlogNewRouteImport } from './routes/admin/blog/new'
 import { Route as AdminPagesIndexRouteImport } from './routes/admin/pages/index'
 import { Route as AdminPagesPageRouteImport } from './routes/admin/pages/$page'
+import { Route as AdminSchemaIndexRouteImport } from './routes/admin/schema/index'
+import { Route as AdminSchemaIdRouteImport } from './routes/admin/schema/$id'
+import { Route as AdminSchemaNewRouteImport } from './routes/admin/schema/new'
 import { Route as AdminUseCasesIndexRouteImport } from './routes/admin/use-cases/index'
 import { Route as AdminUseCasesIdRouteImport } from './routes/admin/use-cases/$id'
 import { Route as AdminUseCasesNewRouteImport } from './routes/admin/use-cases/new'
 import { Route as ApiAdminMediaUploadRouteImport } from './routes/api/admin/media-upload'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiV1SchemaTypesRouteImport } from './routes/api/v1/schema-types'
+import { Route as ApiV1TargetsRouteImport } from './routes/api/v1/targets'
 import { Route as BlogCategorySlugRouteImport } from './routes/blog/category/$slug'
+import { Route as ApiV1PostsIndexRouteImport } from './routes/api/v1/posts/index'
+import { Route as ApiV1PostsIdRouteImport } from './routes/api/v1/posts/$id'
+import { Route as ApiV1PostsFormatRouteImport } from './routes/api/v1/posts/format'
+import { Route as ApiV1SchemasIndexRouteImport } from './routes/api/v1/schemas/index'
+import { Route as ApiV1SchemasIdRouteImport } from './routes/api/v1/schemas/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -132,6 +143,11 @@ const AdminAccountRoute = AdminAccountRouteImport.update({
 const AdminActivityRoute = AdminActivityRouteImport.update({
   id: '/activity',
   path: '/activity',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminApiKeysRoute = AdminApiKeysRouteImport.update({
+  id: '/api-keys',
+  path: '/api-keys',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminAuthorsRoute = AdminAuthorsRouteImport.update({
@@ -308,6 +324,21 @@ const AdminPagesPageRoute = AdminPagesPageRouteImport.update({
   path: '/pages/$page',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminSchemaIndexRoute = AdminSchemaIndexRouteImport.update({
+  id: '/schema/',
+  path: '/schema/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSchemaIdRoute = AdminSchemaIdRouteImport.update({
+  id: '/schema/$id',
+  path: '/schema/$id',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSchemaNewRoute = AdminSchemaNewRouteImport.update({
+  id: '/schema/new',
+  path: '/schema/new',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminUseCasesIndexRoute = AdminUseCasesIndexRouteImport.update({
   id: '/use-cases/',
   path: '/use-cases/',
@@ -333,9 +364,44 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1SchemaTypesRoute = ApiV1SchemaTypesRouteImport.update({
+  id: '/api/v1/schema-types',
+  path: '/api/v1/schema-types',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1TargetsRoute = ApiV1TargetsRouteImport.update({
+  id: '/api/v1/targets',
+  path: '/api/v1/targets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogCategorySlugRoute = BlogCategorySlugRouteImport.update({
   id: '/blog/category/$slug',
   path: '/blog/category/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1PostsIndexRoute = ApiV1PostsIndexRouteImport.update({
+  id: '/api/v1/posts/',
+  path: '/api/v1/posts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1PostsIdRoute = ApiV1PostsIdRouteImport.update({
+  id: '/api/v1/posts/$id',
+  path: '/api/v1/posts/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1PostsFormatRoute = ApiV1PostsFormatRouteImport.update({
+  id: '/api/v1/posts/format',
+  path: '/api/v1/posts/format',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1SchemasIndexRoute = ApiV1SchemasIndexRouteImport.update({
+  id: '/api/v1/schemas/',
+  path: '/api/v1/schemas/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1SchemasIdRoute = ApiV1SchemasIdRouteImport.update({
+  id: '/api/v1/schemas/$id',
+  path: '/api/v1/schemas/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -353,6 +419,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/account': typeof AdminAccountRoute
   '/admin/activity': typeof AdminActivityRoute
+  '/admin/api-keys': typeof AdminApiKeysRoute
   '/admin/authors': typeof AdminAuthorsRoute
   '/admin/footer': typeof AdminFooterRoute
   '/admin/leads': typeof AdminLeadsRoute
@@ -386,14 +453,24 @@ export interface FileRoutesByFullPath {
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
   '/admin/pages/$page': typeof AdminPagesPageRoute
+  '/admin/schema/$id': typeof AdminSchemaIdRoute
+  '/admin/schema/new': typeof AdminSchemaNewRoute
   '/admin/use-cases/$id': typeof AdminUseCasesIdRoute
   '/admin/use-cases/new': typeof AdminUseCasesNewRoute
   '/api/admin/media-upload': typeof ApiAdminMediaUploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/v1/schema-types': typeof ApiV1SchemaTypesRoute
+  '/api/v1/targets': typeof ApiV1TargetsRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/pages/': typeof AdminPagesIndexRoute
+  '/admin/schema/': typeof AdminSchemaIndexRoute
   '/admin/use-cases/': typeof AdminUseCasesIndexRoute
+  '/api/v1/posts/$id': typeof ApiV1PostsIdRoute
+  '/api/v1/posts/format': typeof ApiV1PostsFormatRoute
+  '/api/v1/schemas/$id': typeof ApiV1SchemasIdRoute
+  '/api/v1/posts/': typeof ApiV1PostsIndexRoute
+  '/api/v1/schemas/': typeof ApiV1SchemasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -408,6 +485,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/account': typeof AdminAccountRoute
   '/admin/activity': typeof AdminActivityRoute
+  '/admin/api-keys': typeof AdminApiKeysRoute
   '/admin/authors': typeof AdminAuthorsRoute
   '/admin/footer': typeof AdminFooterRoute
   '/admin/leads': typeof AdminLeadsRoute
@@ -441,14 +519,24 @@ export interface FileRoutesByTo {
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
   '/admin/pages/$page': typeof AdminPagesPageRoute
+  '/admin/schema/$id': typeof AdminSchemaIdRoute
+  '/admin/schema/new': typeof AdminSchemaNewRoute
   '/admin/use-cases/$id': typeof AdminUseCasesIdRoute
   '/admin/use-cases/new': typeof AdminUseCasesNewRoute
   '/api/admin/media-upload': typeof ApiAdminMediaUploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/v1/schema-types': typeof ApiV1SchemaTypesRoute
+  '/api/v1/targets': typeof ApiV1TargetsRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
   '/admin/blog': typeof AdminBlogIndexRoute
   '/admin/pages': typeof AdminPagesIndexRoute
+  '/admin/schema': typeof AdminSchemaIndexRoute
   '/admin/use-cases': typeof AdminUseCasesIndexRoute
+  '/api/v1/posts/$id': typeof ApiV1PostsIdRoute
+  '/api/v1/posts/format': typeof ApiV1PostsFormatRoute
+  '/api/v1/schemas/$id': typeof ApiV1SchemasIdRoute
+  '/api/v1/posts': typeof ApiV1PostsIndexRoute
+  '/api/v1/schemas': typeof ApiV1SchemasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -465,6 +553,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/account': typeof AdminAccountRoute
   '/admin/activity': typeof AdminActivityRoute
+  '/admin/api-keys': typeof AdminApiKeysRoute
   '/admin/authors': typeof AdminAuthorsRoute
   '/admin/footer': typeof AdminFooterRoute
   '/admin/leads': typeof AdminLeadsRoute
@@ -498,14 +587,24 @@ export interface FileRoutesById {
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
   '/admin/pages/$page': typeof AdminPagesPageRoute
+  '/admin/schema/$id': typeof AdminSchemaIdRoute
+  '/admin/schema/new': typeof AdminSchemaNewRoute
   '/admin/use-cases/$id': typeof AdminUseCasesIdRoute
   '/admin/use-cases/new': typeof AdminUseCasesNewRoute
   '/api/admin/media-upload': typeof ApiAdminMediaUploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/v1/schema-types': typeof ApiV1SchemaTypesRoute
+  '/api/v1/targets': typeof ApiV1TargetsRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/pages/': typeof AdminPagesIndexRoute
+  '/admin/schema/': typeof AdminSchemaIndexRoute
   '/admin/use-cases/': typeof AdminUseCasesIndexRoute
+  '/api/v1/posts/$id': typeof ApiV1PostsIdRoute
+  '/api/v1/posts/format': typeof ApiV1PostsFormatRoute
+  '/api/v1/schemas/$id': typeof ApiV1SchemasIdRoute
+  '/api/v1/posts/': typeof ApiV1PostsIndexRoute
+  '/api/v1/schemas/': typeof ApiV1SchemasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -523,6 +622,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin/account'
     | '/admin/activity'
+    | '/admin/api-keys'
     | '/admin/authors'
     | '/admin/footer'
     | '/admin/leads'
@@ -556,14 +656,24 @@ export interface FileRouteTypes {
     | '/admin/blog/$id'
     | '/admin/blog/new'
     | '/admin/pages/$page'
+    | '/admin/schema/$id'
+    | '/admin/schema/new'
     | '/admin/use-cases/$id'
     | '/admin/use-cases/new'
     | '/api/admin/media-upload'
     | '/api/auth/$'
+    | '/api/v1/schema-types'
+    | '/api/v1/targets'
     | '/blog/category/$slug'
     | '/admin/blog/'
     | '/admin/pages/'
+    | '/admin/schema/'
     | '/admin/use-cases/'
+    | '/api/v1/posts/$id'
+    | '/api/v1/posts/format'
+    | '/api/v1/schemas/$id'
+    | '/api/v1/posts/'
+    | '/api/v1/schemas/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -578,6 +688,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin/account'
     | '/admin/activity'
+    | '/admin/api-keys'
     | '/admin/authors'
     | '/admin/footer'
     | '/admin/leads'
@@ -611,14 +722,24 @@ export interface FileRouteTypes {
     | '/admin/blog/$id'
     | '/admin/blog/new'
     | '/admin/pages/$page'
+    | '/admin/schema/$id'
+    | '/admin/schema/new'
     | '/admin/use-cases/$id'
     | '/admin/use-cases/new'
     | '/api/admin/media-upload'
     | '/api/auth/$'
+    | '/api/v1/schema-types'
+    | '/api/v1/targets'
     | '/blog/category/$slug'
     | '/admin/blog'
     | '/admin/pages'
+    | '/admin/schema'
     | '/admin/use-cases'
+    | '/api/v1/posts/$id'
+    | '/api/v1/posts/format'
+    | '/api/v1/schemas/$id'
+    | '/api/v1/posts'
+    | '/api/v1/schemas'
   id:
     | '__root__'
     | '/'
@@ -634,6 +755,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin/account'
     | '/admin/activity'
+    | '/admin/api-keys'
     | '/admin/authors'
     | '/admin/footer'
     | '/admin/leads'
@@ -667,14 +789,24 @@ export interface FileRouteTypes {
     | '/admin/blog/$id'
     | '/admin/blog/new'
     | '/admin/pages/$page'
+    | '/admin/schema/$id'
+    | '/admin/schema/new'
     | '/admin/use-cases/$id'
     | '/admin/use-cases/new'
     | '/api/admin/media-upload'
     | '/api/auth/$'
+    | '/api/v1/schema-types'
+    | '/api/v1/targets'
     | '/blog/category/$slug'
     | '/admin/blog/'
     | '/admin/pages/'
+    | '/admin/schema/'
     | '/admin/use-cases/'
+    | '/api/v1/posts/$id'
+    | '/api/v1/posts/format'
+    | '/api/v1/schemas/$id'
+    | '/api/v1/posts/'
+    | '/api/v1/schemas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -708,7 +840,14 @@ export interface RootRouteChildren {
   UseCasesIndexRoute: typeof UseCasesIndexRoute
   ApiAdminMediaUploadRoute: typeof ApiAdminMediaUploadRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiV1SchemaTypesRoute: typeof ApiV1SchemaTypesRoute
+  ApiV1TargetsRoute: typeof ApiV1TargetsRoute
   BlogCategorySlugRoute: typeof BlogCategorySlugRoute
+  ApiV1PostsIdRoute: typeof ApiV1PostsIdRoute
+  ApiV1PostsFormatRoute: typeof ApiV1PostsFormatRoute
+  ApiV1SchemasIdRoute: typeof ApiV1SchemasIdRoute
+  ApiV1PostsIndexRoute: typeof ApiV1PostsIndexRoute
+  ApiV1SchemasIndexRoute: typeof ApiV1SchemasIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -809,6 +948,13 @@ declare module '@tanstack/react-router' {
       path: '/activity'
       fullPath: '/admin/activity'
       preLoaderRoute: typeof AdminActivityRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/api-keys': {
+      id: '/admin/api-keys'
+      path: '/api-keys'
+      fullPath: '/admin/api-keys'
+      preLoaderRoute: typeof AdminApiKeysRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/authors': {
@@ -1049,6 +1195,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPagesPageRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/schema/': {
+      id: '/admin/schema/'
+      path: '/schema'
+      fullPath: '/admin/schema/'
+      preLoaderRoute: typeof AdminSchemaIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/schema/$id': {
+      id: '/admin/schema/$id'
+      path: '/schema/$id'
+      fullPath: '/admin/schema/$id'
+      preLoaderRoute: typeof AdminSchemaIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/schema/new': {
+      id: '/admin/schema/new'
+      path: '/schema/new'
+      fullPath: '/admin/schema/new'
+      preLoaderRoute: typeof AdminSchemaNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/use-cases/': {
       id: '/admin/use-cases/'
       path: '/use-cases'
@@ -1084,11 +1251,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/schema-types': {
+      id: '/api/v1/schema-types'
+      path: '/api/v1/schema-types'
+      fullPath: '/api/v1/schema-types'
+      preLoaderRoute: typeof ApiV1SchemaTypesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/targets': {
+      id: '/api/v1/targets'
+      path: '/api/v1/targets'
+      fullPath: '/api/v1/targets'
+      preLoaderRoute: typeof ApiV1TargetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/category/$slug': {
       id: '/blog/category/$slug'
       path: '/blog/category/$slug'
       fullPath: '/blog/category/$slug'
       preLoaderRoute: typeof BlogCategorySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/posts/': {
+      id: '/api/v1/posts/'
+      path: '/api/v1/posts'
+      fullPath: '/api/v1/posts/'
+      preLoaderRoute: typeof ApiV1PostsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/posts/$id': {
+      id: '/api/v1/posts/$id'
+      path: '/api/v1/posts/$id'
+      fullPath: '/api/v1/posts/$id'
+      preLoaderRoute: typeof ApiV1PostsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/posts/format': {
+      id: '/api/v1/posts/format'
+      path: '/api/v1/posts/format'
+      fullPath: '/api/v1/posts/format'
+      preLoaderRoute: typeof ApiV1PostsFormatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/schemas/': {
+      id: '/api/v1/schemas/'
+      path: '/api/v1/schemas'
+      fullPath: '/api/v1/schemas/'
+      preLoaderRoute: typeof ApiV1SchemasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/schemas/$id': {
+      id: '/api/v1/schemas/$id'
+      path: '/api/v1/schemas/$id'
+      fullPath: '/api/v1/schemas/$id'
+      preLoaderRoute: typeof ApiV1SchemasIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -1097,6 +1313,7 @@ declare module '@tanstack/react-router' {
 interface AdminRouteRouteChildren {
   AdminAccountRoute: typeof AdminAccountRoute
   AdminActivityRoute: typeof AdminActivityRoute
+  AdminApiKeysRoute: typeof AdminApiKeysRoute
   AdminAuthorsRoute: typeof AdminAuthorsRoute
   AdminFooterRoute: typeof AdminFooterRoute
   AdminLeadsRoute: typeof AdminLeadsRoute
@@ -1113,16 +1330,20 @@ interface AdminRouteRouteChildren {
   AdminBlogIdRoute: typeof AdminBlogIdRoute
   AdminBlogNewRoute: typeof AdminBlogNewRoute
   AdminPagesPageRoute: typeof AdminPagesPageRoute
+  AdminSchemaIdRoute: typeof AdminSchemaIdRoute
+  AdminSchemaNewRoute: typeof AdminSchemaNewRoute
   AdminUseCasesIdRoute: typeof AdminUseCasesIdRoute
   AdminUseCasesNewRoute: typeof AdminUseCasesNewRoute
   AdminBlogIndexRoute: typeof AdminBlogIndexRoute
   AdminPagesIndexRoute: typeof AdminPagesIndexRoute
+  AdminSchemaIndexRoute: typeof AdminSchemaIndexRoute
   AdminUseCasesIndexRoute: typeof AdminUseCasesIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAccountRoute: AdminAccountRoute,
   AdminActivityRoute: AdminActivityRoute,
+  AdminApiKeysRoute: AdminApiKeysRoute,
   AdminAuthorsRoute: AdminAuthorsRoute,
   AdminFooterRoute: AdminFooterRoute,
   AdminLeadsRoute: AdminLeadsRoute,
@@ -1139,10 +1360,13 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminBlogIdRoute: AdminBlogIdRoute,
   AdminBlogNewRoute: AdminBlogNewRoute,
   AdminPagesPageRoute: AdminPagesPageRoute,
+  AdminSchemaIdRoute: AdminSchemaIdRoute,
+  AdminSchemaNewRoute: AdminSchemaNewRoute,
   AdminUseCasesIdRoute: AdminUseCasesIdRoute,
   AdminUseCasesNewRoute: AdminUseCasesNewRoute,
   AdminBlogIndexRoute: AdminBlogIndexRoute,
   AdminPagesIndexRoute: AdminPagesIndexRoute,
+  AdminSchemaIndexRoute: AdminSchemaIndexRoute,
   AdminUseCasesIndexRoute: AdminUseCasesIndexRoute,
 }
 
@@ -1182,7 +1406,14 @@ const rootRouteChildren: RootRouteChildren = {
   UseCasesIndexRoute: UseCasesIndexRoute,
   ApiAdminMediaUploadRoute: ApiAdminMediaUploadRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiV1SchemaTypesRoute: ApiV1SchemaTypesRoute,
+  ApiV1TargetsRoute: ApiV1TargetsRoute,
   BlogCategorySlugRoute: BlogCategorySlugRoute,
+  ApiV1PostsIdRoute: ApiV1PostsIdRoute,
+  ApiV1PostsFormatRoute: ApiV1PostsFormatRoute,
+  ApiV1SchemasIdRoute: ApiV1SchemasIdRoute,
+  ApiV1PostsIndexRoute: ApiV1PostsIndexRoute,
+  ApiV1SchemasIndexRoute: ApiV1SchemasIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

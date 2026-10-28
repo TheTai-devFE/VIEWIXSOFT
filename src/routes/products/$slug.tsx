@@ -13,6 +13,8 @@ import { isPageVisible } from '~/lib/page-visibility'
 import type { Product } from '~/content/products'
 import { generateMetaTags } from '~/lib/seo/meta'
 import { getSoftwareApplicationSchema, getFaqSchema, getBreadcrumbSchema, getVideoSchema } from '~/lib/seo/jsonld'
+import { ldScripts } from '~/lib/seo/custom-schema'
+import { getPageSchemasFn } from '~/server/functions/custom-schemas'
 import { resolveSectionContent } from '~/lib/section-content'
 import { FaqAccordion } from '~/components/blocks/FaqAccordion'
 import { PartnerBand } from '~/components/blocks/PartnerBand'
@@ -62,14 +64,15 @@ function productTourPosterPreload(config: ReturnType<typeof siteConfigFromMatche
 function productTourLd(config: ReturnType<typeof siteConfigFromMatches>) {
   const tour = shownTour(config)
   if (!tour) return []
-  const schema = getVideoSchema({
-    title: tour.title,
-    description: tour.description,
-    src: tour.video.url,
-    poster: tour.poster.url,
-    uploadDate: tour.video.uploadedAt,
-  })
-  return [{ type: 'application/ld+json', children: JSON.stringify(schema) }]
+  return [
+    getVideoSchema({
+      title: tour.title,
+      description: tour.description,
+      src: tour.video.url,
+      poster: tour.poster.url,
+      uploadDate: tour.video.uploadedAt,
+    }),
+  ]
 }
 
 export const Route = createFileRoute('/products/$slug')({
@@ -77,11 +80,14 @@ export const Route = createFileRoute('/products/$slug')({
     const base = PRODUCTS.find((p) => p.slug === params.slug)
     if (!base) throw notFound()
     // The admin can switch a product between available, coming soon and hidden.
-    const config = await getSiteConfigFn()
+    const [config, schemas] = await Promise.all([
+      getSiteConfigFn(),
+      getPageSchemasFn({ data: { path: `/products/${base.slug}` } }),
+    ])
     if (!isPageVisible(config, `/products/${base.slug}`)) throw notFound()
     const status = productStatus(config, base)
     if (status === 'hidden') throw notFound()
-    return { product: { ...base, status } }
+    return { product: { ...base, status }, schemas }
   },
   head: ({ loaderData, matches }) => {
     if (!loaderData?.product) return {}
@@ -99,40 +105,33 @@ export const Route = createFileRoute('/products/$slug')({
       { name: p.name, path: `/products/${p.slug}` },
     ]
 
-    const breadcrumbLd = { type: 'application/ld+json', children: JSON.stringify(getBreadcrumbSchema(breadcrumbs)) }
+    const breadcrumbLd = getBreadcrumbSchema(breadcrumbs)
 
     // An unreleased product gets no SoftwareApplication or FAQ markup: there is no
     // shipped software or confirmed FAQ to describe yet.
-    if (comingSoon) return { meta: seo.meta, links: seo.links, scripts: [breadcrumbLd] }
+    if (comingSoon) return { meta: seo.meta, links: seo.links, scripts: ldScripts([breadcrumbLd], loaderData.schemas) }
 
     return {
       meta: seo.meta,
       links: [...seo.links, ...(p.slug === 'cms' ? productTourPosterPreload(siteConfigFromMatches(matches)) : [])],
-      scripts: [
-        {
-          type: 'application/ld+json',
-          children: JSON.stringify(
-            getSoftwareApplicationSchema({
-              ...p,
-              // Only Viewixsoft CMS has published prices so far; the same figure the pricing table shows.
-              offer: p.slug === 'cms' ? cmsOffer(siteConfigFromMatches(matches)) : undefined,
-            }),
-          ),
-        },
-        {
-          type: 'application/ld+json',
+      scripts: ldScripts(
+        [
+          getSoftwareApplicationSchema({
+            ...p,
+            // Only Viewixsoft CMS has published prices so far; the same figure the pricing table shows.
+            offer: p.slug === 'cms' ? cmsOffer(siteConfigFromMatches(matches)) : undefined,
+          }),
           // The same questions the FAQ section shows, edited or not.
-          children: JSON.stringify(
-            getFaqSchema(
-              p.slug === 'cms'
-                ? resolveSectionContent('product-cms:faq', siteConfigFromMatches(matches).content['product-cms:faq']).items
-                : p.faq,
-            ),
+          getFaqSchema(
+            p.slug === 'cms'
+              ? resolveSectionContent('product-cms:faq', siteConfigFromMatches(matches).content['product-cms:faq']).items
+              : p.faq,
           ),
-        },
-        breadcrumbLd,
-        ...(p.slug === 'cms' ? productTourLd(siteConfigFromMatches(matches)) : []),
-      ],
+          breadcrumbLd,
+          ...(p.slug === 'cms' ? productTourLd(siteConfigFromMatches(matches)) : []),
+        ],
+        loaderData.schemas,
+      ),
     }
   },
   component: ProductDetailPage,

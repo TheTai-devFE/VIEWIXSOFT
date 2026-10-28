@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useRef, useState } from 'react'
 import { useConfirm, useToast } from '~/components/ui/feedback'
 import { Link, useRouter } from '@tanstack/react-router'
 import {
@@ -7,7 +7,7 @@ import {
   Check,
   CheckSquare,
   Code,
-  Columns2,
+  Code2,
   Eye,
   FileCode,
   Heading2,
@@ -32,12 +32,14 @@ import {
 import { ImagePickerSheet } from '~/components/admin/ImagePickerSheet'
 import type { LibraryAsset } from '~/components/admin/ImagePickerSheet'
 import { InsertImageSheet } from '~/components/admin/InsertImageSheet'
-import { MarkdownRenderer } from '~/components/blog/MarkdownRenderer'
 import { EditorHeader } from '~/components/admin/EditorHeader'
 import { OwnershipNotice } from '~/components/admin/OwnershipNotice'
 import type { Ownership } from '~/components/admin/OwnershipNotice'
 import { RepeatableList, TextField } from '~/components/admin/use-cases/BlockFields'
 import { SeoChecklist, SeoScoreBadge } from '~/components/admin/blog/SeoChecklist'
+import { PostSchemaPanel } from '~/components/admin/blog/PostSchemaPanel'
+import type { CustomSchemaListRow } from '~/server/custom-schemas/repository'
+import type { SchemaLibraryItem } from '~/server/custom-schemas/post-schemas'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Input } from '~/components/ui/input'
@@ -45,13 +47,21 @@ import { Label } from '~/components/ui/label'
 import { createBlogPostFn, deleteBlogPostFn, updateBlogPostFn } from '~/server/functions/blog'
 import { uploadMediaAssetFn } from '~/server/functions/media-admin'
 import { prepareImage } from '~/lib/image-prepare'
-import { htmlToMarkdown } from '~/lib/html-to-markdown'
+import { htmlToMarkdown } from '~/lib/markdown-html'
+import { HtmlSourceEditor } from '~/components/admin/blog/HtmlSourceEditor'
+import type { ContentEditorHandle } from '~/components/admin/blog/VisualEditor'
 import { extractTocFromMarkdown, generateMarkdownToc } from '~/lib/toc'
 import type { AuthorRow, BlogPostRow } from '~/server/db/schema'
 import { checkPost } from '~/lib/seo/post-checklist'
 import type { FaqEntry } from '~/lib/case-study'
 import { cn } from '~/lib/cn'
 import { LazyImage } from '~/components/ui/lazy-image'
+
+// Tiptap is only needed once the visual tab opens, so it stays out of the editor's first download.
+const VisualEditor = lazy(() => import('~/components/admin/blog/VisualEditor').then((m) => ({ default: m.VisualEditor })))
+
+/** How the body is edited; it is always saved as Markdown. */
+type EditorMode = 'visual' | 'markdown' | 'html'
 
 const PRODUCTS = [
   { slug: 'cms', name: 'Viewixsoft CMS' },
@@ -75,8 +85,14 @@ export function BlogPostEditor({
   authors = [],
   defaultAuthorId = null,
   ownership,
+  schemas = [],
+  schemaLibrary = [],
 }: {
   initialPost?: BlogPostRow | null
+  /** Schema markup attached to this post (/admin/schema), when editing. */
+  schemas?: CustomSchemaListRow[]
+  /** Other pages' schemas, to copy one onto this post. */
+  schemaLibrary?: SchemaLibraryItem[]
   mediaAssets?: LibraryAsset[]
   /** Profiles from /admin/authors to pick the byline from. */
   authors?: AuthorRow[]
@@ -109,7 +125,8 @@ export function BlogPostEditor({
   const [faq, setFaq] = useState<FaqEntry[]>(initialPost?.faq ?? [])
   const author = authors.find((a) => a.id === authorId) ?? null
 
-  const [activeTab, setActiveTab] = useState<'write' | 'split' | 'preview'>('split')
+  const [mode, setMode] = useState<EditorMode>('visual')
+  const contentEditorRef = useRef<ContentEditorHandle>(null)
   const [localMediaAssets, setLocalMediaAssets] = useState<LibraryAsset[]>(mediaAssets)
   const [coverPickerOpen, setCoverPickerOpen] = useState(false)
   const [insertImageSheetOpen, setInsertImageSheetOpen] = useState(false)
@@ -168,6 +185,11 @@ export function BlogPostEditor({
   )
 
   const insertAtCursor = (text: string) => {
+    // The visual and HTML tabs insert at their own cursor and report back as Markdown.
+    if (mode !== 'markdown') {
+      contentEditorRef.current?.insertMarkdown(text)
+      return
+    }
     const textarea = document.getElementById('post-content-textarea') as HTMLTextAreaElement | null
     if (!textarea) {
       setContent((prev) => prev + text)
@@ -215,6 +237,40 @@ export function BlogPostEditor({
     setTemplateMenuOpen(false)
   }
 
+  /** Uploads a pasted or dropped image to the media library; null (with the error shown) when it fails. */
+  const uploadImage = async (rawFile: File): Promise<{ url: string; alt: string } | null> => {
+    setIsUploadingPaste(true)
+    try {
+      const fileName = rawFile.name && rawFile.name !== 'image.png' ? rawFile.name : `pasted-image-${Date.now()}.png`
+      const prepared = await prepareImage(new File([rawFile], fileName, { type: rawFile.type }))
+      const form = new FormData()
+      form.set('file', prepared.file)
+      const res = await uploadMediaAssetFn({ data: form })
+      if (!res.ok || !res.asset?.url) {
+        setError(res.ok ? 'Không tải ảnh lên được.' : res.error)
+        return null
+      }
+      const alt = res.asset.alt || 'Image'
+      const newAsset: LibraryAsset = {
+        id: res.asset.id,
+        url: res.asset.url,
+        fileName: res.asset.fileName,
+        contentType: res.asset.contentType,
+        width: res.asset.width,
+        height: res.asset.height,
+        alt,
+        createdAt: new Date(res.asset.createdAt),
+      }
+      setLocalMediaAssets((prev) => [newAsset, ...prev])
+      return { url: res.asset.url, alt }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Có lỗi khi tải ảnh lên.')
+      return null
+    } finally {
+      setIsUploadingPaste(false)
+    }
+  }
+
   const handleUploadImageFile = async (rawFile: File, targetPosition?: { start: number; end: number }) => {
     const textarea = document.getElementById('post-content-textarea') as HTMLTextAreaElement | null
     const start = targetPosition?.start ?? textarea?.selectionStart ?? content.length
@@ -227,45 +283,8 @@ export function BlogPostEditor({
     const updatedWithPlaceholder =
       originalContent.substring(0, start) + placeholder + originalContent.substring(end)
     setContent(updatedWithPlaceholder)
-    setIsUploadingPaste(true)
-
-    try {
-      const fileName = rawFile.name && rawFile.name !== 'image.png'
-        ? rawFile.name
-        : `pasted-image-${Date.now()}.png`
-      const namedFile = new File([rawFile], fileName, { type: rawFile.type })
-
-      const prepared = await prepareImage(namedFile)
-      const form = new FormData()
-      form.set('file', prepared.file)
-
-      const res = await uploadMediaAssetFn({ data: form })
-      if (res.ok && res.asset?.url) {
-        const altText = res.asset.alt || 'Image'
-        const markdown = `\n\n![${altText}](${res.asset.url})\n\n`
-        setContent((prev) => prev.replace(placeholder, markdown))
-
-        const newAsset: LibraryAsset = {
-          id: res.asset.id,
-          url: res.asset.url,
-          fileName: res.asset.fileName,
-          contentType: res.asset.contentType,
-          width: res.asset.width,
-          height: res.asset.height,
-          alt: altText,
-          createdAt: new Date(res.asset.createdAt),
-        }
-        setLocalMediaAssets((prev) => [newAsset, ...prev])
-      } else {
-        setError(res.ok ? 'Không tải ảnh lên được.' : res.error)
-        setContent((prev) => prev.replace(placeholder, ''))
-      }
-    } catch (err: any) {
-      setError(err?.message || 'Có lỗi khi tải ảnh lên.')
-      setContent((prev) => prev.replace(placeholder, ''))
-    } finally {
-      setIsUploadingPaste(false)
-    }
+    const uploaded = await uploadImage(rawFile)
+    setContent((prev) => prev.replace(placeholder, uploaded ? `\n\n![${uploaded.alt}](${uploaded.url})\n\n` : ''))
   }
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -299,7 +318,7 @@ export function BlogPostEditor({
         htmlData,
       )
       if (hasRichContent) {
-        const markdown = htmlToMarkdown(htmlData)
+        const { markdown } = htmlToMarkdown(htmlData)
         if (markdown && markdown.trim()) {
           e.preventDefault()
           const textarea = e.currentTarget
@@ -506,6 +525,97 @@ export function BlogPostEditor({
     })
   }
 
+  // Shared by the three editing tabs.
+  const templatesMenu = (
+    <div className="relative ml-auto">
+      <button
+        type="button"
+        onClick={() => setTemplateMenuOpen((prev) => !prev)}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-ink-900 px-2.5 py-1 text-xs font-semibold text-signal-400 hover:bg-accent"
+      >
+        <Sparkles className="size-3.5" /> Mẫu có sẵn
+      </button>
+
+      {templateMenuOpen && (
+        <div className="absolute right-0 top-full z-30 mt-1 w-60 rounded-xl border border-border bg-card p-1.5 shadow-xl">
+          <button
+            type="button"
+            onClick={() => insertTemplate('toc')}
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-signal-400 hover:bg-accent border-b border-border/50 pb-2 mb-1"
+          >
+            <span>📑</span> Tạo Mục lục tự động ({currentToc.length} mục)
+          </button>
+          <button
+            type="button"
+            onClick={() => insertTemplate('takeaways')}
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
+          >
+            <span>📌</span> Khung ý chính (Key Takeaways)
+          </button>
+          <button
+            type="button"
+            onClick={() => insertTemplate('table')}
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
+          >
+            <span>📊</span> Bảng so sánh
+          </button>
+          <button
+            type="button"
+            onClick={() => insertTemplate('faq')}
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
+          >
+            <span>❓</span> Khối FAQ
+          </button>
+          <button
+            type="button"
+            onClick={() => insertTemplate('steps')}
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
+          >
+            <span>🔢</span> Hướng dẫn từng bước
+          </button>
+          <button
+            type="button"
+            onClick={() => insertTemplate('callout')}
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
+          >
+            <span>💡</span> Khung mẹo (Pro tip)
+          </button>
+        </div>
+      )}
+    </div>
+  )
+
+  const statsBar = (
+    <div className="flex flex-wrap items-center justify-between border-t border-border bg-ink-950/40 px-3 py-1.5 text-xs text-muted-foreground">
+      <div className="flex items-center gap-2">
+        <span>
+          <strong className="text-foreground">{wordCount}</strong> từ
+        </span>
+        <span>•</span>
+        <span>
+          ~<strong className="text-foreground">{readTimeMin}</strong> phút đọc
+        </span>
+        <span>•</span>
+        <span>{charCount} ký tự</span>
+        {currentToc.length > 0 && (
+          <>
+            <span>•</span>
+            <span className="text-signal-400 font-medium">
+              📑 <strong>{currentToc.length}</strong> tiêu đề (mục lục)
+            </span>
+          </>
+        )}
+      </div>
+      <div className="hidden sm:flex items-center gap-2 text-[11px] text-muted-foreground">
+        <span>Phím tắt:</span>
+        <kbd className="rounded border border-border bg-ink-900 px-1 py-0.5 font-mono text-[10px]">Ctrl+B</kbd>
+        <kbd className="rounded border border-border bg-ink-900 px-1 py-0.5 font-mono text-[10px]">Ctrl+I</kbd>
+        <kbd className="rounded border border-border bg-ink-900 px-1 py-0.5 font-mono text-[10px]">Ctrl+K</kbd>
+        <kbd className="rounded border border-border bg-ink-900 px-1 py-0.5 font-mono text-[10px]">Ctrl+V</kbd>
+      </div>
+    </div>
+  )
+
   return (
     <div className="space-y-8">
       <EditorHeader
@@ -561,7 +671,7 @@ export function BlogPostEditor({
       <fieldset disabled={!canEdit} className="min-w-0">
         <div className="grid gap-8 lg:grid-cols-12">
           {/* Left Column: Post Core Content */}
-          <div className={cn('space-y-6', activeTab === 'split' ? 'lg:col-span-12' : 'lg:col-span-8')}>
+          <div className="min-w-0 space-y-6 lg:col-span-8">
             {/* Title */}
             <div>
               <Label htmlFor="post-title" className="text-base font-semibold">
@@ -636,321 +746,26 @@ export function BlogPostEditor({
             {/* Markdown Content Editor */}
             <div>
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
-                <Label className="text-base font-semibold">Nội dung bài viết (Markdown) *</Label>
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v === 'write' || v === 'preview' ? v : 'split')}>
-                  <TabsList aria-label="Chế độ soạn thảo">
-                    <TabsTrigger value="write" icon={<PenLine aria-hidden="true" className="size-3.5" />}>
-                      Soạn
+                <div>
+                  <Label className="text-base font-semibold">Nội dung bài viết *</Label>
+                  <p className="text-xs text-muted-foreground">Sửa ở tab nào cũng được, ba tab luôn cùng một nội dung. Bài được lưu dưới dạng Markdown.</p>
+                </div>
+                <Tabs value={mode} onValueChange={(v) => setMode(v === 'markdown' || v === 'html' ? v : 'visual')}>
+                  <TabsList aria-label="Cách soạn nội dung">
+                    <TabsTrigger value="visual" icon={<Eye aria-hidden="true" className="size-3.5" />}>
+                      Trực quan
                     </TabsTrigger>
-                    <TabsTrigger value="split" icon={<Columns2 aria-hidden="true" className="size-3.5" />}>
-                      Chia đôi màn hình
+                    <TabsTrigger value="markdown" icon={<PenLine aria-hidden="true" className="size-3.5" />}>
+                      Markdown
                     </TabsTrigger>
-                    <TabsTrigger value="preview" icon={<Eye aria-hidden="true" className="size-3.5" />}>
-                      Xem trước
+                    <TabsTrigger value="html" icon={<Code2 aria-hidden="true" className="size-3.5" />}>
+                      HTML
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
               </div>
 
-              {/* Split Screen Mode */}
-              {activeTab === 'split' ? (
-                <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                  {/* Left: Editor */}
-                  <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-background shadow-xs">
-                    {/* Toolbar */}
-                    <div className="relative flex flex-wrap items-center gap-1 border-b border-border bg-ink-950/30 p-2">
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('## ', '', 'Section Heading')}
-                        title="Tiêu đề cấp 2 (H2)"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <Heading2 className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('### ', '', 'Subsection Heading')}
-                        title="Tiêu đề cấp 3 (H3)"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <Heading3 className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('#### ', '', 'Minor Heading')}
-                        title="Tiêu đề cấp 4 (H4)"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <Heading4 className="size-4" />
-                      </button>
-
-                      <div className="h-4 w-px bg-border mx-0.5" />
-
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('**', '**', 'bold text')}
-                        title="In đậm (Ctrl+B)"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <Bold className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('*', '*', 'italic text')}
-                        title="In nghiêng (Ctrl+I)"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <Italic className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('~~', '~~', 'strikethrough')}
-                        title="Gạch ngang (Ctrl+Shift+X)"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <Strikethrough className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('`', '`', 'code')}
-                        title="Code trong dòng (Ctrl+E)"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <Code className="size-4" />
-                      </button>
-
-                      <div className="h-4 w-px bg-border mx-0.5" />
-
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('- ', '', 'List item')}
-                        title="Danh sách gạch đầu dòng"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <List className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('1. ', '', 'Numbered item')}
-                        title="Danh sách đánh số"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <ListOrdered className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('- [ ] ', '', 'Task item')}
-                        title="Checklist"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <CheckSquare className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('> ', '', 'Quoted text')}
-                        title="Trích dẫn"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <Quote className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('\n```ts\n', '\n```\n', '// code snippet')}
-                        title="Khối code"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <FileCode className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertAtCursor('\n\n---\n\n')}
-                        title="Đường kẻ ngang"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <Minus className="size-4" />
-                      </button>
-
-                      <div className="h-4 w-px bg-border mx-0.5" />
-
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('[', '](https://viewixsoft.com)', 'link text')}
-                        title="Chèn link (Ctrl+K)"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <LinkIcon className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setInsertImageSheetOpen(true)}
-                        title="Chèn ảnh (tải lên / thư viện / URL)"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <ImageIcon className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          insertAtCursor(
-                            '\n\n| Feature | Viewixsoft CMS | Legacy Approach |\n| --- | --- | --- |\n| Central Management | ✅ Real-time Cloud | ❌ Manual on-site |\n| Offline Caching | ✅ Edge Cache | ⚠️ Black screen |\n\n',
-                          )
-                        }
-                        title="Chèn bảng so sánh"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <TableIcon className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          insertAtCursor('\n\n> 💡 **Pro Tip / Best Practice:**\n> Enter key recommendation here.\n\n')
-                        }
-                        title="Chèn khung ghi chú"
-                        className="inline-flex size-8 items-center justify-center rounded hover:bg-accent text-foreground"
-                      >
-                        <AlertCircle className="size-4" />
-                      </button>
-
-                      {/* Quick Templates Dropdown */}
-                      <div className="relative ml-auto">
-                        <button
-                          type="button"
-                          onClick={() => setTemplateMenuOpen((prev) => !prev)}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-ink-900 px-2.5 py-1 text-xs font-semibold text-signal-400 hover:bg-accent"
-                        >
-                          <Sparkles className="size-3.5" /> Mẫu có sẵn
-                        </button>
-
-                        {templateMenuOpen && (
-                          <div className="absolute right-0 top-full z-30 mt-1 w-60 rounded-xl border border-border bg-card p-1.5 shadow-xl">
-                            <button
-                              type="button"
-                              onClick={() => insertTemplate('toc')}
-                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-signal-400 hover:bg-accent border-b border-border/50 pb-2 mb-1"
-                            >
-                              <span>📑</span> Tạo Mục lục tự động ({currentToc.length} mục)
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => insertTemplate('takeaways')}
-                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
-                            >
-                              <span>📌</span> Khung ý chính (Key Takeaways)
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => insertTemplate('table')}
-                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
-                            >
-                              <span>📊</span> Bảng so sánh
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => insertTemplate('faq')}
-                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
-                            >
-                              <span>❓</span> Khối FAQ
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => insertTemplate('steps')}
-                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
-                            >
-                              <span>🔢</span> Hướng dẫn từng bước
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => insertTemplate('callout')}
-                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
-                            >
-                              <span>💡</span> Khung mẹo (Pro tip)
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {pasteNotice && (
-                      <div className="flex items-center gap-2 border-b border-signal-500/30 bg-signal-500/10 px-4 py-2 text-xs font-semibold text-signal-400">
-                        <Check className="size-3.5" />
-                        <span>{pasteNotice}</span>
-                      </div>
-                    )}
-
-                    {isUploadingPaste && (
-                      <div className="flex items-center gap-2 border-b border-border bg-signal-500/10 px-4 py-2 text-xs font-medium text-signal-400">
-                        <Loader2 className="size-3.5 animate-spin" />
-                        <span>Đang tải ảnh từ clipboard lên… Vui lòng chờ.</span>
-                      </div>
-                    )}
-
-                    <textarea
-                      id="post-content-textarea"
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      onPaste={handlePaste}
-                      onDrop={handleDrop}
-                      onKeyDown={handleKeyDown}
-                      rows={26}
-                      placeholder="Viết bài bằng Markdown (nội dung tiếng Anh). Dán (Ctrl+V) từ Word/Google Docs/ChatGPT vẫn giữ định dạng, dán ảnh trực tiếp, hoặc dùng thanh công cụ…"
-                      className="w-full resize-y bg-transparent p-4 font-mono text-sm leading-relaxed outline-none"
-                      required
-                    />
-
-                    {/* Stats Bar */}
-                    <div className="flex flex-wrap items-center justify-between border-t border-border bg-ink-950/40 px-3 py-1.5 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <span>
-                          <strong className="text-foreground">{wordCount}</strong> từ
-                        </span>
-                        <span>•</span>
-                        <span>
-                          ~<strong className="text-foreground">{readTimeMin}</strong> phút đọc
-                        </span>
-                        <span>•</span>
-                        <span>{charCount} ký tự</span>
-                        {currentToc.length > 0 && (
-                          <>
-                            <span>•</span>
-                            <span className="text-signal-400 font-medium">
-                              📑 <strong>{currentToc.length}</strong> tiêu đề (mục lục)
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      <div className="hidden sm:flex items-center gap-2 text-[11px] text-muted-foreground">
-                        <span>Phím tắt:</span>
-                        <kbd className="rounded border border-border bg-ink-900 px-1 py-0.5 font-mono text-[10px]">Ctrl+B</kbd>
-                        <kbd className="rounded border border-border bg-ink-900 px-1 py-0.5 font-mono text-[10px]">Ctrl+I</kbd>
-                        <kbd className="rounded border border-border bg-ink-900 px-1 py-0.5 font-mono text-[10px]">Ctrl+K</kbd>
-                        <kbd className="rounded border border-border bg-ink-900 px-1 py-0.5 font-mono text-[10px]">Ctrl+V</kbd>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right: Live Preview */}
-                  <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
-                    <div className="flex items-center justify-between border-b border-border bg-ink-950/40 px-4 py-2.5">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Xem trước trực tiếp
-                      </span>
-                      <span className="flex items-center gap-1.5 text-xs text-signal-400">
-                        <span className="inline-block size-2 rounded-full bg-signal-400 animate-pulse" />
-                        Đang đồng bộ
-                      </span>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-6 max-h-[720px]">
-                      {content ? (
-                        <MarkdownRenderer content={content} />
-                      ) : (
-                        <p className="text-sm text-muted-foreground italic">
-                          Bản xem trước sẽ hiện ở đây khi bạn soạn bên trái…
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : activeTab === 'write' ? (
+              {mode === 'markdown' ? (
                 /* Write Only Mode */
                 <div className="mt-3 flex flex-col overflow-hidden rounded-xl border border-border bg-background shadow-xs">
                   {/* Toolbar */}
@@ -1107,63 +922,7 @@ export function BlogPostEditor({
                       <AlertCircle className="size-4" />
                     </button>
 
-                    {/* Quick Templates Dropdown */}
-                    <div className="relative ml-auto">
-                      <button
-                        type="button"
-                        onClick={() => setTemplateMenuOpen((prev) => !prev)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-ink-900 px-2.5 py-1 text-xs font-semibold text-signal-400 hover:bg-accent"
-                      >
-                        <Sparkles className="size-3.5" /> Mẫu có sẵn
-                      </button>
-
-                      {templateMenuOpen && (
-                        <div className="absolute right-0 top-full z-30 mt-1 w-60 rounded-xl border border-border bg-card p-1.5 shadow-xl">
-                          <button
-                            type="button"
-                            onClick={() => insertTemplate('toc')}
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-signal-400 hover:bg-accent border-b border-border/50 pb-2 mb-1"
-                          >
-                            <span>📑</span> Tạo Mục lục tự động ({currentToc.length} mục)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => insertTemplate('takeaways')}
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
-                          >
-                            <span>📌</span> Khung ý chính (Key Takeaways)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => insertTemplate('table')}
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
-                          >
-                            <span>📊</span> Bảng so sánh
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => insertTemplate('faq')}
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
-                          >
-                            <span>❓</span> Khối FAQ
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => insertTemplate('steps')}
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
-                          >
-                            <span>🔢</span> Hướng dẫn từng bước
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => insertTemplate('callout')}
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
-                          >
-                            <span>💡</span> Khung mẹo (Pro tip)
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    {templatesMenu}
                   </div>
 
                   {pasteNotice && (
@@ -1193,45 +952,30 @@ export function BlogPostEditor({
                     required
                   />
 
-                  {/* Stats Bar */}
-                  <div className="flex flex-wrap items-center justify-between border-t border-border bg-ink-950/40 px-3 py-1.5 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <span>
-                        <strong className="text-foreground">{wordCount}</strong> từ
-                      </span>
-                      <span>•</span>
-                      <span>
-                        ~<strong className="text-foreground">{readTimeMin}</strong> phút đọc
-                      </span>
-                      <span>•</span>
-                      <span>{charCount} ký tự</span>
-                      {currentToc.length > 0 && (
-                        <>
-                          <span>•</span>
-                          <span className="text-signal-400 font-medium">
-                            📑 <strong>{currentToc.length}</strong> tiêu đề (mục lục)
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    <div className="hidden sm:flex items-center gap-2 text-[11px] text-muted-foreground">
-                      <span>Phím tắt:</span>
-                      <kbd className="rounded border border-border bg-ink-900 px-1 py-0.5 font-mono text-[10px]">Ctrl+B</kbd>
-                      <kbd className="rounded border border-border bg-ink-900 px-1 py-0.5 font-mono text-[10px]">Ctrl+I</kbd>
-                      <kbd className="rounded border border-border bg-ink-900 px-1 py-0.5 font-mono text-[10px]">Ctrl+K</kbd>
-                      <kbd className="rounded border border-border bg-ink-900 px-1 py-0.5 font-mono text-[10px]">Ctrl+V</kbd>
-                    </div>
-                  </div>
+                  {statsBar}
                 </div>
+              ) : mode === 'html' ? (
+                <HtmlSourceEditor
+                  ref={contentEditorRef}
+                  markdown={content}
+                  onChange={setContent}
+                  onRequestImage={() => setInsertImageSheetOpen(true)}
+                  templatesMenu={templatesMenu}
+                  footer={statsBar}
+                />
               ) : (
-                /* Preview Only Mode */
-                <div className="mt-3 min-h-[520px] rounded-xl border border-border bg-card p-6">
-                  {content ? (
-                    <MarkdownRenderer content={content} />
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Chưa có gì để xem trước. Hãy viết nội dung trước.</p>
-                  )}
-                </div>
+                <Suspense fallback={<div className="mt-3 min-h-[600px] rounded-xl border border-border bg-card" />}>
+                  <VisualEditor
+                    ref={contentEditorRef}
+                    markdown={content}
+                    onChange={setContent}
+                    onRequestImage={() => setInsertImageSheetOpen(true)}
+                    onUploadImage={uploadImage}
+                    templatesMenu={templatesMenu}
+                    footer={statsBar}
+                    disabled={!canEdit}
+                  />
+                </Suspense>
               )}
             </div>
 
@@ -1306,10 +1050,13 @@ export function BlogPostEditor({
                 />
               </CardContent>
             </Card>
+
+            {/* Attached to the saved slug; a changed slug carries its schemas along when the post is saved. */}
+            <PostSchemaPanel postId={initialPost?.id} slug={initialPost?.slug ?? slug} schemas={schemas} library={schemaLibrary} canEdit={canEdit} assets={mediaAssets} />
           </div>
 
           {/* Right Column: Taxonomy, Cover, Author, SEO */}
-          <div className={cn('space-y-6', activeTab === 'split' ? 'lg:col-span-12 grid grid-cols-1 items-start gap-6 space-y-0 md:grid-cols-2 lg:grid-cols-4' : 'lg:col-span-4')}>
+          <div className="space-y-6 lg:col-span-4">
             <SeoChecklist checks={checks} />
 
             <Card>

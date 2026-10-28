@@ -17,6 +17,8 @@ import { can, canEditContent } from '~/lib/permissions'
 import { logActivity } from '~/server/activity/repository'
 import { statusAction } from '~/server/activity/status-action'
 import { listAccountNames } from '~/server/users/repository'
+import { deleteCustomSchemasForPath, moveCustomSchemas } from '~/server/custom-schemas/repository'
+import { invalidatePublishedSchemas } from '~/server/custom-schemas/published'
 
 // ─── Public Queries ─────────────────────────────────────────────────────────
 
@@ -119,6 +121,8 @@ export const updateBlogPostFn = createServerFn({ method: 'POST' })
       }
       const post = await updateBlogPost(data.id, data.data, context.admin.userId)
       if (!post) return { ok: false as const, error: 'not_found' as const, message: NOT_FOUND }
+      // The post's schema markup is keyed by its path, so it moves with a new slug.
+      if (post.slug !== current.slug && (await moveCustomSchemas(`/blog/${current.slug}`, `/blog/${post.slug}`))) invalidatePublishedSchemas()
       await logActivity(context.admin, statusAction('blog', current.status, post.status), { type: 'blog', id: post.id, label: post.title })
       return { ok: true as const, post }
     } catch (error) {
@@ -161,6 +165,7 @@ export const deleteBlogPostFn = createServerFn({ method: 'POST' })
       if (!current) return { ok: false as const, message: NOT_FOUND }
       if (!canEditContent(context.admin, current)) return { ok: false as const, message: NOT_OWNER }
       const success = await deleteBlogPost(data.id)
+      if (success && (await deleteCustomSchemasForPath(`/blog/${current.slug}`))) invalidatePublishedSchemas()
       if (success) await logActivity(context.admin, 'blog.delete', { type: 'blog', id: current.id, label: current.title })
       return success ? { ok: true as const } : { ok: false as const, message: NOT_FOUND }
     } catch (error) {

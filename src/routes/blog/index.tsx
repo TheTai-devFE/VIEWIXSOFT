@@ -6,6 +6,8 @@ import { NewsletterSignup } from '~/components/blocks/NewsletterSignup'
 import { PRODUCTS } from '~/content/products'
 import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
 import { generateMetaTags } from '~/lib/seo/meta'
+import { ldScripts } from '~/lib/seo/custom-schema'
+import { getPageSchemasFn } from '~/server/functions/custom-schemas'
 import { getBreadcrumbSchema } from '~/lib/seo/jsonld'
 import { cn } from '~/lib/cn'
 import { getPublishedBlogPostsFn } from '~/server/functions/blog'
@@ -29,12 +31,15 @@ const formatDateAntigravity = (iso: string) => {
 export const Route = createFileRoute('/blog/')({
   validateSearch: searchSchema,
   loader: async () => {
-    const config = await getSiteConfigFn()
+    const [config, res, schemas] = await Promise.all([
+      getSiteConfigFn(),
+      getPublishedBlogPostsFn(),
+      getPageSchemasFn({ data: { path: '/blog' } }),
+    ])
     if (!isPageVisible(config, 'blog')) throw notFound()
-    const res = await getPublishedBlogPostsFn()
-    return { dbPosts: res.ok ? res.posts : [] }
+    return { dbPosts: res.ok ? res.posts : [], schemas }
   },
-  head: ({ matches }) => {
+  head: ({ matches, loaderData }) => {
     const seo = generateMetaTags({
       ...pageContent(siteConfigFromMatches(matches), 'blog').seo,
       canonicalUrl: '/blog',
@@ -42,17 +47,12 @@ export const Route = createFileRoute('/blog/')({
     return {
       meta: seo.meta,
       links: seo.links,
-      scripts: [
-        {
-          type: 'application/ld+json',
-          children: JSON.stringify(
-            getBreadcrumbSchema([
-              { name: 'Home', path: '/' },
-              { name: 'Blog', path: '/blog' },
-            ]),
-          ),
-        },
-      ],
+      scripts: ldScripts([
+        getBreadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Blog', path: '/blog' },
+        ]),
+      ], loaderData?.schemas),
     }
   },
   component: BlogIndexPage,

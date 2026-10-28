@@ -9,3 +9,6 @@ export const SPRING_LAYOUT = { type: 'spring', stiffness: 360, damping: 32, mass
 
 /** Overlay panels entering: dialogs and toasts. */
 export const SPRING_PANEL = { type: 'spring', stiffness: 420, damping: 40, mass: 0.5 } as const
+
+/** Press feedback on buttons and other tappable controls. */
+export const SPRING_PRESS = { type: 'spring', stiffness: 500, damping: 30, mass: 0.6 } as const

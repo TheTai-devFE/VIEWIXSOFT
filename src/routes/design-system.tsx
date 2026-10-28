@@ -20,6 +20,18 @@ import { LazyImage } from '~/components/ui/lazy-image'
 import { StatefulButton } from '~/components/ui/stateful-button'
 import type { ButtonState } from '~/components/ui/stateful-button'
 import { Label } from '~/components/ui/label'
+import { Checkbox } from '~/components/ui/checkbox'
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
+  ComboboxList,
+  ComboboxTrigger,
+} from '~/components/ui/combobox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 
 const SWATCHES = [
@@ -60,6 +72,8 @@ function DesignSystemPage() {
   const [checkboxChecked, setCheckboxChecked] = useState(true)
   const [demoTab, setDemoTab] = useState('split')
   const [demoEmail, setDemoEmail] = useState('')
+  const [demoPage, setDemoPage] = useState('/pricing')
+  const [demoScope, setDemoScope] = useState(true)
   const [demoButton, setDemoButton] = useState<ButtonState>('idle')
 
   return (
@@ -239,7 +253,7 @@ function DesignSystemPage() {
 
           {/* beUI primitives used by the admin editors */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-ink-50">beUI: Card, Tabs, Animated badge, Field input, Stateful button</h2>
+            <h2 className="text-2xl font-bold text-ink-50">beUI: Card, Tabs, Animated badge, Field input, Stateful button, Combobox, Checkbox</h2>
             <div className="grid gap-6 rounded-2xl border border-ink-800 p-6 panel md:grid-cols-2">
               <Card>
                 <CardHeader>
@@ -290,6 +304,36 @@ function DesignSystemPage() {
                 >
                   Stateful button
                 </StatefulButton>
+              </div>
+              <Checkbox
+                checked={demoScope}
+                onCheckedChange={setDemoScope}
+                label="Checkbox with description"
+                description="Drawn checkmark and press feedback; reduced motion skips both."
+              />
+              <div className="md:col-span-2">
+                <Label htmlFor="ds-combobox" className="text-xs text-muted-foreground">
+                  Combobox (searchable, grouped)
+                </Label>
+                <Combobox id="ds-combobox" value={demoPage} onValueChange={setDemoPage} className="mt-1 max-w-md">
+                  <ComboboxTrigger>
+                    <ComboboxInput placeholder="Search pages…" />
+                  </ComboboxTrigger>
+                  <ComboboxContent>
+                    <ComboboxList aria-label="Pages">
+                      <ComboboxEmpty>No pages found.</ComboboxEmpty>
+                      <ComboboxGroup>
+                        <ComboboxLabel>Pages</ComboboxLabel>
+                        <ComboboxItem value="/">Home</ComboboxItem>
+                        <ComboboxItem value="/pricing">Pricing</ComboboxItem>
+                      </ComboboxGroup>
+                      <ComboboxGroup>
+                        <ComboboxLabel>Products</ComboboxLabel>
+                        <ComboboxItem value="/products/cms">Viewixsoft CMS</ComboboxItem>
+                      </ComboboxGroup>
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
               </div>
             </div>
           </div>

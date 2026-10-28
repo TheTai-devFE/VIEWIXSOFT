@@ -9,6 +9,8 @@ import { BLOG_POSTS } from '~/content/blog'
 import { PRODUCTS } from '~/content/products'
 import { getArticleSchema, getBreadcrumbSchema, getFaqSchema } from '~/lib/seo/jsonld'
 import { assetUrl, generateMetaTags } from '~/lib/seo/meta'
+import { ldScripts } from '~/lib/seo/custom-schema'
+import { getPageSchemasFn } from '~/server/functions/custom-schemas'
 import { blogPostSeo } from '~/lib/seo/page-seo'
 import { getPublishedBlogPostBySlugFn, getPublishedBlogPostsFn } from '~/server/functions/blog'
 import { blogPostFromRow } from '~/lib/blog-post-from-row'
@@ -29,9 +31,10 @@ export const Route = createFileRoute('/blog/$slug')({
     if (!isPageVisible(config, 'blog')) throw notFound()
 
     // The database copy wins; the MDX files cover slugs it does not have.
-    const [dbRes, listRes] = await Promise.all([
+    const [dbRes, listRes, schemas] = await Promise.all([
       getPublishedBlogPostBySlugFn({ data: { slug: params.slug } }),
       getPublishedBlogPostsFn(),
+      getPageSchemasFn({ data: { path: `/blog/${params.slug}` } }),
     ])
     const fromDb = dbRes.ok ? blogPostFromRow(dbRes.post, dbRes.author) : null
     const post = fromDb ?? BLOG_POSTS.find((p) => p.slug === params.slug)
@@ -47,7 +50,7 @@ export const Route = createFileRoute('/blog/$slug')({
       .sort((a, b) => Number(b.product === post.product) - Number(a.product === post.product) || b.publishedAt.localeCompare(a.publishedAt))
       .slice(0, 2)
     const productName = PRODUCTS.find((p) => p.slug === post.product)?.name ?? post.product
-    return { post, dbContent: dbRes.ok ? dbRes.post.content : null, relatedPosts, productName }
+    return { post, dbContent: dbRes.ok ? dbRes.post.content : null, relatedPosts, productName, schemas }
   },
 
   head: ({ loaderData }) => {
@@ -73,29 +76,24 @@ export const Route = createFileRoute('/blog/$slug')({
         { property: 'article:modified_time', content: p.updatedAt },
       ],
       links: seo.links,
-      scripts: [
-        {
-          type: 'application/ld+json',
-          children: JSON.stringify(
-            getArticleSchema({
-              title: p.title,
-              description: p.description,
-              path: `/blog/${p.slug}`,
-              publishedAt: p.publishedAt,
-              updatedAt: p.updatedAt,
-              authorName: p.author.name,
-              authorType: p.author.kind === 'person' ? 'Person' : 'Organization',
-              authorJobTitle: p.author.role || undefined,
-              authorImage: p.author.kind === 'person' ? p.author.avatar : undefined,
-              authorUrl: p.author.url,
-              image: p.cover.src,
-              keywords: p.tags,
-            }),
-          ),
-        },
-        { type: 'application/ld+json', children: JSON.stringify(getBreadcrumbSchema(breadcrumbs)) },
-        ...(p.faq?.length ? [{ type: 'application/ld+json', children: JSON.stringify(getFaqSchema(p.faq)) }] : []),
-      ],
+      scripts: ldScripts([
+        getArticleSchema({
+          title: p.title,
+          description: p.description,
+          path: `/blog/${p.slug}`,
+          publishedAt: p.publishedAt,
+          updatedAt: p.updatedAt,
+          authorName: p.author.name,
+          authorType: p.author.kind === 'person' ? 'Person' : 'Organization',
+          authorJobTitle: p.author.role || undefined,
+          authorImage: p.author.kind === 'person' ? p.author.avatar : undefined,
+          authorUrl: p.author.url,
+          image: p.cover.src,
+          keywords: p.tags,
+        }),
+        getBreadcrumbSchema(breadcrumbs),
+        ...(p.faq?.length ? [getFaqSchema(p.faq)] : []),
+      ], loaderData?.schemas),
     }
   },
   component: BlogPostPage,

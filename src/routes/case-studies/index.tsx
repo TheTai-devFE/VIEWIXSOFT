@@ -8,6 +8,8 @@ import { CaseStudyMatrix } from '~/components/blocks/CaseStudyMatrix'
 import { CaseStudyModeBadge } from '~/components/blocks/CaseStudyModeBadge'
 import { getBreadcrumbSchema } from '~/lib/seo/jsonld'
 import { generateMetaTags } from '~/lib/seo/meta'
+import { ldScripts } from '~/lib/seo/custom-schema'
+import { getPageSchemasFn } from '~/server/functions/custom-schemas'
 import { getPublishedUseCasesFn } from '~/server/functions/use-cases'
 import { CaseStudiesHero } from '~/components/blocks/CaseStudiesHero'
 import { CaseStudyCard } from '~/components/blocks/CaseStudyCard'
@@ -24,12 +26,15 @@ const searchSchema = z.object({
 export const Route = createFileRoute('/case-studies/')({
   validateSearch: searchSchema,
   loader: async () => {
-    const config = await getSiteConfigFn()
+    const [config, res, schemas] = await Promise.all([
+      getSiteConfigFn(),
+      getPublishedUseCasesFn(),
+      getPageSchemasFn({ data: { path: '/case-studies' } }),
+    ])
     if (!isPageVisible(config, '/case-studies')) throw notFound()
-    const res = await getPublishedUseCasesFn()
-    return { useCases: mergeUseCases(res.ok ? res.useCases : [], USE_CASES).map(forPublic) }
+    return { useCases: mergeUseCases(res.ok ? res.useCases : [], USE_CASES).map(forPublic), schemas }
   },
-  head: () => {
+  head: ({ loaderData }) => {
     const seo = generateMetaTags({
       title: 'Case Studies — Viewixsoft',
       description:
@@ -39,17 +44,12 @@ export const Route = createFileRoute('/case-studies/')({
     return {
       meta: seo.meta,
       links: seo.links,
-      scripts: [
-        {
-          type: 'application/ld+json',
-          children: JSON.stringify(
-            getBreadcrumbSchema([
-              { name: 'Home', path: '/' },
-              { name: 'Case studies', path: '/case-studies' },
-            ]),
-          ),
-        },
-      ],
+      scripts: ldScripts([
+        getBreadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Case studies', path: '/case-studies' },
+        ]),
+      ], loaderData?.schemas),
     }
   },
   component: CaseStudiesIndexPage,

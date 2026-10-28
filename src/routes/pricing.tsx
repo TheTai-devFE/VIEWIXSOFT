@@ -8,6 +8,8 @@ import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
 import { usePageContent } from '~/lib/use-page-content'
 import { HeroTitle } from '~/components/ui/hero-heading'
 import { generateMetaTags } from '~/lib/seo/meta'
+import { ldScripts } from '~/lib/seo/custom-schema'
+import { getPageSchemasFn } from '~/server/functions/custom-schemas'
 import { getBreadcrumbSchema, getFaqSchema } from '~/lib/seo/jsonld'
 import { getSiteConfigFn } from '~/server/functions/site'
 import { isPageVisible } from '~/lib/page-visibility'
@@ -20,10 +22,11 @@ const BREADCRUMBS = [
 
 export const Route = createFileRoute('/pricing')({
   loader: async () => {
-    const config = await getSiteConfigFn()
+    const [config, schemas] = await Promise.all([getSiteConfigFn(), getPageSchemasFn({ data: { path: '/pricing' } })])
     if (!isPageVisible(config, 'pricing')) throw notFound()
+    return { schemas }
   },
-  head: ({ matches }) => {
+  head: ({ matches, loaderData }) => {
     const config = siteConfigFromMatches(matches)
     const seo = generateMetaTags({
       ...pageContent(config, 'pricing').seo,
@@ -32,10 +35,10 @@ export const Route = createFileRoute('/pricing')({
     return {
       meta: seo.meta,
       links: seo.links,
-      scripts: [
-        { type: 'application/ld+json', children: JSON.stringify(getBreadcrumbSchema(BREADCRUMBS)) },
-        { type: 'application/ld+json', children: JSON.stringify(getFaqSchema(pricingFaq(pricingFromConfig(config)))) },
-      ],
+      scripts: ldScripts([
+        getBreadcrumbSchema(BREADCRUMBS),
+        getFaqSchema(pricingFaq(pricingFromConfig(config))),
+      ], loaderData?.schemas),
     }
   },
   component: PricingPage,

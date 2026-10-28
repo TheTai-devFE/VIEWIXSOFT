@@ -3,15 +3,17 @@ import { BlogPostEditor } from '~/components/admin/blog/BlogPostEditor'
 import { getAdminBlogPostByIdFn } from '~/server/functions/blog'
 import { getAdminAuthorsFn } from '~/server/functions/authors'
 import { listMediaLibraryFn } from '~/server/functions/media-admin'
+import { getPostSchemasFn } from '~/server/functions/post-schemas'
 
 export const Route = createFileRoute('/admin/blog/$id')({
   loader: {
     staleReloadMode: 'blocking',
     handler: async ({ params }) => {
-      const [postRes, mediaRes, authorsRes] = await Promise.all([
+      const [postRes, mediaRes, authorsRes, schemasRes] = await Promise.all([
         getAdminBlogPostByIdFn({ data: { id: params.id } }),
         listMediaLibraryFn(),
         getAdminAuthorsFn(),
+        getPostSchemasFn({ data: { postId: params.id } }),
       ])
 
       if (!postRes.ok || !postRes.post) {
@@ -22,6 +24,8 @@ export const Route = createFileRoute('/admin/blog/$id')({
         post: postRes.post,
         assets: mediaRes.ok ? mediaRes.assets : [],
         authors: authorsRes.authors,
+        schemas: schemasRes.schemas,
+        schemaLibrary: schemasRes.library,
         ownership: { createdBy: postRes.post.createdBy, updatedBy: postRes.post.updatedBy, people: postRes.people, canEdit: postRes.canEdit },
       }
     },
@@ -30,6 +34,6 @@ export const Route = createFileRoute('/admin/blog/$id')({
 })
 
 function EditBlogPostPage() {
-  const { post, assets, authors, ownership } = Route.useLoaderData()
-  return <BlogPostEditor initialPost={post} mediaAssets={assets} authors={authors} ownership={ownership} />
+  const { post, assets, authors, ownership, schemas, schemaLibrary } = Route.useLoaderData()
+  return <BlogPostEditor initialPost={post} mediaAssets={assets} authors={authors} ownership={ownership} schemas={schemas} schemaLibrary={schemaLibrary} />
 }
