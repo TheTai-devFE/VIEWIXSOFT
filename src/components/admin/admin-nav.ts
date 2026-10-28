@@ -2,10 +2,12 @@ import type { LucideIcon } from 'lucide-react'
 import {
   BarChart3,
   BookOpen,
+  Braces,
   Briefcase,
   History,
   Image as ImageIcon,
   Inbox,
+  KeyRound,
   LayoutDashboard,
   Mail,
   Package,
@@ -31,6 +33,8 @@ export interface AdminNavItem {
     | '/admin/pages'
     | '/admin/footer'
     | '/admin/seo'
+    | '/admin/schema'
+    | '/admin/api-keys'
     | '/admin/products'
     | '/admin/stats'
     | '/admin/testimonials'
@@ -70,6 +74,7 @@ export const ADMIN_NAV: { group: string; items: AdminNavItem[] }[] = [
       { to: '/admin/pages', label: 'Pages', icon: PanelsTopLeft, access: 'pages', tree: 'pages' },
       { to: '/admin/footer', label: 'Footer info', icon: PanelBottom, access: 'footer' },
       { to: '/admin/seo', label: 'SEO & GEO', icon: Search, access: 'seo' },
+      { to: '/admin/schema', label: 'Schema markup', icon: Braces, access: 'schema' },
       { to: '/admin/products', label: 'Product status', icon: Package, access: 'products' },
       { to: '/admin/stats', label: 'Company stats', icon: BarChart3, access: 'stats' },
       { to: '/admin/testimonials', label: 'Customer quotes', icon: Quote, access: 'testimonials' },
@@ -80,6 +85,7 @@ export const ADMIN_NAV: { group: string; items: AdminNavItem[] }[] = [
     group: 'Tài khoản',
     items: [
       { to: '/admin/users', label: 'Người dùng & quyền', icon: Users, access: 'admin' },
+      { to: '/admin/api-keys', label: 'Khóa API', icon: KeyRound, access: 'admin' },
       { to: '/admin/activity', label: 'Nhật ký hoạt động', icon: History, access: 'activity' },
       { to: '/admin/account', label: 'Tài khoản của tôi', icon: UserCog, access: 'everyone' },
     ],

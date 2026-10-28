@@ -36,6 +36,19 @@ export default defineConfig(({ command, mode }) => {
     },
   },
   plugins: [
+    // linkedom (server-side HTML parsing for /api/v1/posts) imports a named
+    // export from a CommonJS package that the dev dependency optimizer can't
+    // see. The optimizer skips it everywhere (route files are scanned for the
+    // client too, before server code is split off) and server environments
+    // load it straight from Node. Production builds bundle it normally.
+    {
+      name: 'viewixsoft:linkedom-dev-external',
+      apply: 'serve',
+      configEnvironment: (name) => ({
+        optimizeDeps: { exclude: ['linkedom'] },
+        ...(name === 'client' ? {} : { resolve: { external: ['linkedom'] } }),
+      }),
+    },
     mdxPlugin(),
     tailwindcss(),
     tanstackStart({

@@ -71,6 +71,20 @@
       "when": 1793066725005,
       "tag": "0009_ownership_activity",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793154503426,
+      "tag": "0010_custom_schemas_api_keys",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793159505605,
+      "tag": "0011_api_posts",
+      "breakpoints": true
     }
   ]
 }

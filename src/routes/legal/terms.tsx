@@ -2,15 +2,19 @@ import { createFileRoute, notFound } from '@tanstack/react-router'
 import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
 import { usePageContent } from '~/lib/use-page-content'
 import { generateMetaTags } from '~/lib/seo/meta'
+import { ldScripts } from '~/lib/seo/custom-schema'
+import { getPageSchemasFn } from '~/server/functions/custom-schemas'
+import { getBreadcrumbSchema } from '~/lib/seo/jsonld'
 import { getSiteConfigFn } from '~/server/functions/site'
 import { isPageVisible } from '~/lib/page-visibility'
 
 export const Route = createFileRoute('/legal/terms')({
   loader: async () => {
-    const config = await getSiteConfigFn()
+    const [config, schemas] = await Promise.all([getSiteConfigFn(), getPageSchemasFn({ data: { path: '/legal/terms' } })])
     if (!isPageVisible(config, 'legal-terms')) throw notFound()
+    return { schemas }
   },
-  head: ({ matches }) => {
+  head: ({ matches, loaderData }) => {
     const seo = generateMetaTags({
       ...pageContent(siteConfigFromMatches(matches), 'legal-terms').seo,
       canonicalUrl: '/legal/terms',
@@ -18,6 +22,12 @@ export const Route = createFileRoute('/legal/terms')({
     return {
       meta: seo.meta,
       links: seo.links,
+      scripts: ldScripts([
+        getBreadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Terms of Service', path: '/legal/terms' },
+        ]),
+      ], loaderData?.schemas),
     }
   },
   component: TermsPage,

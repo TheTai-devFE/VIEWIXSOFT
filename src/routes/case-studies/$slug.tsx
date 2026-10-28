@@ -3,6 +3,8 @@ import { USE_CASES } from '~/content/useCases'
 import { assetUrl, generateMetaTags } from '~/lib/seo/meta'
 import { useCaseSeo } from '~/lib/seo/page-seo'
 import { getArticleSchema, getBreadcrumbSchema, getFaqSchema } from '~/lib/seo/jsonld'
+import { ldScripts } from '~/lib/seo/custom-schema'
+import { getPageSchemasFn } from '~/server/functions/custom-schemas'
 import { CtaBand } from '~/components/blocks/CtaBand'
 import { CaseStudyCard } from '~/components/blocks/CaseStudyCard'
 import { CaseStudyHero } from '~/components/blocks/CaseStudyHero'
@@ -20,7 +22,10 @@ import { forPublic, mergeUseCases, useCaseFromRow } from '~/lib/use-case-from-ro
 
 export const Route = createFileRoute('/case-studies/$slug')({
   loader: async ({ params }) => {
-    const config = await getSiteConfigFn()
+    const [config, schemas] = await Promise.all([
+      getSiteConfigFn(),
+      getPageSchemasFn({ data: { path: `/case-studies/${params.slug}` } }),
+    ])
     if (!isPageVisible(config, `/case-studies/${params.slug}`)) throw notFound()
 
     // The database copy wins; the bundled sample only covers slugs it does not have.
@@ -33,7 +38,7 @@ export const Route = createFileRoute('/case-studies/$slug')({
     const all = listRes.ok ? mergeUseCases(listRes.useCases, USE_CASES) : USE_CASES
     const related = all.filter((c) => c.slug !== useCase.slug).slice(0, 3).map(forPublic)
 
-    return { useCase, related }
+    return { useCase, related, schemas }
   },
 
   head: ({ loaderData }) => {
@@ -73,7 +78,7 @@ export const Route = createFileRoute('/case-studies/$slug')({
     return {
       meta: seo.meta,
       links: seo.links,
-      scripts: schemas.map((schema) => ({ type: 'application/ld+json', children: JSON.stringify(schema) })),
+      scripts: ldScripts(schemas, loaderData.schemas),
     }
   },
   component: CaseStudyDetailPage,

@@ -11,12 +11,15 @@ import { PricingTeaser } from '~/components/blocks/PricingTeaser'
 import { HomeFaqSection } from '~/components/blocks/HomeFaqSection'
 import { HomeNewsletterSection } from '~/components/blocks/LeadFormSection'
 import { generateMetaTags } from '~/lib/seo/meta'
+import { ldScripts } from '~/lib/seo/custom-schema'
+import { getPageSchemasFn } from '~/server/functions/custom-schemas'
 import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
 import { getFaqSchema } from '~/lib/seo/jsonld'
 import { resolveSectionContent } from '~/lib/section-content'
 
 export const Route = createFileRoute('/')({
-  head: ({ matches }) => {
+  loader: async () => ({ schemas: await getPageSchemasFn({ data: { path: '/' } }) }),
+  head: ({ matches, loaderData }) => {
     const config = siteConfigFromMatches(matches)
     // The JSON-LD lists the same questions the FAQ section shows, edited or not.
     const faq = resolveSectionContent('home:faq', config.content['home:faq']).items
@@ -28,7 +31,7 @@ export const Route = createFileRoute('/')({
     return {
       meta: seo.meta,
       links: seo.links,
-      scripts: [{ type: 'application/ld+json', children: JSON.stringify(getFaqSchema(faq)) }],
+      scripts: ldScripts([getFaqSchema(faq)], loaderData?.schemas),
     }
   },
   component: HomePage,

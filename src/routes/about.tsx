@@ -2,6 +2,8 @@ import { Fragment } from 'react'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
 import { generateMetaTags } from '~/lib/seo/meta'
+import { ldScripts } from '~/lib/seo/custom-schema'
+import { getPageSchemasFn } from '~/server/functions/custom-schemas'
 import { getBreadcrumbSchema } from '~/lib/seo/jsonld'
 import { Reveal } from '~/components/ui/reveal'
 import { CustomerMarquee } from '~/components/blocks/CustomerMarquee'
@@ -22,10 +24,11 @@ import { isPageVisible } from '~/lib/page-visibility'
 
 export const Route = createFileRoute('/about')({
   loader: async () => {
-    const config = await getSiteConfigFn()
+    const [config, schemas] = await Promise.all([getSiteConfigFn(), getPageSchemasFn({ data: { path: '/about' } })])
     if (!isPageVisible(config, 'about')) throw notFound()
+    return { schemas }
   },
-  head: ({ matches }) => {
+  head: ({ matches, loaderData }) => {
     const config = siteConfigFromMatches(matches)
     const seo = generateMetaTags({
       ...pageContent(config, 'about').seo,
@@ -34,17 +37,12 @@ export const Route = createFileRoute('/about')({
     return {
       meta: seo.meta,
       links: seo.links,
-      scripts: [
-        {
-          type: 'application/ld+json',
-          children: JSON.stringify(
-            getBreadcrumbSchema([
-              { name: 'Home', path: '/' },
-              { name: 'About', path: '/about' },
-            ]),
-          ),
-        },
-      ],
+      scripts: ldScripts([
+        getBreadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: 'About', path: '/about' },
+        ]),
+      ], loaderData?.schemas),
     }
   },
   component: AboutPage,

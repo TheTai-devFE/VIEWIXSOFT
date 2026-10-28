@@ -5,6 +5,8 @@ import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
 import { usePageContent } from '~/lib/use-page-content'
 import { HeroTitle } from '~/components/ui/hero-heading'
 import { generateMetaTags } from '~/lib/seo/meta'
+import { ldScripts } from '~/lib/seo/custom-schema'
+import { getPageSchemasFn } from '~/server/functions/custom-schemas'
 import { getBreadcrumbSchema, getFaqSchema } from '~/lib/seo/jsonld'
 import { FaqAccordion } from '~/components/blocks/FaqAccordion'
 import { LeadForm } from '~/components/blocks/LeadForm'
@@ -40,10 +42,11 @@ const contactSearchSchema = z.object({
 export const Route = createFileRoute('/contact')({
   validateSearch: contactSearchSchema,
   loader: async () => {
-    const config = await getSiteConfigFn()
+    const [config, schemas] = await Promise.all([getSiteConfigFn(), getPageSchemasFn({ data: { path: '/contact' } })])
     if (!isPageVisible(config, 'contact')) throw notFound()
+    return { schemas }
   },
-  head: ({ matches }) => {
+  head: ({ matches, loaderData }) => {
     const seo = generateMetaTags({
       ...pageContent(siteConfigFromMatches(matches), 'contact').seo,
       canonicalUrl: '/contact',
@@ -51,18 +54,13 @@ export const Route = createFileRoute('/contact')({
     return {
       meta: seo.meta,
       links: seo.links,
-      scripts: [
-        {
-          type: 'application/ld+json',
-          children: JSON.stringify(
-            getBreadcrumbSchema([
-              { name: 'Home', path: '/' },
-              { name: 'Contact sales', path: '/contact' },
-            ]),
-          ),
-        },
-        { type: 'application/ld+json', children: JSON.stringify(getFaqSchema(CONTACT_FAQS)) },
-      ],
+      scripts: ldScripts([
+        getBreadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Contact sales', path: '/contact' },
+        ]),
+        getFaqSchema(CONTACT_FAQS),
+      ], loaderData?.schemas),
     }
   },
   component: ContactPage,

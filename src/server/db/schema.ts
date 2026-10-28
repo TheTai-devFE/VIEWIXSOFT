@@ -13,7 +13,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core'
 // Relative import: drizzle-kit loads this file without the ~/ alias.
-import { LEAD_STATUSES, LEAD_TYPES, PRODUCT_STATUSES } from '../../lib/enums'
+import { CUSTOM_SCHEMA_STATUSES, CUSTOM_SCHEMA_TYPES, LEAD_STATUSES, LEAD_TYPES, PRODUCT_STATUSES } from '../../lib/enums'
 import { CASE_STUDY_MODES } from '../../lib/case-study'
 import type {
   CaseStudyResult,
@@ -434,3 +434,68 @@ export type NewBlogPost = typeof blogPosts.$inferInsert
 export type UseCaseRow = typeof useCases.$inferSelect
 export type NewUseCase = typeof useCases.$inferInsert
 
+
+// ─── Custom schema markup & API keys (/admin/schema, /admin/api-keys, /api/v1) ──
+
+/**
+ * Keys for outside tools calling /api/v1. Only a SHA-256 hash of the key is
+ * stored; the key itself is shown once, when it is created. The window
+ * columns count requests for the per-key rate limit.
+ */
+export const apiKeys = pgTable(
+  'api_keys',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    name: text('name').notNull(),
+    /** The first characters of the key, so admins can tell keys apart. */
+    prefix: text('prefix').notNull(),
+    keyHash: text('key_hash').notNull().unique(),
+    scopes: text('scopes').array().notNull().default(sql`'{}'::text[]`),
+    createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    windowStart: timestamp('window_start', { withTimezone: true }).defaultNow().notNull(),
+    windowCount: integer('window_count').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+)
+
+/**
+ * Hand-made JSON-LD for one page. `data` holds the fields as entered (shapes in
+ * src/lib/seo/custom-schema.ts); only `published` rows reach the page. Rows
+ * written through the API always start as `pending`.
+ */
+export const customSchemas = pgTable(
+  'custom_schemas',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    /** Public path of the page, e.g. `/about` or `/blog/my-post`. */
+    path: text('path').notNull(),
+    name: text('name').notNull().default(''),
+    schemaType: text('schema_type', { enum: CUSTOM_SCHEMA_TYPES }).notNull(),
+    data: jsonb('data').$type<Json>().notNull(),
+    status: text('status', { enum: CUSTOM_SCHEMA_STATUSES }).notNull().default('pending'),
+    source: text('source', { enum: ['admin', 'api'] }).notNull().default('admin'),
+    apiKeyId: uuid('api_key_id').references(() => apiKeys.id, { onDelete: 'set null' }),
+    createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+    updatedBy: text('updated_by').references(() => user.id, { onDelete: 'set null' }),
+    ...timestamps,
+  },
+  (t) => [index('custom_schemas_path_idx').on(t.path), index('custom_schemas_status_idx').on(t.status)],
+)
+
+/**
+ * Blog posts an outside tool created through /api/v1/posts. A tool may only
+ * read and change these, and only while they are drafts. Kept apart from
+ * blog_posts so that table's shape is unchanged.
+ */
+export const apiPosts = pgTable('api_posts', {
+  postId: uuid('post_id')
+    .primaryKey()
+    .references(() => blogPosts.id, { onDelete: 'cascade' }),
+  apiKeyId: uuid('api_key_id').references(() => apiKeys.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
+export type ApiKeyRow = typeof apiKeys.$inferSelect
+export type CustomSchemaRow = typeof customSchemas.$inferSelect

@@ -2,16 +2,20 @@ import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { pageContent, siteConfigFromMatches } from '~/lib/page-content'
 import { usePageContent } from '~/lib/use-page-content'
 import { generateMetaTags } from '~/lib/seo/meta'
+import { ldScripts } from '~/lib/seo/custom-schema'
+import { getPageSchemasFn } from '~/server/functions/custom-schemas'
+import { getBreadcrumbSchema } from '~/lib/seo/jsonld'
 import { ShieldCheck } from 'lucide-react'
 import { getSiteConfigFn } from '~/server/functions/site'
 import { isPageVisible } from '~/lib/page-visibility'
 
 export const Route = createFileRoute('/legal/privacy')({
   loader: async () => {
-    const config = await getSiteConfigFn()
+    const [config, schemas] = await Promise.all([getSiteConfigFn(), getPageSchemasFn({ data: { path: '/legal/privacy' } })])
     if (!isPageVisible(config, 'legal-privacy')) throw notFound()
+    return { schemas }
   },
-  head: ({ matches }) => {
+  head: ({ matches, loaderData }) => {
     const seo = generateMetaTags({
       ...pageContent(siteConfigFromMatches(matches), 'legal-privacy').seo,
       canonicalUrl: '/legal/privacy',
@@ -19,6 +23,12 @@ export const Route = createFileRoute('/legal/privacy')({
     return {
       meta: seo.meta,
       links: seo.links,
+      scripts: ldScripts([
+        getBreadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Privacy Policy', path: '/legal/privacy' },
+        ]),
+      ], loaderData?.schemas),
     }
   },
   component: PrivacyPage,

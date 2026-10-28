@@ -8,7 +8,8 @@ import { activityLog } from '~/server/db/schema'
 import { errorFields, logger } from '~/server/logger'
 
 export interface Actor {
-  userId: string
+  /** Null for an outside tool acting through an API key. */
+  userId: string | null
   name: string
 }
 
