@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { bearerToken, CreateApiKeySchema } from '~/lib/api-keys'
+import { bearerToken, CreateApiKeySchema, effectiveScopes, scopesAllowed } from '~/lib/api-keys'
+import type { Permission } from '~/lib/permissions'
 import { generateApiKey, hashApiKey } from '~/server/api-keys/repository'
 
 describe('API keys', () => {
@@ -31,5 +32,29 @@ describe('API keys', () => {
     expect(CreateApiKeySchema.safeParse({ name: ' ', scopes: ['schema:read'] }).success).toBe(false)
     expect(CreateApiKeySchema.safeParse({ name: 'SEO tool', scopes: [] }).success).toBe(false)
     expect(CreateApiKeySchema.safeParse({ name: 'SEO tool', scopes: ['admin:all'] }).success).toBe(false)
+  })
+})
+
+describe('personal key scopes', () => {
+  const member = (permissions: Permission[], banned = false) => ({ role: 'user' as const, permissions, banned })
+
+  it('lets an account give only the Blog/Schema access it has', () => {
+    expect(scopesAllowed({ role: 'admin', permissions: [] })).toEqual(['schema:read', 'schema:write', 'blog:write'])
+    expect(scopesAllowed({ role: 'user', permissions: ['blog', 'api-keys'] })).toEqual(['blog:write'])
+    expect(scopesAllowed({ role: 'user', permissions: ['schema'] })).toEqual(['schema:read', 'schema:write'])
+    expect(scopesAllowed({ role: 'user', permissions: ['leads'] })).toEqual([])
+  })
+
+  it("cuts a key down to what its owner may do on each request", () => {
+    const all = ['schema:read', 'schema:write', 'blog:write']
+    expect(effectiveScopes(all, member(['api-keys', 'blog']))).toEqual(['blog:write'])
+    expect(effectiveScopes(['blog:write'], member(['api-keys', 'schema']))).toEqual([])
+    expect(effectiveScopes(all, { role: 'admin', permissions: [], banned: false })).toEqual(all)
+  })
+
+  it('stops a key whose owner is locked, deleted or lost the api-keys permission', () => {
+    expect(effectiveScopes(['blog:write'], member(['api-keys', 'blog'], true))).toEqual([])
+    expect(effectiveScopes(['blog:write'], null)).toEqual([])
+    expect(effectiveScopes(['blog:write'], member(['blog']))).toEqual([])
   })
 })
