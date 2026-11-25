@@ -6,13 +6,15 @@ import type { Access, Permission } from '~/lib/permissions'
  * Access an API key can be given, for outside tools calling /api/v1. Labels
  * are admin UI copy, so they are in Vietnamese.
  */
-export const API_SCOPES = ['schema:read', 'schema:write', 'blog:write'] as const
+export const API_SCOPES = ['schema:read', 'schema:write', 'blog:write', 'blog:publish', 'media:write'] as const
 export type ApiScope = (typeof API_SCOPES)[number]
 
 export const API_SCOPE_LABELS: Record<ApiScope, { label: string; hint: string }> = {
   'schema:read': { label: 'Đọc schema', hint: 'Xem danh sách trang và schema đã có' },
   'schema:write': { label: 'Ghi schema', hint: 'Thêm, sửa, xoá schema. Schema mới luôn chờ admin duyệt.' },
-  'blog:write': { label: 'Gửi bài blog', hint: 'Tạo và sửa bài nháp. Bài thuộc về người tạo khóa; chỉ người trong admin bấm Đăng được.' },
+  'media:write': { label: 'Tải ảnh', hint: 'Tải ảnh và thông tin mô tả vào thư viện.' },
+  'blog:publish': { label: 'Xuất bản bài', hint: 'Cho phép đăng bài công khai khi có cả quyền gửi bài.' },
+  'blog:write': { label: 'Gửi bài blog', hint: 'Tạo và sửa bài nháp.' },
 }
 
 /** The admin module an account needs before a key of its may carry each scope. */
@@ -20,6 +22,8 @@ const SCOPE_PERMISSION: Record<ApiScope, Permission> = {
   'schema:read': 'schema',
   'schema:write': 'schema',
   'blog:write': 'blog',
+  'blog:publish': 'blog',
+  'media:write': 'media',
 }
 
 /** Scopes an account may put on its keys: never more than it can do in the admin itself. */

@@ -67,6 +67,7 @@ import { Route as AdminUseCasesIdRouteImport } from './routes/admin/use-cases/$i
 import { Route as AdminUseCasesNewRouteImport } from './routes/admin/use-cases/new'
 import { Route as ApiAdminMediaUploadRouteImport } from './routes/api/admin/media-upload'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiV1MediaRouteImport } from './routes/api/v1/media'
 import { Route as ApiV1SchemaTypesRouteImport } from './routes/api/v1/schema-types'
 import { Route as ApiV1TargetsRouteImport } from './routes/api/v1/targets'
 import { Route as BlogCategorySlugRouteImport } from './routes/blog/category/$slug'
@@ -370,6 +371,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1MediaRoute = ApiV1MediaRouteImport.update({
+  id: '/api/v1/media',
+  path: '/api/v1/media',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1SchemaTypesRoute = ApiV1SchemaTypesRouteImport.update({
   id: '/api/v1/schema-types',
   path: '/api/v1/schema-types',
@@ -466,6 +472,7 @@ export interface FileRoutesByFullPath {
   '/admin/use-cases/new': typeof AdminUseCasesNewRoute
   '/api/admin/media-upload': typeof ApiAdminMediaUploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/v1/media': typeof ApiV1MediaRoute
   '/api/v1/schema-types': typeof ApiV1SchemaTypesRoute
   '/api/v1/targets': typeof ApiV1TargetsRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
@@ -533,6 +540,7 @@ export interface FileRoutesByTo {
   '/admin/use-cases/new': typeof AdminUseCasesNewRoute
   '/api/admin/media-upload': typeof ApiAdminMediaUploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/v1/media': typeof ApiV1MediaRoute
   '/api/v1/schema-types': typeof ApiV1SchemaTypesRoute
   '/api/v1/targets': typeof ApiV1TargetsRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
@@ -602,6 +610,7 @@ export interface FileRoutesById {
   '/admin/use-cases/new': typeof AdminUseCasesNewRoute
   '/api/admin/media-upload': typeof ApiAdminMediaUploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/v1/media': typeof ApiV1MediaRoute
   '/api/v1/schema-types': typeof ApiV1SchemaTypesRoute
   '/api/v1/targets': typeof ApiV1TargetsRoute
   '/blog/category/$slug': typeof BlogCategorySlugRoute
@@ -672,6 +681,7 @@ export interface FileRouteTypes {
     | '/admin/use-cases/new'
     | '/api/admin/media-upload'
     | '/api/auth/$'
+    | '/api/v1/media'
     | '/api/v1/schema-types'
     | '/api/v1/targets'
     | '/blog/category/$slug'
@@ -739,6 +749,7 @@ export interface FileRouteTypes {
     | '/admin/use-cases/new'
     | '/api/admin/media-upload'
     | '/api/auth/$'
+    | '/api/v1/media'
     | '/api/v1/schema-types'
     | '/api/v1/targets'
     | '/blog/category/$slug'
@@ -807,6 +818,7 @@ export interface FileRouteTypes {
     | '/admin/use-cases/new'
     | '/api/admin/media-upload'
     | '/api/auth/$'
+    | '/api/v1/media'
     | '/api/v1/schema-types'
     | '/api/v1/targets'
     | '/blog/category/$slug'
@@ -852,6 +864,7 @@ export interface RootRouteChildren {
   UseCasesIndexRoute: typeof UseCasesIndexRoute
   ApiAdminMediaUploadRoute: typeof ApiAdminMediaUploadRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiV1MediaRoute: typeof ApiV1MediaRoute
   ApiV1SchemaTypesRoute: typeof ApiV1SchemaTypesRoute
   ApiV1TargetsRoute: typeof ApiV1TargetsRoute
   BlogCategorySlugRoute: typeof BlogCategorySlugRoute
@@ -1270,6 +1283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/media': {
+      id: '/api/v1/media'
+      path: '/api/v1/media'
+      fullPath: '/api/v1/media'
+      preLoaderRoute: typeof ApiV1MediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/schema-types': {
       id: '/api/v1/schema-types'
       path: '/api/v1/schema-types'
@@ -1427,6 +1447,7 @@ const rootRouteChildren: RootRouteChildren = {
   UseCasesIndexRoute: UseCasesIndexRoute,
   ApiAdminMediaUploadRoute: ApiAdminMediaUploadRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiV1MediaRoute: ApiV1MediaRoute,
   ApiV1SchemaTypesRoute: ApiV1SchemaTypesRoute,
   ApiV1TargetsRoute: ApiV1TargetsRoute,
   BlogCategorySlugRoute: BlogCategorySlugRoute,

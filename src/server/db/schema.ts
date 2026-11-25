@@ -234,6 +234,9 @@ export const mediaAssets = pgTable('media_assets', {
   height: integer('height').notNull(),
   /** Suggested alt text, from the file name; each placement sets its own. */
   alt: text('alt').notNull(),
+  imageTitle: text('image_title'),
+  caption: text('caption'),
+  description: text('description'),
   uploadedBy: text('uploaded_by'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })

@@ -39,8 +39,8 @@ describe('personal key scopes', () => {
   const member = (permissions: Permission[], banned = false) => ({ role: 'user' as const, permissions, banned })
 
   it('lets an account give only the Blog/Schema access it has', () => {
-    expect(scopesAllowed({ role: 'admin', permissions: [] })).toEqual(['schema:read', 'schema:write', 'blog:write'])
-    expect(scopesAllowed({ role: 'user', permissions: ['blog', 'api-keys'] })).toEqual(['blog:write'])
+    expect(scopesAllowed({ role: 'admin', permissions: [] })).toEqual(['schema:read', 'schema:write', 'blog:write', 'blog:publish', 'media:write'])
+    expect(scopesAllowed({ role: 'user', permissions: ['blog', 'api-keys'] })).toEqual(['blog:write', 'blog:publish'])
     expect(scopesAllowed({ role: 'user', permissions: ['schema'] })).toEqual(['schema:read', 'schema:write'])
     expect(scopesAllowed({ role: 'user', permissions: ['leads'] })).toEqual([])
   })

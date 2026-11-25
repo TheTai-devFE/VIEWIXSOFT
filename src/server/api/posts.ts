@@ -7,21 +7,21 @@ import { CustomSchemaFormSchema } from '~/lib/seo/custom-schema'
 import type { CustomSchemaForm } from '~/lib/seo/custom-schema'
 import { importJsonLd } from '~/lib/seo/custom-schema-import'
 import { SITE_URL } from '~/lib/seo/meta'
+import { getAssetsByIds } from '~/server/media/repository'
 import { logActivity } from '~/server/activity/repository'
-import { isApiPost, linkApiPost, listApiPosts } from '~/server/api-keys/posts-repository'
+import { isApiPost, listApiPosts } from '~/server/api-keys/posts-repository'
 import { getAuthorByUserId } from '~/server/authors/repository'
 import { createBlogPost, getBlogPostById, getBlogPostBySlug, updateBlogPost } from '~/server/blog/repository'
 import { invalidatePublishedSchemas } from '~/server/custom-schemas/published'
-import { createCustomSchema, moveCustomSchemas } from '~/server/custom-schemas/repository'
+import { moveCustomSchemas } from '~/server/custom-schemas/repository'
 import type { BlogPostRow } from '~/server/db/schema'
 import { parseHtmlOnServer } from '~/server/html-parse'
 import { apiActor, apiError, apiOk, authorize, guarded, readJson, validationError } from './v1'
 
 /*
  * /api/v1/posts: blog posts sent by an outside tool (an AI writer, an SEO
- * tool) with a `blog:write` key. Every post is saved as a draft owned by the
- * admin who made the key, with that account's author byline; someone in
- * /admin/blog reviews it and presses Publish. A tool can only read and change
+ * tool) with a `blog:write` key. Posts default to drafts owned by the key creator.
+ * Publishing also requires blog:publish. A tool can only read and change
  * posts that came through the API, and only while they are drafts.
  */
 
@@ -42,6 +42,8 @@ export const ApiPostSchema = BlogPostFormSchema.pick({
   faq: true,
 }).extend({
   slug: z.string().trim().regex(SLUG, 'Lowercase letters, digits and hyphens, e.g. my-post-title.').min(3).max(100).optional(),
+  status: z.enum(['draft', 'published']).default('draft'),
+  coverAssetId: z.string().uuid().optional(),
   content: z.string().min(10).max(200_000),
   format: z.enum(['markdown', 'html']).default('markdown'),
   coverUrl: z
@@ -79,6 +81,38 @@ async function freeSlug(title: string) {
 function bodyMarkdown(post: ApiPost) {
   if (post.format === 'markdown') return { markdown: post.content.trim(), dropped: [] as string[] }
   return htmlToMarkdown(post.content, parseHtmlOnServer)
+}
+
+/** Resolve upload references after converting HTML paragraphs to Markdown. */
+async function resolvePostImages(post: ApiPost) {
+  const body = bodyMarkdown(post)
+  const lines = body.markdown.split('\n')
+  const ids = new Set<string>()
+  if (post.coverAssetId) ids.add(post.coverAssetId)
+  const placements = new Map<number, string>()
+  for (const [index, line] of lines.entries()) {
+    if (!line.includes('{{media:')) continue
+    const id = line.trim().match(/^\{\{media:([^}]+)\}\}$/)?.[1]
+    if (!id || !z.uuid().safeParse(id).success) {
+      return apiError(422, 'validation_failed', 'Place one {{media:UUID}} on its own line or in its own HTML paragraph.', [{ line: index + 1 }])
+    }
+    ids.add(id)
+    placements.set(index, id)
+  }
+  if (!ids.size) return { ...body, coverUrl: post.coverUrl, coverAlt: post.coverAlt }
+  const assets = new Map((await getAssetsByIds([...ids])).map((a) => [a.id, a]))
+  for (const id of ids) {
+    const asset = assets.get(id)
+    if (!asset || !asset.contentType.startsWith('image/')) {
+      return apiError(422, 'validation_failed', 'Referenced image is missing or is not an image.', [{ id }])
+    }
+  }
+  for (const [index, id] of placements) {
+    const asset = assets.get(id)
+    if (asset) lines[index] = '![' + asset.alt.replace(/[[\]\r\n]/g, ' ') + '](' + asset.url + ')'
+  }
+  const cover = post.coverAssetId ? assets.get(post.coverAssetId) : undefined
+  return { markdown: lines.join('\n'), dropped: body.dropped, coverUrl: cover?.url ?? post.coverUrl, coverAlt: cover?.alt ?? post.coverAlt }
 }
 
 /** Reads each JSON-LD into a schema for the post's path, or the 422 naming the first that fails. */
@@ -132,13 +166,17 @@ export function handleCreatePost(request: Request) {
     const parsed = ApiPostSchema.safeParse(body.body)
     if (!parsed.success) return validationError(parsed.error)
     const post = parsed.data
+    if (post.status === 'published' && !key.scopes.includes('blog:publish')) {
+      return apiError(403, 'forbidden', 'Publishing requires blog:publish.')
+    }
     if (post.schemas?.length && !key.scopes.includes('schema:write')) {
       return apiError(403, 'forbidden', 'Sending "schemas" needs the "schema:write" permission on this key.')
     }
 
     if (post.slug && (await getBlogPostBySlug(post.slug))) return apiError(422, 'slug_taken', 'Another post already uses this slug.')
     const slug = post.slug ?? (await freeSlug(post.title))
-    const body_ = bodyMarkdown(post)
+    const body_ = await resolvePostImages(post)
+    if (body_ instanceof Response) return body_
     const schemas = readSchemas(post.schemas ?? [], `/blog/${slug}`)
     if (!schemas.ok) return schemas.response
 
@@ -148,17 +186,16 @@ export function handleCreatePost(request: Request) {
       ...post,
       slug,
       content: body_.markdown,
-      coverUrl: post.coverUrl || undefined,
+      coverUrl: body_.coverUrl || undefined,
+      coverAlt: body_.coverAlt,
       authorId: author?.id ?? null,
       ...(author ? { authorName: author.name, authorRole: author.role || undefined } : {}),
-      status: 'draft',
+      status: post.status,
     } satisfies Partial<BlogPostFormInput> & Record<string, unknown>)
     if (!form.success) return validationError(form.error)
 
-    const created = await createBlogPost(form.data, key.createdBy)
-    await linkApiPost(created.id, key.id)
-    for (const schema of schemas.forms) await createCustomSchema(schema, 'pending', { kind: 'api', apiKeyId: key.id })
-    await logActivity(apiActor(key), 'blog.create', { type: 'blog', id: created.id, label: created.title })
+    const created = await createBlogPost(form.data, key.createdBy, { keyId: key.id, schemas: schemas.forms })
+    await logActivity(apiActor(key), post.status === 'published' ? 'blog.publish' : 'blog.create', { type: 'blog', id: created.id, label: created.title })
     return apiOk(withWarnings(present(created), { droppedHtml: body_.dropped, ignoredSchemaProperties: schemas.ignored }), 201)
   })
 }
@@ -218,28 +255,34 @@ export function handleUpdatePost(request: Request, id: string) {
     const parsed = ApiPostSchema.safeParse(body.body)
     if (!parsed.success) return validationError(parsed.error)
     const post = parsed.data
+    if (post.status === 'published' && !key.scopes.includes('blog:publish')) {
+      return apiError(403, 'forbidden', 'Publishing requires blog:publish.')
+    }
+    if (post.status === 'published' && current.createdBy !== key.createdBy) return apiError(403, 'forbidden', 'Only the post owner may publish this draft.')
     if (post.schemas?.length) return apiError(422, 'validation_failed', 'Send schemas for an existing post to POST /api/v1/schemas with its path.')
 
     const slug = post.slug ?? current.slug
     const taken = slug !== current.slug ? await getBlogPostBySlug(slug) : null
     if (taken) return apiError(422, 'slug_taken', 'Another post already uses this slug.')
-    const body_ = bodyMarkdown(post)
+    const body_ = await resolvePostImages(post)
+    if (body_ instanceof Response) return body_
     const form = BlogPostFormSchema.safeParse({
       ...post,
       slug,
       content: body_.markdown,
-      coverUrl: post.coverUrl || undefined,
+      coverUrl: body_.coverUrl || undefined,
+      coverAlt: body_.coverAlt,
       authorId: current.authorId,
       authorName: current.authorName,
       authorRole: current.authorRole ?? undefined,
-      status: 'draft',
+      status: post.status,
     })
     if (!form.success) return validationError(form.error)
 
-    const updated = await updateBlogPost(id, form.data, key.createdBy)
-    if (!updated) return apiError(404, 'not_found', NOT_API_POST)
+    const updated = await updateBlogPost(id, form.data, key.createdBy, true)
+    if (!updated) return apiError(409, 'conflict', 'This draft was published or removed during the update.')
     if (updated.slug !== current.slug && (await moveCustomSchemas(`/blog/${current.slug}`, `/blog/${updated.slug}`))) invalidatePublishedSchemas()
-    await logActivity(apiActor(key), 'blog.update', { type: 'blog', id: updated.id, label: updated.title })
+    await logActivity(apiActor(key), post.status === 'published' ? 'blog.publish' : 'blog.update', { type: 'blog', id: updated.id, label: updated.title })
     return apiOk(withWarnings(present(updated), { droppedHtml: body_.dropped }))
   })
 }
@@ -251,12 +294,22 @@ export function handlePostFormat(request: Request) {
     if (key instanceof Response) return key
     return apiOk({
       notes: [
-        'Posts are saved as drafts; an editor publishes them in the admin.',
+        'Posts default to draft. Explicit status published requires blog:publish in addition to blog:write.',
         'Send the body as Markdown (format "markdown") or HTML (format "html"). HTML is converted to Markdown; tags the site cannot show are dropped and listed in data.warnings.droppedHtml.',
         'Supported in the body: h2–h4, paragraphs, one-level lists, blockquotes, tables, code blocks, images on their own line, links, bold, italic, strikethrough, inline code.',
         'Optional "schemas": up to 5 schema.org JSON-LD objects, saved as pending schemas (needs "schema:write").',
         'Omit "slug" to derive it from the title.',
       ],
+      media: {
+        upload: 'POST /api/v1/media with media:write and multipart/form-data',
+        fields: ['file', 'alt', 'title', 'caption', 'description'],
+        result: 'Use data.id for placements and data.url for the hosted image.',
+        example: {
+          title: 'Manage digital signage remotely', description: 'A guide to managing digital signage content remotely.',
+          coverAssetId: '<thumbnail upload ID>', status: 'published',
+          content: '## Update a screen\\n\\n{{media:<section upload ID>}}\\n\\nSchedule the playlist.',
+        },
+      },
       jsonSchema: z.toJSONSchema(ApiPostSchema, { io: 'input', unrepresentable: 'any' }),
       example: {
         title: 'How to manage 100 digital signage screens remotely',

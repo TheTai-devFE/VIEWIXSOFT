@@ -12,6 +12,7 @@ import { UPLOAD_PERMISSIONS } from '~/lib/permissions'
 import { errorFields, logger } from '~/server/logger'
 import { readImageSize } from '~/server/media/image-size'
 import {
+  blogUsesImage,
   deleteMediaAsset,
   getAssetsByIds,
   getMediaAsset,
@@ -150,6 +151,7 @@ export const deleteMediaAssetFn = createServerFn({ method: 'POST' })
       }
       const asset = await getMediaAsset(data.id)
       if (!asset) return { ok: true }
+      if (await blogUsesImage(asset.url)) return { ok: false, error: 'Ảnh đang được dùng trong bài blog.' }
       await deleteMediaAsset(data.id)
       // Remove the file only after the row is gone, so the site never points at a missing file.
       await getStorage()

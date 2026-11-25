@@ -43,8 +43,8 @@ const columns = (input: CustomSchemaForm) => ({
   data: input.schema.data as Json,
 })
 
-export async function createCustomSchema(input: CustomSchemaForm, status: CustomSchemaStatus, by: SchemaAuthor) {
-  const [row] = await getDb()
+export function insertCustomSchema(input: CustomSchemaForm, status: CustomSchemaStatus, by: SchemaAuthor) {
+  return getDb()
     .insert(customSchemas)
     .values({
       ...columns(input),
@@ -55,6 +55,10 @@ export async function createCustomSchema(input: CustomSchemaForm, status: Custom
       updatedBy: by.kind === 'admin' ? by.userId : null,
     })
     .returning()
+}
+
+export async function createCustomSchema(input: CustomSchemaForm, status: CustomSchemaStatus, by: SchemaAuthor) {
+  const [row] = await insertCustomSchema(input, status, by)
   if (!row) throw new Error('Failed to insert custom schema')
   return row
 }

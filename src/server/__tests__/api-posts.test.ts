@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AuthenticatedKey } from '~/server/api-keys/repository'
 
 const authenticateApiKey = vi.fn<(key: string) => Promise<AuthenticatedKey | null>>()
-const linkApiPost = vi.fn()
+const getAssetsByIds = vi.fn()
+vi.mock('~/server/media/repository', () => ({ getAssetsByIds }))
 const isApiPost = vi.fn(async () => true)
 const listApiPosts = vi.fn(async () => [])
 const getAuthorByUserId = vi.fn()
@@ -15,7 +16,7 @@ const moveCustomSchemas = vi.fn(async () => 0)
 const logActivity = vi.fn()
 
 vi.mock('~/server/api-keys/repository', () => ({ authenticateApiKey }))
-vi.mock('~/server/api-keys/posts-repository', () => ({ linkApiPost, isApiPost, listApiPosts }))
+vi.mock('~/server/api-keys/posts-repository', () => ({ isApiPost, listApiPosts }))
 vi.mock('~/server/authors/repository', () => ({ getAuthorByUserId }))
 vi.mock('~/server/blog/repository', () => ({ createBlogPost, getBlogPostById, getBlogPostBySlug, updateBlogPost }))
 vi.mock('~/server/custom-schemas/repository', () => ({
@@ -75,15 +76,18 @@ describe('POST /api/v1/posts', () => {
     const [form, owner] = createBlogPost.mock.calls[0] as [Record<string, unknown>, string]
     expect(owner).toBe('editor-1')
     expect(form).toMatchObject({ slug: 'how-to-manage-100-screens-remotely', status: 'draft', content: POST.content })
-    expect(linkApiPost).toHaveBeenCalledWith(POST_ID, KEY.id)
+    expect(createBlogPost.mock.calls[0]?.[2]).toEqual({ keyId: KEY.id, schemas: [] })
     const body = await json(res)
     expect(body.data).toMatchObject({ status: 'draft', adminUrl: `https://viewixsoft.com/admin/blog/${POST_ID}` })
     expect(body.data).not.toHaveProperty('warnings')
   })
 
-  it('cannot publish: a status in the body is ignored', async () => {
-    await api.handleCreatePost(request('POST', { ...POST, status: 'published' }))
-    expect(createBlogPost.mock.calls[0]?.[0]).toMatchObject({ status: 'draft' })
+  it('requires explicit publication access', async () => {
+    expect((await api.handleCreatePost(request('POST', { ...POST, status: 'published' }))).status).toBe(403)
+    expect(createBlogPost).not.toHaveBeenCalled()
+    authenticateApiKey.mockResolvedValue({ ...KEY, scopes: ['blog:write', 'blog:publish'] })
+    expect((await api.handleCreatePost(request('POST', { ...POST, status: 'published' }))).status).toBe(201)
+    expect(createBlogPost.mock.calls[0]?.[0]).toMatchObject({ status: 'published' })
   })
 
   it("uses the key owner's author profile as the byline", async () => {
@@ -118,11 +122,25 @@ describe('POST /api/v1/posts', () => {
 
     authenticateApiKey.mockResolvedValue({ ...KEY, scopes: ['blog:write', 'schema:write'] })
     expect((await api.handleCreatePost(request('POST', { ...POST, schemas: [faq] }))).status).toBe(201)
-    expect(createCustomSchema).toHaveBeenCalledWith(
-      expect.objectContaining({ path: '/blog/how-to-manage-100-screens-remotely', schema: expect.objectContaining({ type: 'FAQPage' }) }),
-      'pending',
-      { kind: 'api', apiKeyId: KEY.id },
-    )
+    expect(createBlogPost.mock.calls[0]?.[2]).toEqual({ keyId: KEY.id, schemas: [expect.objectContaining({ path: '/blog/how-to-manage-100-screens-remotely', schema: expect.objectContaining({ type: 'FAQPage' }) })] })
+  })
+
+  it('resolves a cover and places a section image between HTML paragraphs', async () => {
+    const asset = { id: POST_ID, contentType: 'image/png', url: '/media-dev/picture.png', alt: 'CMS preview' }
+    getAssetsByIds.mockResolvedValue([asset])
+    const input = { ...POST, coverAssetId: POST_ID, format: 'html', content: '<p>Before</p><p>{{media:' + POST_ID + '}}</p><p>After</p>' }
+    expect((await api.handleCreatePost(request('POST', input))).status).toBe(201)
+    expect(createBlogPost.mock.calls[0]?.[0]).toMatchObject({
+      coverUrl: asset.url, coverAlt: asset.alt, content: 'Before\n\n![CMS preview](/media-dev/picture.png)\n\nAfter',
+    })
+  })
+
+  it('rejects a missing image before writing the post', async () => {
+    getAssetsByIds.mockResolvedValue([])
+    const response = await api.handleCreatePost(request('POST', { ...POST, coverAssetId: POST_ID }))
+    expect(response.status).toBe(422)
+    expect(await response.text()).toContain(POST_ID)
+    expect(createBlogPost).not.toHaveBeenCalled()
   })
 
   it('checks every schema before creating anything', async () => {
@@ -171,7 +189,7 @@ describe('GET and PUT /api/v1/posts/<id>', () => {
   it('updates a draft, keeping its byline and moving its schemas with a new slug', async () => {
     const res = await api.handleUpdatePost(request('PUT', { ...POST, slug: 'remote-screens' }), POST_ID)
     expect(res.status).toBe(200)
-    expect(updateBlogPost).toHaveBeenCalledWith(POST_ID, expect.objectContaining({ slug: 'remote-screens', status: 'draft', authorName: 'Viewixsoft Team' }), 'editor-1')
+    expect(updateBlogPost).toHaveBeenCalledWith(POST_ID, expect.objectContaining({ slug: 'remote-screens', status: 'draft', authorName: 'Viewixsoft Team' }), 'editor-1', true)
     expect(moveCustomSchemas).toHaveBeenCalledWith('/blog/how-to-manage-100-screens-remotely', '/blog/remote-screens')
   })
 

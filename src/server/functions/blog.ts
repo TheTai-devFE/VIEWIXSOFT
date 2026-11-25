@@ -11,6 +11,7 @@ import {
   listPublishedBlogPosts,
   updateBlogPost,
 } from '~/server/blog/repository'
+import { articleImages } from '~/server/media/repository'
 import { getAuthorById } from '~/server/authors/repository'
 import { errorFields, logger } from '~/server/logger'
 import { can, canEditContent } from '~/lib/permissions'
@@ -42,7 +43,8 @@ export const getPublishedBlogPostBySlugFn = createServerFn({ method: 'GET' })
       }
       // A missing or failing author lookup falls back to the plain byline rather than hiding the post.
       const author = post.authorId ? await getAuthorById(post.authorId).catch(() => null) : null
-      return { ok: true as const, post, author }
+      const images = await articleImages(post.content, post.coverUrl)
+      return { ok: true as const, post, author, images }
     } catch (error) {
       logger.error('blog.get_failed', errorFields(error))
       return { ok: false as const, error: 'server_error' as const }

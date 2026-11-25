@@ -1,7 +1,9 @@
 import '@tanstack/react-start/server-only'
 import { and, desc, eq } from 'drizzle-orm'
 import { getDb } from '~/server/db/client'
-import { blogPosts } from '~/server/db/schema'
+import { insertCustomSchema } from '~/server/custom-schemas/repository'
+import type { CustomSchemaForm } from '~/lib/seo/custom-schema'
+import { apiPosts, blogPosts } from '~/server/db/schema'
 import type { BlogPostRow, NewBlogPost } from '~/server/db/schema'
 import type { BlogPostFormInput } from '~/lib/admin-schemas'
 
@@ -28,11 +30,17 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPostRow | nul
 }
 
 /** `userId` becomes the post's owner and last editor. */
-export async function createBlogPost(input: BlogPostFormInput, userId: string): Promise<BlogPostRow> {
+export async function createBlogPost(
+  input: BlogPostFormInput,
+  userId: string,
+  api?: { keyId: string; schemas: CustomSchemaForm[] },
+): Promise<BlogPostRow> {
   const isPublished = input.status === 'published'
-  const [row] = await getDb()
-    .insert(blogPosts)
+  const db = getDb()
+  const id = crypto.randomUUID()
+  const insert = db.insert(blogPosts)
     .values({
+      id,
       slug: input.slug,
       title: input.title,
       seoTitle: input.seoTitle || null,
@@ -55,11 +63,20 @@ export async function createBlogPost(input: BlogPostFormInput, userId: string): 
       updatedBy: userId,
     })
     .returning()
+  // The post only becomes visible once its API ownership and schemas have been recorded.
+  const [rows] = api
+    ? await db.batch([
+        insert,
+        db.insert(apiPosts).values({ postId: id, apiKeyId: api.keyId }),
+        ...api.schemas.map((schema) => insertCustomSchema(schema, 'pending', { kind: 'api', apiKeyId: api.keyId })),
+      ])
+    : [await insert]
+  const row = rows[0]
   if (!row) throw new Error('Failed to insert blog post')
   return row
 }
 
-export async function updateBlogPost(id: string, input: Partial<BlogPostFormInput>, userId: string): Promise<BlogPostRow | null> {
+export async function updateBlogPost(id: string, input: Partial<BlogPostFormInput>, userId: string, draftOnly = false): Promise<BlogPostRow | null> {
   const existing = await getBlogPostById(id)
   if (!existing) return null
 
@@ -92,7 +109,8 @@ export async function updateBlogPost(id: string, input: Partial<BlogPostFormInpu
     updateData.publishedAt = publishedAt
   }
 
-  const [row] = await getDb().update(blogPosts).set(updateData).where(eq(blogPosts.id, id)).returning()
+  const [row] = await getDb().update(blogPosts).set(updateData)
+    .where(and(eq(blogPosts.id, id), draftOnly ? eq(blogPosts.status, 'draft') : undefined)).returning()
   return row ?? null
 }
 

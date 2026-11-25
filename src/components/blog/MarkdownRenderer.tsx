@@ -72,7 +72,17 @@ export function parseInline(text: string): ReactNode[] {
   return nodes.length > 0 ? nodes : [text]
 }
 
-export function MarkdownRenderer({ content, className }: { content: string; className?: string }) {
+interface ArticleImage {
+  url: string
+  title: string | null
+  alt: string
+  caption: string | null
+  description: string | null
+  width: number
+  height: number
+}
+
+export function MarkdownRenderer({ content, className, images = [] }: { content: string; className?: string; images?: ArticleImage[] }) {
   if (!content) return null
 
   const lines = content.replace(/\r\n/g, '\n').split('\n')
@@ -354,16 +364,22 @@ export function MarkdownRenderer({ content, className }: { content: string; clas
       flushAll()
       const match = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(line)
       if (match && match[2]) {
+        const image = images.find((asset) => asset.url === match[2])
+        const caption = image?.caption ?? match[1]
         elements.push(
           <figure key={`img-${elements.length}`} className="my-8">
             <img
               src={match[2]}
-              alt={match[1] || ''}
+              alt={image?.title ? image.alt : match[1] || ''}
+              title={image?.title ?? undefined}
+              aria-description={image?.description ?? undefined}
+              width={image?.width}
+              height={image?.height}
               loading="lazy"
               decoding="async"
               className="max-h-[520px] w-full rounded-2xl border border-ink-800 object-cover shadow-sm"
             />
-            {match[1] && <figcaption className="mt-2.5 text-center text-xs text-ink-400">{match[1]}</figcaption>}
+            {caption && <figcaption className="mt-2.5 text-center text-xs text-ink-400">{caption}</figcaption>}
           </figure>,
         )
       } else {

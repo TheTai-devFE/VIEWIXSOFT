@@ -50,7 +50,7 @@ export const Route = createFileRoute('/blog/$slug')({
       .sort((a, b) => Number(b.product === post.product) - Number(a.product === post.product) || b.publishedAt.localeCompare(a.publishedAt))
       .slice(0, 2)
     const productName = PRODUCTS.find((p) => p.slug === post.product)?.name ?? post.product
-    return { post, dbContent: dbRes.ok ? dbRes.post.content : null, relatedPosts, productName, schemas }
+    return { post, images: dbRes.ok ? dbRes.images : [], dbContent: dbRes.ok ? dbRes.post.content : null, relatedPosts, productName, schemas }
   },
 
   head: ({ loaderData }) => {
@@ -100,7 +100,8 @@ export const Route = createFileRoute('/blog/$slug')({
 })
 
 function BlogPostPage() {
-  const { post, dbContent, relatedPosts, productName } = Route.useLoaderData()
+  const { post, dbContent, relatedPosts, productName, images } = Route.useLoaderData()
+  const coverImage = images.find((image) => image.url === post.cover.src)
   const [copied, setCopied] = useState(false)
 
   const handleShare = async () => {
@@ -202,31 +203,39 @@ function BlogPostPage() {
       </div>
 
       {/* 2. Hero Image Banner (Centered max-w-5xl) */}
-      <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-ink-800/80 bg-gradient-to-br from-ink-950 via-[#0a0d18] to-signal-950 shadow-2xl aspect-[16/9] w-full">
-        {post.cover.src && !post.cover.src.includes('retail-screens.webp') ? (
-          <img
-            src={post.cover.src}
-            alt={post.cover.alt || post.title}
-            className="h-full w-full object-cover"
-            loading="eager"
-          />
-        ) : (
-          <div className="relative flex h-full w-full flex-col items-center justify-center p-6 text-center sm:p-12">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.18)_0%,transparent_70%)]" />
-            <div className="relative z-10 flex flex-col items-center max-w-3xl">
-              <span className="mb-4 inline-flex items-center rounded-full border border-signal-800/80 bg-signal-950/80 px-3.5 py-1 font-mono text-xs font-medium text-signal-300">
-                {productName}
-              </span>
-              <h2 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl md:text-5xl">
-                {post.title}
-              </h2>
-              <p className="mt-4 max-w-xl text-xs sm:text-sm text-ink-400 leading-relaxed">
-                Viewixsoft Platform &bull; Cloud Signage &amp; Edge Architecture
-              </p>
+      <figure className="mx-auto max-w-5xl">
+        <div className="overflow-hidden rounded-3xl border border-ink-800/80 bg-gradient-to-br from-ink-950 via-[#0a0d18] to-signal-950 shadow-2xl aspect-[16/9] w-full">
+          {post.cover.src && !post.cover.src.includes('retail-screens.webp') ? (
+            <img
+              src={post.cover.src}
+              alt={post.cover.alt || post.title}
+              title={coverImage?.title ?? undefined}
+              aria-description={coverImage?.description ?? undefined}
+              width={coverImage?.width}
+              height={coverImage?.height}
+              className="h-full w-full object-cover"
+              loading="eager"
+            />
+          ) : (
+            <div className="relative flex h-full w-full flex-col items-center justify-center p-6 text-center sm:p-12">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.18)_0%,transparent_70%)]" />
+              <div className="relative z-10 flex flex-col items-center max-w-3xl">
+                <span className="mb-4 inline-flex items-center rounded-full border border-signal-800/80 bg-signal-950/80 px-3.5 py-1 font-mono text-xs font-medium text-signal-300">
+                  {productName}
+                </span>
+                <h2 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl md:text-5xl">
+                  {post.title}
+                </h2>
+                <p className="mt-4 max-w-xl text-xs sm:text-sm text-ink-400 leading-relaxed">
+                  Viewixsoft Platform &bull; Cloud Signage &amp; Edge Architecture
+                </p>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+
+        {coverImage?.caption && <figcaption className="mt-2 text-center text-sm text-muted-foreground">{coverImage.caption}</figcaption>}
+      </figure>
 
       {/* 3. Centered Single-Column Editorial Reading Experience (max-w-3xl) */}
       <div className="mx-auto max-w-3xl space-y-8 pt-2">
@@ -262,7 +271,7 @@ function BlogPostPage() {
 
         {/* Article Body */}
         <article className="space-y-6 text-base sm:text-[17px] leading-[1.8]">
-          {dbContent ? <MarkdownRenderer content={dbContent} /> : <PostBody slug={post.slug} />}
+          {dbContent ? <MarkdownRenderer content={dbContent} images={images} /> : <PostBody slug={post.slug} />}
         </article>
 
         {/* FAQ: answers in the SSR HTML and as FAQPage JSON-LD (see head). */}

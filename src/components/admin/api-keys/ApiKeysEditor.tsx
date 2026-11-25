@@ -73,13 +73,13 @@ function CopyButton({ text, label, compact = false }: { text: string; label: str
 }
 
 /** The admin module behind each scope, named in the hint of a scope the account can't give. */
-const SCOPE_MODULE: Record<ApiScope, string> = { 'schema:read': 'Schema markup', 'schema:write': 'Schema markup', 'blog:write': 'Blog posts' }
+const SCOPE_MODULE: Record<ApiScope, string> = { 'schema:read': 'Schema markup', 'schema:write': 'Schema markup', 'blog:write': 'Blog posts', 'blog:publish': 'Blog posts', 'media:write': 'Thư viện ảnh' }
 
 /** Creating a key: name and permissions, then the key shown once. */
 function CreateKey({ allowedScopes }: { allowedScopes: ApiScope[] }) {
   const router = useRouter()
   const [name, setName] = useState('')
-  const [scopes, setScopes] = useState<ApiScope[]>(() => allowedScopes.filter((s) => s !== 'blog:write'))
+  const [scopes, setScopes] = useState<ApiScope[]>(() => allowedScopes.filter((s) => s.startsWith('schema:')))
   const [error, setError] = useState('')
   const [state, setState] = useState<ButtonState>('idle')
   const [created, setCreated] = useState<{ key: string; name: string } | null>(null)
@@ -334,7 +334,8 @@ const ENDPOINTS: { method: string; path: string; scope: ApiScope; what: string }
   { method: 'PUT', path: '/api/v1/schemas/{id}', scope: 'schema:write', what: 'Thay schema; quay về chờ duyệt' },
   { method: 'DELETE', path: '/api/v1/schemas/{id}', scope: 'schema:write', what: 'Xoá schema' },
   { method: 'GET', path: '/api/v1/posts/format', scope: 'blog:write', what: 'Các trường của bài, JSON Schema và ví dụ' },
-  { method: 'POST', path: '/api/v1/posts', scope: 'blog:write', what: 'Gửi bài mới (luôn lưu Nháp), nội dung Markdown hoặc HTML' },
+  { method: 'POST', path: '/api/v1/media', scope: 'media:write', what: 'Tải file ảnh cùng alt, tiêu đề, chú thích và mô tả' },
+  { method: 'POST', path: '/api/v1/posts', scope: 'blog:write', what: 'Gửi bài mới (mặc định lưu nháp), nội dung Markdown hoặc HTML' },
   { method: 'GET', path: '/api/v1/posts', scope: 'blog:write', what: 'Các bài đã gửi qua API' },
   { method: 'GET', path: '/api/v1/posts/{id}', scope: 'blog:write', what: 'Một bài đã gửi qua API' },
   { method: 'PUT', path: '/api/v1/posts/{id}', scope: 'blog:write', what: 'Sửa bài khi còn là Nháp' },
@@ -361,8 +362,7 @@ function ApiGuide() {
           <li>Mọi schema gửi qua API đều ở trạng thái <strong>Chờ duyệt</strong>. Chỉ hiện trên site sau khi admin bấm Duyệt ở trang Schema markup.</li>
           <li>Tool chỉ sửa và xoá được schema do API tạo, không đụng được schema admin tự nhập.</li>
           <li>
-            Bài gửi qua <code>/api/v1/posts</code> luôn lưu ở trạng thái <strong>Nháp</strong>, thuộc về người tạo khóa. Người trong mục Blog posts xem lại rồi
-            bấm Đăng. Tool chỉ sửa được bài do API tạo và chỉ khi bài còn là Nháp.
+            Bài gửi qua <code>/api/v1/posts</code> mặc định lưu nháp. Để đăng ngay, cấp thêm quyền <code>blog:publish</code> và gửi <code>status="published"</code>. Tool chỉ sửa được bài do API tạo và chỉ khi bài còn là Nháp.
           </li>
           <li>
             Schema nhận <code>"jsonLd"</code> (JSON-LD chuẩn schema.org) hoặc <code>"schema"</code> (<code>{'{ type, data }'}</code>). Thuộc tính bị bỏ qua

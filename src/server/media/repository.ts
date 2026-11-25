@@ -1,7 +1,7 @@
 import '@tanstack/react-start/server-only'
-import { desc, eq, inArray } from 'drizzle-orm'
+import { desc, eq, inArray, or, sql } from 'drizzle-orm'
 import { getDb } from '~/server/db/client'
-import { mediaAssets, mediaSlots } from '~/server/db/schema'
+import { blogPosts, mediaAssets, mediaSlots } from '~/server/db/schema'
 
 export async function listMediaAssets() {
   return getDb().select().from(mediaAssets).orderBy(desc(mediaAssets.createdAt))
@@ -14,6 +14,25 @@ export async function listMediaSlots() {
 export async function insertMediaAsset(row: typeof mediaAssets.$inferInsert) {
   const [asset] = await getDb().insert(mediaAssets).values(row).returning()
   return asset
+}
+
+export async function blogUsesImage(url: string) {
+  const [post] = await getDb().select({ id: blogPosts.id }).from(blogPosts)
+    .where(or(eq(blogPosts.coverUrl, url), sql`strpos(${blogPosts.content}, ${url}) > 0`)).limit(1)
+  return Boolean(post)
+}
+
+export async function articleImages(content: string, coverUrl: string | null) {
+  const urls = new Set<string>()
+  if (coverUrl) urls.add(coverUrl)
+  for (const match of content.matchAll(/^!\[[^\]]*\]\(([^)\s]+)\)\s*$/gm)) {
+    if (match[1]) urls.add(match[1])
+  }
+  if (!urls.size) return []
+  return getDb().select({
+    url: mediaAssets.url, title: mediaAssets.imageTitle, alt: mediaAssets.alt, caption: mediaAssets.caption,
+    description: mediaAssets.description, width: mediaAssets.width, height: mediaAssets.height,
+  }).from(mediaAssets).where(inArray(mediaAssets.url, [...urls]))
 }
 
 export async function getMediaAsset(id: string) {
