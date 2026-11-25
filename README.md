@@ -150,7 +150,7 @@ Built by Viewixsoft Inc. All rights reserved. Complies with GDPR, CCPA, and WCAG
 ## Export an illustrated article
 
 1. Grant the tool `media:write` and `blog:write`. Add `blog:publish` for direct publication.
-2. For each thumbnail or section image, POST multipart/form-data to `/api/v1/media` with a Bearer key and fields `file`, `alt` (SEO description), `title`, `caption` and `description`. Use PNG, WebP, JPEG or AVIF up to 1 MiB. The 201 response contains the hosted URL, image ID, metadata and dimensions.
+2. For each thumbnail or section image, POST multipart/form-data to `/api/v1/media` with a Bearer key and fields `file`, `alt` (10–125 characters describing the picture, not a file name), `title`, `caption` and `description`. Use PNG, WebP, JPEG or AVIF up to 1 MiB. The 201 response contains the hosted URL, image ID, metadata and dimensions.
 3. POST JSON to `/api/v1/posts` with the title, description and content. Set `coverAssetId` to the thumbnail ID. Put `{{media:UUID}}` on its own Markdown line or in its own HTML paragraph for each section. Replace UUID with the uploaded image ID. Use `status: "published"` to publish immediately. The default is draft. The response includes the post status and URL.
 4. See `GET /api/v1/posts/format` for an example. A missing referenced image returns 422 before the post is saved. Existing coverUrl/coverAlt inputs are still accepted.
 

@@ -53,6 +53,14 @@ describe('POST /api/v1/media', () => {
     expect((await send(form)).status).toBe(422)
     expect(deps.put).not.toHaveBeenCalled()
   })
+  it('rejects alt text that is too short, too long or reads as a file name', async () => {
+    for (const alt of ['Kiosk', 'kiosk_01.webp', 'A'.repeat(126)]) {
+      const form = await uploadForm()
+      form.set('alt', alt)
+      expect((await send(form)).status, alt).toBe(422)
+    }
+    expect(deps.put).not.toHaveBeenCalled()
+  })
   it('rejects oversized multipart uploads before persisting bytes', async () => {
     const form = await uploadForm()
     form.set('file', new File([new Uint8Array(2 * 1024 * 1024)], 'big.png'))

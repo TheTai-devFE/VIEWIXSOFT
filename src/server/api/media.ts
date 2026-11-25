@@ -6,8 +6,16 @@ import { insertMediaAsset } from '~/server/media/repository'
 import { getStorage } from '~/server/media/storage'
 import { apiError, apiOk, authorize, guarded, validationError } from './v1'
 
+// Alt text describes the picture for screen readers and search. A file name is not a description.
+const FILE_NAME_ALT = /\.(jpe?g|png|webp|avif|gif|svg)$|_/i
+
 const fields = z.object({
-  alt: z.string().trim().min(1).max(200),
+  alt: z
+    .string()
+    .trim()
+    .min(10, 'Alt text needs at least 10 characters.')
+    .max(125, 'Alt text is at most 125 characters.')
+    .refine((alt) => !FILE_NAME_ALT.test(alt), 'Describe the picture in words; a file name is not alt text.'),
   title: z.string().trim().min(1).max(200),
   caption: z.string().trim().min(1).max(1000),
   description: z.string().trim().min(1).max(2000),
