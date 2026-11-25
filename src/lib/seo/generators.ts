@@ -15,6 +15,8 @@ import { absoluteUrl, SITE_NAME, SITE_URL } from '~/lib/seo/meta'
 import { AI_CRAWLER_POLICY, AI_CRAWLERS, DISALLOWED_PATHS, STATIC_PAGES } from '~/lib/seo/site-pages'
 import { isPageVisible } from '~/lib/page-visibility'
 import type { SiteConfig } from '~/lib/site-config'
+import { toPublicPath } from '~/lib/slugs'
+import type { SlugMap } from '~/lib/slugs'
 
 /*
  * Pure builders for sitemap.xml, robots.txt, rss.xml, llms.txt, llms-full.txt
@@ -72,19 +74,31 @@ export function sitemapEntries(
   }
 
   const staticPages = STATIC_PAGES.filter((p) => isPageVisible(config, p.path))
+  const pub = (path: string) => toPublicPath(path, config?.slugs)
+
+  // Customized filter landing pages (e.g. /blog?product=cms -> /blog/cms) become indexable sitemap entries.
+  const customFilterEntries: SitemapEntry[] = Object.entries(config?.slugs ?? {}).flatMap(([defaultPath, customPath]) => {
+    const qIndex = defaultPath.indexOf('?')
+    if (qIndex === -1) return []
+    const parentPath = defaultPath.slice(0, qIndex)
+    if (!isPageVisible(config, parentPath)) return []
+    const lastmod = collectionLastmod[parentPath] || staticPages.find((p) => p.path === parentPath)?.updatedAt || ''
+    return lastmod ? [{ path: customPath, lastmod }] : []
+  })
 
   return [
     ...staticPages.map((p) => ({
-      path: p.path,
+      path: pub(p.path),
       lastmod: latest([p.updatedAt, collectionLastmod[p.path] ?? '']),
     })),
+    ...customFilterEntries,
     ...products
       .filter((p) => isPageVisible(config, `/products/${p.slug}`))
-      .map((p) => ({ path: `/products/${p.slug}`, lastmod: p.updatedAt })),
+      .map((p) => ({ path: pub(`/products/${p.slug}`), lastmod: p.updatedAt })),
     ...content.useCases
       .filter((u) => isPageVisible(config, `/case-studies/${u.slug}`))
-      .map((u) => ({ path: `/case-studies/${u.slug}`, lastmod: u.updatedAt })),
-    ...(isPageVisible(config, '/blog') ? posts.map((b) => ({ path: `/blog/${b.slug}`, lastmod: b.updatedAt })) : []),
+      .map((u) => ({ path: pub(`/case-studies/${u.slug}`), lastmod: u.updatedAt })),
+    ...(isPageVisible(config, '/blog') ? posts.map((b) => ({ path: pub(`/blog/${b.slug}`), lastmod: b.updatedAt })) : []),
   ]
 }
 
@@ -111,11 +125,11 @@ function rfc822(date: string) {
   return new Date(`${date}T00:00:00Z`).toUTCString()
 }
 
-export function buildRssXml(posts: BlogPost[] = PUBLISHED_POSTS) {
+export function buildRssXml(posts: BlogPost[] = PUBLISHED_POSTS, slugMap?: SlugMap) {
   const sorted = [...posts].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
   const items = sorted
     .map((p) => {
-      const url = `${SITE_URL}/blog/${p.slug}`
+      const url = `${SITE_URL}${toPublicPath(`/blog/${p.slug}`, slugMap)}`
       return [
         '    <item>',
         `      <title>${escapeXml(p.title)}</title>`,
@@ -133,7 +147,7 @@ export function buildRssXml(posts: BlogPost[] = PUBLISHED_POSTS) {
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>${SITE_NAME} Blog</title>
-    <link>${SITE_URL}/blog</link>
+    <link>${SITE_URL}${toPublicPath('/blog', slugMap)}</link>
     <description>Guides on digital signage software, menu boards, proof-of-play and NFC from the ${SITE_NAME} team.</description>
     <language>en-us</language>
     <lastBuildDate>${lastBuild}</lastBuildDate>
@@ -161,12 +175,17 @@ function statusLabel(p: Product) {
   return p.status === 'available' ? 'available now' : 'coming soon'
 }
 
-export function buildLlmsTxt(published: Product[] = PRODUCTS, content: PublishedContent = bundledContent()) {
+export function buildLlmsTxt(
+  published: Product[] = PRODUCTS,
+  content: PublishedContent = bundledContent(),
+  slugMap?: SlugMap,
+) {
+  const pub = (path: string) => toPublicPath(path, slugMap)
   const products = published.map(
-    (p) => `- [${p.name}](${SITE_URL}/products/${p.slug}.md) (${statusLabel(p)}): ${PRODUCT_ONE_LINERS[p.slug] ?? p.tagline}`,
+    (p) => `- [${p.name}](${SITE_URL}${pub(`/products/${p.slug}.md`)}) (${statusLabel(p)}): ${PRODUCT_ONE_LINERS[p.slug] ?? p.tagline}`,
   )
-  const useCases = content.useCases.map((u) => `- [${u.title}](${SITE_URL}/case-studies/${u.slug}.md): ${u.tagline}`)
-  const posts = content.posts.map(({ post: b }) => `- [${b.title}](${SITE_URL}/blog/${b.slug}.md): ${b.description}`)
+  const useCases = content.useCases.map((u) => `- [${u.title}](${SITE_URL}${pub(`/case-studies/${u.slug}.md`)}): ${u.tagline}`)
+  const posts = content.posts.map(({ post: b }) => `- [${b.title}](${SITE_URL}${pub(`/blog/${b.slug}.md`)}): ${b.description}`)
   return [
     `# ${SITE_NAME}`,
     '',
@@ -186,9 +205,9 @@ export function buildLlmsTxt(published: Product[] = PRODUCTS, content: Published
     '',
     '## Key pages',
     '',
-    `- [Pricing](${SITE_URL}/pricing): Viewixsoft CMS prices per screen licence.`,
-    `- [About](${SITE_URL}/about): Who builds Viewixsoft and how it relates to Viewix.`,
-    `- [Contact](${SITE_URL}/contact): Book a demo or ask for a quote.`,
+    `- [Pricing](${SITE_URL}${pub('/pricing')}): Viewixsoft CMS prices per screen licence.`,
+    `- [About](${SITE_URL}${pub('/about')}): Who builds Viewixsoft and how it relates to Viewix.`,
+    `- [Contact](${SITE_URL}${pub('/contact')}): Book a demo or ask for a quote.`,
     '',
     '## Optional',
     '',

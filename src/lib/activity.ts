@@ -11,6 +11,7 @@ export const ACTIVITY_ENTITIES = {
   media: 'Ảnh & video',
   page: 'Trang',
   seo: 'SEO',
+  slug: 'Đường dẫn (Slug)',
   schema: 'Schema markup',
   'api-key': 'Khóa API',
   footer: 'Footer',

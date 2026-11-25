@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Seven result sets, in the order readConfig batches them; only product status varies here.
-const rows = (status: string) => [[], [{ slug: 'cms', status }], [], [], [], [], []]
+// Nine result sets, in the order readConfig batches them; only product status varies here.
+const rows = (status: string) => [[], [{ slug: 'cms', status }], [], [], [], [], [], [], []]
 const batch = vi.fn()
 
 vi.mock('~/server/db/client', () => ({ hasDatabase: () => true, getDb: () => ({ batch, select: () => chain }) }))

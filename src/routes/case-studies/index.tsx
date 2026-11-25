@@ -17,6 +17,7 @@ import { CtaBand } from '~/components/blocks/CtaBand'
 import { cn } from '~/lib/cn'
 import { getSiteConfigFn } from '~/server/functions/site'
 import { isPageVisible } from '~/lib/page-visibility'
+import { siteConfigFromMatches } from '~/lib/page-content'
 
 const searchSchema = z.object({
   industry: z.string().optional().catch(undefined),
@@ -25,21 +26,25 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute('/case-studies/')({
   validateSearch: searchSchema,
-  loader: async () => {
+  loaderDeps: ({ search }) => ({ product: search.product }),
+  loader: async ({ deps }) => {
     const [config, res, schemas] = await Promise.all([
       getSiteConfigFn(),
       getPublishedUseCasesFn(),
       getPageSchemasFn({ data: { path: '/case-studies' } }),
     ])
     if (!isPageVisible(config, '/case-studies')) throw notFound()
-    return { useCases: mergeUseCases(res.ok ? res.useCases : [], USE_CASES).map(forPublic), schemas }
+    return { useCases: mergeUseCases(res.ok ? res.useCases : [], USE_CASES).map(forPublic), schemas, product: deps.product }
   },
-  head: ({ loaderData }) => {
+  head: ({ matches, loaderData }) => {
+    const config = siteConfigFromMatches(matches)
+    const filterPath = loaderData?.product && loaderData.product !== 'all' ? `/case-studies?product=${loaderData.product}` : null
+    const canonicalUrl = filterPath && config.slugs[filterPath] ? filterPath : '/case-studies'
     const seo = generateMetaTags({
       title: 'Case Studies — Viewixsoft',
       description:
         'Digital signage by industry: which Viewixsoft products fit retail, restaurants, offices, hotels and clinics, and how a rollout works.',
-      canonicalUrl: '/case-studies',
+      canonicalUrl,
     })
     return {
       meta: seo.meta,

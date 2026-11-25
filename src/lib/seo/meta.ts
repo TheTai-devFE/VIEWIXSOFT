@@ -1,3 +1,5 @@
+import { getActiveSlugMap, toPublicPath } from '~/lib/slugs'
+
 export interface SeoOptions {
   /** Page name without the brand; " — Viewixsoft" is appended unless the title already names the brand. */
   title: string
@@ -50,7 +52,10 @@ export function shareImageTags(image: { url: string; width: number; height: numb
 
 export function generateMetaTags(options: SeoOptions) {
   const fullTitle = buildTitle(options.title)
-  const canonical = absoluteUrl(options.canonicalUrl)
+  const slugMap = getActiveSlugMap()
+  const canonicalPath = options.canonicalUrl ? toPublicPath(options.canonicalUrl, slugMap) : undefined
+  const canonical = absoluteUrl(canonicalPath)
+  const markdownPublicPath = options.markdownPath ? toPublicPath(options.markdownPath, slugMap) : undefined
 
   const meta: MetaTag[] = [
     { title: fullTitle },
@@ -80,8 +85,8 @@ export function generateMetaTags(options: SeoOptions) {
     { rel: 'alternate', href: canonical, hrefLang: 'en' },
     { rel: 'alternate', href: canonical, hrefLang: 'x-default' },
   ]
-  if (options.markdownPath) {
-    links.push({ rel: 'alternate', type: 'text/markdown', href: `${SITE_URL}${options.markdownPath}` })
+  if (markdownPublicPath) {
+    links.push({ rel: 'alternate', type: 'text/markdown', href: `${SITE_URL}${markdownPublicPath}` })
   }
 
   return { meta, links }

@@ -1,5 +1,6 @@
 import { CONTACT_EMAILS, FOUNDED_YEAR } from '~/data/company'
 import { SOCIAL_LINKS } from '~/data/social'
+import { getActiveSlugMap, toPublicPath } from '~/lib/slugs'
 import { assetUrl, DEFAULT_OG_IMAGE, LOGO_URL, SITE_NAME, SITE_URL } from './meta'
 
 // Official profiles only: the social links in src/data/social.ts that have a URL.
@@ -55,7 +56,7 @@ export function getSoftwareApplicationSchema(product: {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     name: product.name,
-    url: `${SITE_URL}/products/${product.slug}`,
+    url: `${SITE_URL}${toPublicPath(`/products/${product.slug}`, getActiveSlugMap())}`,
     image: DEFAULT_OG_IMAGE,
     applicationCategory: 'BusinessApplication',
     ...(product.supportedOS?.length ? { operatingSystem: product.supportedOS.join(', ') } : {}),
@@ -79,15 +80,19 @@ export function getSoftwareApplicationSchema(product: {
 }
 
 export function getBreadcrumbSchema(items: { name: string; path: string }[]) {
+  const slugMap = getActiveSlugMap()
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
-    itemListElement: items.map((item, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: item.name,
-      item: item.path === '/' ? `${SITE_URL}/` : `${SITE_URL}${item.path}`
-    }))
+    itemListElement: items.map((item, index) => {
+      const publicPath = item.path === '/' ? '/' : toPublicPath(item.path, slugMap)
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+        item: publicPath === '/' ? `${SITE_URL}/` : `${SITE_URL}${publicPath}`,
+      }
+    }),
   }
 }
 
@@ -124,7 +129,7 @@ export function getArticleSchema(article: {
   image?: string
   keywords?: string[]
 }) {
-  const url = `${SITE_URL}${article.path}`
+  const url = `${SITE_URL}${toPublicPath(article.path, getActiveSlugMap())}`
   return {
     '@context': 'https://schema.org',
     '@type': article.type ?? 'BlogPosting',

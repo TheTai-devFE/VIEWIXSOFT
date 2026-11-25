@@ -7,8 +7,9 @@ export const Route = createFileRoute('/rss.xml')({
   server: {
     handlers: {
       GET: async () => {
-        const { posts } = await loadPublishedContent(await loadSiteConfig())
-        return textResponse(buildRssXml(posts.map((p) => p.post)), 'application/rss+xml')
+        const config = await loadSiteConfig()
+        const { posts } = await loadPublishedContent(config)
+        return textResponse(buildRssXml(posts.map((p) => p.post), config.slugs), 'application/rss+xml')
       },
     },
   },

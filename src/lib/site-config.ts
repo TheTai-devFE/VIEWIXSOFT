@@ -7,6 +7,7 @@ import type { ProductStatus } from '~/lib/enums'
 import type { PageOverride } from '~/data/page-content'
 import { resolveSectionContent } from '~/lib/section-content'
 import type { Json } from '~/lib/section-content'
+import type { RedirectMap, SlugMap } from '~/lib/slugs'
 
 /**
  * Admin-editable site settings, loaded once per request in the root route.
@@ -54,6 +55,10 @@ export interface SiteConfig {
   pages: Record<string, PageOverride>
   /** Edited section content by `page:section` key; read through useSectionContent, which validates it. */
   content: Record<string, Json>
+  /** Custom URL paths by default internal path (e.g. `'/pricing': '/bang-gia'`). */
+  slugs: SlugMap
+  /** Dynamic 301 redirects (`fromPath -> toPath`) from /admin/slugs. */
+  redirects: RedirectMap
 }
 
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
@@ -64,6 +69,8 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   media: {},
   pages: {},
   content: {},
+  slugs: {},
+  redirects: {},
 }
 
 /**

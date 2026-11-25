@@ -9,7 +9,7 @@ export const Route = createFileRoute('/llms.txt')({
     handlers: {
       GET: async () => {
         const config = await loadSiteConfig()
-        return textResponse(buildLlmsTxt(visibleProducts(config), await loadPublishedContent(config)), 'text/plain')
+        return textResponse(buildLlmsTxt(visibleProducts(config), await loadPublishedContent(config), config.slugs), 'text/plain')
       },
     },
   },

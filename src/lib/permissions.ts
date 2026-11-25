@@ -42,7 +42,7 @@ export const PERMISSION_LABELS: Record<Permission, { label: string; hint: string
   authors: { label: 'Tác giả', hint: 'Thêm và sửa hồ sơ tác giả' },
   pages: { label: 'Pages', hint: 'Sửa nội dung và ẩn/hiện các trang' },
   footer: { label: 'Footer info', hint: 'Thông tin chân trang' },
-  seo: { label: 'SEO & GEO', hint: 'Tiêu đề và mô tả tìm kiếm của từng trang' },
+  seo: { label: 'SEO & GEO', hint: 'Tiêu đề tìm kiếm, mô tả, chỉnh sửa đường dẫn (slug) và chuyển hướng 301' },
   schema: { label: 'Schema markup', hint: 'Thêm, sửa và duyệt schema của từng trang (kể cả schema do tool gửi qua API)' },
   products: { label: 'Product status', hint: 'Trạng thái sản phẩm' },
   stats: { label: 'Company stats', hint: 'Số liệu công ty' },

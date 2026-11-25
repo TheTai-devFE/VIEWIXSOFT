@@ -30,19 +30,23 @@ const formatDateAntigravity = (iso: string) => {
 
 export const Route = createFileRoute('/blog/')({
   validateSearch: searchSchema,
-  loader: async () => {
+  loaderDeps: ({ search }) => ({ product: search.product }),
+  loader: async ({ deps }) => {
     const [config, res, schemas] = await Promise.all([
       getSiteConfigFn(),
       getPublishedBlogPostsFn(),
       getPageSchemasFn({ data: { path: '/blog' } }),
     ])
     if (!isPageVisible(config, 'blog')) throw notFound()
-    return { dbPosts: res.ok ? res.posts : [], schemas }
+    return { dbPosts: res.ok ? res.posts : [], schemas, product: deps.product }
   },
   head: ({ matches, loaderData }) => {
+    const config = siteConfigFromMatches(matches)
+    const filterPath = loaderData?.product ? `/blog?product=${loaderData.product}` : null
+    const canonicalUrl = filterPath && config.slugs[filterPath] ? filterPath : '/blog'
     const seo = generateMetaTags({
-      ...pageContent(siteConfigFromMatches(matches), 'blog').seo,
-      canonicalUrl: '/blog',
+      ...pageContent(config, 'blog').seo,
+      canonicalUrl,
     })
     return {
       meta: seo.meta,
@@ -51,6 +55,9 @@ export const Route = createFileRoute('/blog/')({
         getBreadcrumbSchema([
           { name: 'Home', path: '/' },
           { name: 'Blog', path: '/blog' },
+          ...(filterPath && config.slugs[filterPath] && loaderData?.product
+            ? [{ name: productName(loaderData.product), path: filterPath }]
+            : []),
         ]),
       ], loaderData?.schemas),
     }

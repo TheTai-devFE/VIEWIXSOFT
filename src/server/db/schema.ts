@@ -499,3 +499,40 @@ export const apiPosts = pgTable('api_posts', {
 
 export type ApiKeyRow = typeof apiKeys.$inferSelect
 export type CustomSchemaRow = typeof customSchemas.$inferSelect
+
+// ─── Custom Page Slugs & 301 Redirects (/admin/slugs) ─────────────────────────
+
+/**
+ * Custom public URL paths for static, product, collection and legal pages.
+ * Keys match ADMIN_PAGES (plus `products` for the `/products` prefix).
+ * Missing rows use the default path from code.
+ */
+export const pageSlugs = pgTable('page_slugs', {
+  pageKey: text('page_key').primaryKey(),
+  defaultPath: text('default_path').notNull().unique(),
+  customPath: text('custom_path').notNull().unique(),
+  updatedBy: text('updated_by'),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+})
+
+/**
+ * Permanent (301) redirects created automatically when a page, blog post or
+ * case study changes slug, or managed directly in /admin/slugs.
+ */
+export const urlRedirects = pgTable(
+  'url_redirects',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    fromPath: text('from_path').notNull().unique(),
+    toPath: text('to_path').notNull(),
+    createdBy: text('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index('url_redirects_to_path_idx').on(t.toPath)],
+)
+
+export type PageSlugRow = typeof pageSlugs.$inferSelect
+export type UrlRedirectRow = typeof urlRedirects.$inferSelect

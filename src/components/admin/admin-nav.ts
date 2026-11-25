@@ -9,6 +9,7 @@ import {
   Inbox,
   KeyRound,
   LayoutDashboard,
+  Link2,
   Mail,
   Package,
   PanelBottom,
@@ -33,6 +34,7 @@ export interface AdminNavItem {
     | '/admin/pages'
     | '/admin/footer'
     | '/admin/seo'
+    | '/admin/slugs'
     | '/admin/schema'
     | '/admin/api-keys'
     | '/admin/products'
@@ -74,6 +76,7 @@ export const ADMIN_NAV: { group: string; items: AdminNavItem[] }[] = [
       { to: '/admin/pages', label: 'Pages', icon: PanelsTopLeft, access: 'pages', tree: 'pages' },
       { to: '/admin/footer', label: 'Footer info', icon: PanelBottom, access: 'footer' },
       { to: '/admin/seo', label: 'SEO & GEO', icon: Search, access: 'seo' },
+      { to: '/admin/slugs', label: 'Đường dẫn (Slug)', icon: Link2, access: 'seo' },
       { to: '/admin/schema', label: 'Schema markup', icon: Braces, access: 'schema' },
       { to: '/admin/products', label: 'Product status', icon: Package, access: 'products' },
       { to: '/admin/stats', label: 'Company stats', icon: BarChart3, access: 'stats' },

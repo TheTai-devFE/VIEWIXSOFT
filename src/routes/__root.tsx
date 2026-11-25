@@ -15,6 +15,7 @@ import { NotFound } from '~/components/NotFound'
 import { SHARE_IMAGE_SLOT } from '~/data/media-slots'
 import { getOrganizationSchema, getWebSiteSchema } from '~/lib/seo/jsonld'
 import { DEFAULT_OG_IMAGE, shareImageTags } from '~/lib/seo/meta'
+import { serializeSlugBootScript, setActiveSlugMap } from '~/lib/slugs'
 import { getSiteConfigFn } from '~/server/functions/site'
 import appCss from '~/styles/app.css?url'
 
@@ -54,6 +55,9 @@ export const Route = createRootRoute({
         type: 'application/ld+json',
         children: JSON.stringify(getWebSiteSchema()),
       },
+      ...(loaderData && Object.keys(loaderData.slugs).length > 0
+        ? [{ children: serializeSlugBootScript(loaderData.slugs) }]
+        : []),
     ],
   }),
   errorComponent: DefaultCatchBoundary,
@@ -62,6 +66,8 @@ export const Route = createRootRoute({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const config = Route.useLoaderData()
+  if (config?.slugs) setActiveSlugMap(config.slugs)
   // The admin has its own shell (sidebar, theme, <main>); the marketing chrome stays out of it.
   const isAdmin = useRouterState({ select: (s) => s.location.pathname.startsWith('/admin') })
   return (

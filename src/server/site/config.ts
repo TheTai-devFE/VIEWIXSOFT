@@ -1,11 +1,23 @@
 import '@tanstack/react-start/server-only'
 import { asc, eq } from 'drizzle-orm'
 import { getDb, hasDatabase } from '~/server/db/client'
-import { mediaAssets, mediaSlots, pageOverrides, sectionContent, productSettings, sectionSettings, siteMetrics, testimonials } from '~/server/db/schema'
+import {
+  mediaAssets,
+  mediaSlots,
+  pageOverrides,
+  pageSlugs,
+  productSettings,
+  sectionContent,
+  sectionSettings,
+  siteMetrics,
+  testimonials,
+  urlRedirects,
+} from '~/server/db/schema'
 import { errorFields, logger } from '~/server/logger'
 import { METRIC_DEFS } from '~/data/site-sections'
 import { DEFAULT_SITE_CONFIG } from '~/lib/site-config'
 import type { SectionSetting, SiteConfig } from '~/lib/site-config'
+import { setActiveSlugMap } from '~/lib/slugs'
 import type { SectionPage } from '~/data/site-sections'
 
 const TTL_MS = 30_000
@@ -17,8 +29,8 @@ let generation = 0
 
 async function readConfig(): Promise<SiteConfig> {
   const db = getDb()
-  // One batch is one HTTP round trip to Neon instead of seven; each costs ~250 ms from far regions.
-  const [sections, products, metrics, quotes, media, pages, content] = await db.batch([
+  // One batch is one HTTP round trip to Neon instead of nine; each costs ~250 ms from far regions.
+  const [sections, products, metrics, quotes, media, pages, content, slugs, redirects] = await db.batch([
     db.select().from(sectionSettings),
     db.select().from(productSettings),
     db.select().from(siteMetrics),
@@ -29,6 +41,8 @@ async function readConfig(): Promise<SiteConfig> {
       .innerJoin(mediaAssets, eq(mediaSlots.assetId, mediaAssets.id)),
     db.select().from(pageOverrides),
     db.select().from(sectionContent),
+    db.select().from(pageSlugs),
+    db.select().from(urlRedirects),
   ])
 
   const byPage: Partial<Record<SectionPage, SectionSetting[]>> = {}
@@ -66,6 +80,8 @@ async function readConfig(): Promise<SiteConfig> {
         .map((p) => [p.key, { seoTitle: p.seoTitle, seoDescription: p.seoDescription }]),
     ),
     content: Object.fromEntries(content.map((c) => [`${c.page}:${c.sectionKey}`, c.content])),
+    slugs: Object.fromEntries(slugs.map((s) => [s.defaultPath, s.customPath])),
+    redirects: Object.fromEntries(redirects.map((r) => [r.fromPath, r.toPath])),
   }
 }
 
@@ -75,7 +91,10 @@ function refresh(): Promise<SiteConfig> {
   const started = generation
   const read = readConfig()
     .then((config) => {
-      if (started === generation) cache = { at: Date.now(), config }
+      if (started === generation) {
+        cache = { at: Date.now(), config }
+        setActiveSlugMap(config.slugs)
+      }
       return config
     })
     .finally(() => {

@@ -32,6 +32,7 @@ import { Route as AdminMediaRouteImport } from './routes/admin/media'
 import { Route as AdminProductsRouteImport } from './routes/admin/products'
 import { Route as AdminSeoRouteImport } from './routes/admin/seo'
 import { Route as AdminSiteRouteImport } from './routes/admin/site'
+import { Route as AdminSlugsRouteImport } from './routes/admin/slugs'
 import { Route as AdminStatsRouteImport } from './routes/admin/stats'
 import { Route as AdminSubscribersRouteImport } from './routes/admin/subscribers'
 import { Route as AdminTestimonialsRouteImport } from './routes/admin/testimonials'
@@ -188,6 +189,11 @@ const AdminSeoRoute = AdminSeoRouteImport.update({
 const AdminSiteRoute = AdminSiteRouteImport.update({
   id: '/site',
   path: '/site',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSlugsRoute = AdminSlugsRouteImport.update({
+  id: '/slugs',
+  path: '/slugs',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminStatsRoute = AdminStatsRouteImport.update({
@@ -428,6 +434,7 @@ export interface FileRoutesByFullPath {
   '/admin/products': typeof AdminProductsRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/site': typeof AdminSiteRoute
+  '/admin/slugs': typeof AdminSlugsRoute
   '/admin/stats': typeof AdminStatsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
   '/admin/testimonials': typeof AdminTestimonialsRoute
@@ -494,6 +501,7 @@ export interface FileRoutesByTo {
   '/admin/products': typeof AdminProductsRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/site': typeof AdminSiteRoute
+  '/admin/slugs': typeof AdminSlugsRoute
   '/admin/stats': typeof AdminStatsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
   '/admin/testimonials': typeof AdminTestimonialsRoute
@@ -562,6 +570,7 @@ export interface FileRoutesById {
   '/admin/products': typeof AdminProductsRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/site': typeof AdminSiteRoute
+  '/admin/slugs': typeof AdminSlugsRoute
   '/admin/stats': typeof AdminStatsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
   '/admin/testimonials': typeof AdminTestimonialsRoute
@@ -631,6 +640,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/seo'
     | '/admin/site'
+    | '/admin/slugs'
     | '/admin/stats'
     | '/admin/subscribers'
     | '/admin/testimonials'
@@ -697,6 +707,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/seo'
     | '/admin/site'
+    | '/admin/slugs'
     | '/admin/stats'
     | '/admin/subscribers'
     | '/admin/testimonials'
@@ -764,6 +775,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/seo'
     | '/admin/site'
+    | '/admin/slugs'
     | '/admin/stats'
     | '/admin/subscribers'
     | '/admin/testimonials'
@@ -1011,6 +1023,13 @@ declare module '@tanstack/react-router' {
       path: '/site'
       fullPath: '/admin/site'
       preLoaderRoute: typeof AdminSiteRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/slugs': {
+      id: '/admin/slugs'
+      path: '/slugs'
+      fullPath: '/admin/slugs'
+      preLoaderRoute: typeof AdminSlugsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/stats': {
@@ -1322,6 +1341,7 @@ interface AdminRouteRouteChildren {
   AdminProductsRoute: typeof AdminProductsRoute
   AdminSeoRoute: typeof AdminSeoRoute
   AdminSiteRoute: typeof AdminSiteRoute
+  AdminSlugsRoute: typeof AdminSlugsRoute
   AdminStatsRoute: typeof AdminStatsRoute
   AdminSubscribersRoute: typeof AdminSubscribersRoute
   AdminTestimonialsRoute: typeof AdminTestimonialsRoute
@@ -1352,6 +1372,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminProductsRoute: AdminProductsRoute,
   AdminSeoRoute: AdminSeoRoute,
   AdminSiteRoute: AdminSiteRoute,
+  AdminSlugsRoute: AdminSlugsRoute,
   AdminStatsRoute: AdminStatsRoute,
   AdminSubscribersRoute: AdminSubscribersRoute,
   AdminTestimonialsRoute: AdminTestimonialsRoute,
