@@ -35,7 +35,7 @@ vi.mock('~/server/logger', () => ({ logger: { info: vi.fn(), error: vi.fn() }, e
 const api = await import('~/server/api/posts')
 
 const POST_ID = '00000000-0000-4000-8000-0000000000d1'
-const KEY: AuthenticatedKey = { id: '00000000-0000-4000-8000-000000000001', name: 'AI writer', scopes: ['blog:write'], createdBy: 'editor-1', limited: false }
+const KEY: AuthenticatedKey = { id: '00000000-0000-4000-8000-000000000001', name: 'AI writer', scopes: ['blog:write'], createdBy: 'editor-1' }
 const POST = {
   title: 'How to manage 100 screens remotely',
   description: 'A practical guide to grouping screens and scheduling playlists.',

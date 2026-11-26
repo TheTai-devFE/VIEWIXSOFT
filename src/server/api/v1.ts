@@ -46,7 +46,6 @@ const MAX_BODY_BYTES = 64 * 1024
 type ErrorCode =
   | 'unauthorized'
   | 'forbidden'
-  | 'rate_limited'
   | 'invalid_json'
   | 'too_large'
   | 'validation_failed'
@@ -70,11 +69,6 @@ export async function authorize(request: Request, scope: ApiScope): Promise<Auth
   if (!token) return apiError(401, 'unauthorized', 'Send the API key as "Authorization: Bearer <key>".')
   const key = await authenticateApiKey(token)
   if (!key) return apiError(401, 'unauthorized', 'This API key is not valid or has been revoked.')
-  if (key.limited) {
-    const res = apiError(429, 'rate_limited', 'Too many requests. Wait a minute and try again.')
-    res.headers.set('Retry-After', '60')
-    return res
-  }
   if (!key.scopes.includes(scope)) return apiError(403, 'forbidden', `This API key does not have the "${scope}" permission.`)
   return key
 }

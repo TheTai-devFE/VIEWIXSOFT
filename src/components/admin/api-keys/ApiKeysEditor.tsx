@@ -11,7 +11,7 @@ import { FieldInput } from '~/components/ui/field-input'
 import { StatefulButton } from '~/components/ui/stateful-button'
 import type { ButtonState } from '~/components/ui/stateful-button'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
-import { API_RATE_LIMIT_PER_MINUTE, API_SCOPE_LABELS, API_SCOPES, CreateApiKeySchema } from '~/lib/api-keys'
+import { API_SCOPE_LABELS, API_SCOPES, CreateApiKeySchema } from '~/lib/api-keys'
 import type { ApiScope } from '~/lib/api-keys'
 import { EASE_OUT } from '~/lib/ease'
 import { SITE_URL } from '~/lib/seo/meta'
@@ -357,7 +357,7 @@ function ApiGuide() {
       <CardContent className="space-y-5">
         <ul className="list-disc space-y-1 pl-5 text-xs leading-relaxed text-muted-foreground">
           <li>
-            Xác thực bằng header <code>Authorization: Bearer &lt;khóa&gt;</code>. Tối đa {API_RATE_LIMIT_PER_MINUTE} request mỗi phút cho mỗi khóa.
+            Xác thực bằng header <code>Authorization: Bearer &lt;khóa&gt;</code>.
           </li>
           <li>Mọi schema gửi qua API đều ở trạng thái <strong>Chờ duyệt</strong>. Chỉ hiện trên site sau khi admin bấm Duyệt ở trang Schema markup.</li>
           <li>Tool chỉ sửa và xoá được schema do API tạo, không đụng được schema admin tự nhập.</li>

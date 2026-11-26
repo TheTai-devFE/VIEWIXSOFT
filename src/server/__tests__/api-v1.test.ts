@@ -26,7 +26,7 @@ vi.mock('~/server/logger', () => ({ logger: { info: vi.fn(), error: vi.fn() }, e
 
 const api = await import('~/server/api/v1')
 
-const KEY: AuthenticatedKey = { id: '00000000-0000-4000-8000-000000000001', name: 'SEO tool', scopes: ['schema:read', 'schema:write'], createdBy: 'admin-1', limited: false }
+const KEY: AuthenticatedKey = { id: '00000000-0000-4000-8000-000000000001', name: 'SEO tool', scopes: ['schema:read', 'schema:write'], createdBy: 'admin-1' }
 const ID = '00000000-0000-4000-8000-0000000000aa'
 const FAQ = { path: '/pricing', schema: { type: 'FAQPage', data: { items: [{ question: 'Q?', answer: 'A.' }] } } }
 
@@ -76,11 +76,12 @@ describe('/api/v1 authentication', () => {
     expect((await api.handleListSchemas(request('GET'))).status).toBe(401)
   })
 
-  it('rate-limits a busy key', async () => {
-    authenticateApiKey.mockResolvedValue({ ...KEY, limited: true })
-    const res = await api.handleListSchemas(request('GET'))
-    expect(res.status).toBe(429)
-    expect(res.headers.get('retry-after')).toBe('60')
+  it('accepts a burst above 60 requests for an authorized key', async () => {
+    let count = 0
+    authenticateApiKey.mockImplementation(async () => ({ ...KEY, limited: ++count > 60 }))
+    for (let index = 0; index < 65; index++) {
+      expect((await api.handleListSchemas(request('GET'))).status).toBe(200)
+    }
   })
 
   it('checks the scope', async () => {
