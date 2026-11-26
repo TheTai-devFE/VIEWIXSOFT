@@ -42,9 +42,6 @@ export function effectiveScopes(keyScopes: readonly string[], owner: (Access & {
   return API_SCOPES.filter((s) => keyScopes.includes(s) && allowed.includes(s))
 }
 
-/** Requests per key per minute. */
-export const API_RATE_LIMIT_PER_MINUTE = 60
-
 /** Every key starts with this, so a leaked key is easy to spot in logs or code. */
 export const API_KEY_PREFIX = 'vxs_'
 

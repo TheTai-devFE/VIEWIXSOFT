@@ -1,6 +1,6 @@
 import '@tanstack/react-start/server-only'
 import { desc, eq, isNull, sql, and } from 'drizzle-orm'
-import { API_KEY_PREFIX, API_RATE_LIMIT_PER_MINUTE, effectiveScopes } from '~/lib/api-keys'
+import { API_KEY_PREFIX, effectiveScopes } from '~/lib/api-keys'
 import type { ApiScope, CreateApiKeyInput } from '~/lib/api-keys'
 import { parsePermissions, parseRole } from '~/lib/permissions'
 import { getDb } from '~/server/db/client'
@@ -78,27 +78,16 @@ export interface AuthenticatedKey {
   scopes: ApiScope[]
   /** The account that owns the key; posts sent with it belong to that account. */
   createdBy: string | null
-  /** True when this request went over the per-minute limit. */
-  limited: boolean
 }
 
-/**
- * Looks up a live key and counts the request against its one-minute window,
- * in one statement so concurrent requests can't slip past the limit. Returns
- * null for an unknown or revoked key.
- */
+/** Records last use and resolves the current permissions of a live key. */
 export async function authenticateApiKey(key: string): Promise<AuthenticatedKey | null> {
   const keyHash = await hashApiKey(key)
-  const expired = sql`${apiKeys.windowStart} < now() - interval '1 minute'`
   const [row] = await getDb()
     .update(apiKeys)
-    .set({
-      windowCount: sql`case when ${expired} then 1 else ${apiKeys.windowCount} + 1 end`,
-      windowStart: sql`case when ${expired} then now() else ${apiKeys.windowStart} end`,
-      lastUsedAt: sql`now()`,
-    })
+    .set({ lastUsedAt: sql`now()` })
     .where(and(eq(apiKeys.keyHash, keyHash), isNull(apiKeys.revokedAt)))
-    .returning({ id: apiKeys.id, name: apiKeys.name, scopes: apiKeys.scopes, createdBy: apiKeys.createdBy, windowCount: apiKeys.windowCount })
+    .returning({ id: apiKeys.id, name: apiKeys.name, scopes: apiKeys.scopes, createdBy: apiKeys.createdBy })
   if (!row) return null
   // The owner's access now, not when the key was made: a locked, deleted or
   // demoted owner takes the key's power away with them.
@@ -124,6 +113,5 @@ export async function authenticateApiKey(key: string): Promise<AuthenticatedKey 
     name: row.name,
     scopes,
     createdBy: row.createdBy,
-    limited: row.windowCount > API_RATE_LIMIT_PER_MINUTE,
   }
 }
